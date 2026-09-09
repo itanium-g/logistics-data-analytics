@@ -2,51 +2,57 @@
 
 ## How to read this document
 
-This document does three separable jobs. Keep them distinct, because the confidence attached to each differs sharply:
+This revision is the verified decision record for the Spaceship Senior Engineer take-home. It keeps three things separate:
 
-1. **Reconstruct the assignment brief** (§ *Source basis and reconstructed brief*). The original Notion page was not retrievable, so every expectation is labelled with a confidence tier.
-2. **Review the reference implementation** (§ *Component decisions and alternatives*, § *Comparative scoring matrix*). All statements here are **unverified in the current environment** — see *Verification status* below.
-3. **Plan a new submission** (§ *Prioritized implementation plan*, § *Risks*, § *LLM interface*). This is forward-looking recommendation, not observation.
+1. **Assignment reconstruction.** The original Notion page and attachments remain unavailable to this environment, so inferred requirements are still labelled as inferred rather than quoted as fact.
+2. **Reference implementation review.** Code and data claims are now checked against the public upstream repository at commit `1c1ee718dc2ece3e9ad2296060721c7f948001e3`.
+3. **New-submission plan.** Recommendations are forward-looking and are not claims about code that exists in the target repository.
 
-Where the text says "the reference", it means the existing repository. Where it says "I would", it means a recommendation for a fresh submission.
+The target repository is currently a report-only repository. It contains this document on `main` at commit `2daf659faa69d4f0926bbec1be4e1dd1f2ac42ed`; it does not yet contain the application implementation. The companion `IMPLEMENTATION_PLAN.md` turns the recommendations below into an executable build sequence.
 
 ## Verification status
 
-Read this before acting on anything below.
+**Verification snapshot: September 9, 2026 UTC.**
 
-| Claim class | Status | Notes |
+| Claim class | Status | Evidence |
 |---|---|---|
-| **Assignment brief** | Partially evidenced | Notion page unavailable; confidence-tiered in the table below. |
-| **Reference implementation code** | **Unverified** | The repository was not present in the audit workspace (only this report). Every code claim names the file it refers to; confirm against that file before acting. |
-| **Dataset row/status counts** | Unverified, internally consistent | 304 + 55 + 27 + 11 + 3 = 400 ✓ and the on-time figure reproduces from them ✓ (see below). |
-| **Arithmetic in this document** | **Verified** | Cost model, on-time rate and extrapolations recomputed and correct. |
-| **OpenRouter model pricing** | **Verified** | Checked live against the [OpenRouter models API](https://openrouter.ai/api/v1/models) and the [Claude Sonnet 4.6 model page](https://openrouter.ai/anthropic/claude-sonnet-4.6). |
-| **Vercel / Railway plan pricing** | Unverified | Figures are from an earlier check; re-verify before quoting. |
-| **DuckDB concurrency behaviour** | **Unverified and contested** | See the dedicated note in § *Component decisions*. Do not act on it without a quotable source. |
-| **OWASP / Anthropic / Pydantic / FastAPI / Next.js references** | Unverified | Claims are consistent with those projects' published guidance, but the citations need restoring — see the checklist below. |
+| **Assignment brief** | Partially evidenced | The [source Notion page](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24) was not retrievable here. The report therefore distinguishes direct candidate-disclosure evidence from implementation-based inference. |
+| **Target repository state** | Verified | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics) is private, its default branch is `main`, and its initial commit contains only `deep-research-report.md`. |
+| **Upstream reference implementation** | Verified | [Reference repository](https://github.com/KhresnaPanduI/spaceship-logistics-analytics) checked at [commit 1c1ee718](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/commit/1c1ee718dc2ece3e9ad2296060721c7f948001e3). |
+| **Dataset facts** | Verified | The upstream CSV was parsed directly: 400 rows, order dates `2025-01-01` through `2025-12-30`, 355 unique SKUs, total raw order value $13,695.87, and the status counts recorded below. |
+| **KPI arithmetic** | Verified | 304 + 55 + 27 + 11 + 3 = 400; 304 / (304 + 55 + 11) = 82.16%. |
+| **`revenue_at_risk_usd`** | Verified | The upstream registry defines it as the sum of `order_value_usd` for `delayed` and `exception` rows; the CSV recomputes it as $2,386.10. |
+| **Forecast semantics** | Verified defect in reference | `forecast.py` aggregates `COUNT(*)` (orders), while its inventory recommendation and UI wording say “units”; `quantity` is present in the source CSV. |
+| **Metric single-source-of-truth claim** | Partially true | KPI endpoints and most charts use `run_query_metric`, but `charts.py` retains status and two-metric dashboard SQL. |
+| **DuckDB concurrency behaviour** | Verified | Current DuckDB Python documentation says `cursor()` creates another handle on the same connection, but cursors from one connection cannot execute simultaneously; access is effectively serialized. |
+| **LLM routing/evaluation coverage** | Verified gap | The upstream tree has deterministic smoke tests but no LLM routing corpus or `.github/workflows` CI workflow. |
+| **`/api/ask` exposure controls** | Verified gap | The endpoint caps question length and uses constrained tools, but the checked code has no authentication, rate limiter, provider budget guard, or monthly spend cap. |
+| **External pricing and documentation** | Time-stamped and linked | Current Vercel, Railway, OpenRouter, Anthropic, OWASP, Pydantic, FastAPI, Next.js, DuckDB and GitHub Actions pages were checked on this revision date. |
 
-### Citations to restore
+### Sources used in this revision
 
-The original research used session-scoped citation handles that do not resolve for a second reader. They have been removed rather than left as unreadable inline tokens. Each external claim below needs a real URL before this document is circulated.
-
-| Claim | Needs |
+| Topic | Source |
 |---|---|
-| Anthropic's client-tool pattern (app declares tools, model requests, app executes) | Link to Anthropic tool-use documentation |
-| OWASP guidance on least functionality, least privilege, app-side validation, rate limiting | Link to OWASP LLM Top 10 (Excessive Agency, Unbounded Consumption entries) |
-| Pydantic field/model validators for constraints beyond base types | Link to Pydantic validators documentation |
-| FastAPI's Pydantic + OpenAPI integration | Link to FastAPI documentation |
-| Next.js App Router as the current file-system router | Link to Next.js documentation |
-| DuckDB CSV ingestion and in-memory connections | Link to DuckDB documentation |
-| DuckDB cursor/concurrency semantics | Link to DuckDB documentation — **claim is unverified** |
-| Vercel Hobby $0 / Pro $20 with $20 included usage | Link to Vercel pricing |
-| Railway Free / Hobby $5 min / Pro $20 min | Link to Railway pricing |
-| GitHub Actions as CI for repository commits and PR status | Link to GitHub Actions documentation |
+| Assignment source | [Spaceship Senior Engineer Code Test](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24) — not retrievable in this environment |
+| Reference code, data and deployment documentation | [Upstream reference repository](https://github.com/KhresnaPanduI/spaceship-logistics-analytics) |
+| Client tool schemas and tool-use design | [Anthropic tool definitions](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools) |
+| Agent least-functionality / least-privilege risk | [OWASP LLM06:2025 Excessive Agency](https://genai.owasp.org/llmrisk/llm062025-excessive-agency/) |
+| LLM cost-abuse risk | [OWASP LLM10:2025 Unbounded Consumption](https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/) |
+| Application validation | [Pydantic validators](https://pydantic.dev/docs/validation/latest/concepts/validators/) |
+| API framework | [FastAPI features](https://fastapi.tiangolo.com/features/) |
+| Frontend routing | [Next.js App Router](https://nextjs.org/docs/app) |
+| DuckDB Python handles and locking | [DuckDB Python API](https://duckdb.org/docs/lts/clients/python/overview.html) |
+| CI | [GitHub Actions](https://docs.github.com/en/actions/get-started) |
+| Hosting prices | [Vercel pricing](https://vercel.com/pricing) and [Railway pricing](https://railway.com/pricing) |
+| Model prices | [OpenRouter models API](https://openrouter.ai/api/v1/models) |
+
+External prices are planning snapshots, not permanent quotes. Re-check them immediately before deploying or budgeting a live demo.
 
 ## Executive summary
 
 The Spaceship take-home can be reconstructed with high confidence as an **AI-assisted logistics analytics exercise**: ingest a supplied logistics dataset, expose operational KPIs and dashboards, let a reviewer ask natural-language questions about the data, add a lightweight demand-forecasting capability, and demonstrate senior-level judgment around reliability, explainability, testing, deployment, and AI-assisted development. One limitation of this research is that the original public Notion page and its attachments were not retrievable; therefore, I do **not** treat every inferred requirement as verbatim assignment text. The strongest direct evidence about the original brief comes from the reference repository's `AI_USAGE.md`, which says the brief explicitly asks for honest AI-use disclosure with specific examples of AI-generated code and refers to a "section 14" containing bonuses such as caching, Docker, tests, advanced explainability, and ambiguous-query handling.
 
-The reference solution is a two-service monorepo: a **Python/FastAPI backend backed by in-process DuckDB** and a **Next.js/React/Recharts frontend**, deployed to Railway and Vercel respectively. The dataset contains 400 orders from 2025, and the application exposes a fixed dashboard, natural-language analytics, and product-category demand forecasts.
+The upstream reference solution, verified at the commit above, is a two-service monorepo: a **Python/FastAPI backend backed by in-process DuckDB** and a **Next.js/React/Recharts frontend**, deployed to Railway and Vercel respectively. The dataset contains 400 orders from 2025, and the application exposes a fixed dashboard, natural-language analytics, and product-category demand forecasts.
 
 The reference solution's strongest architectural decision is its **semantic/metric registry**. The LLM never receives permission to write SQL. It chooses between only two tools — `query_metric` and `forecast` — whose arguments are validated with Pydantic; deterministic application code then constructs parameterized SQL from registry-controlled expressions or executes forecasting code. The dashboard uses substantially the same metric machinery. This is a good senior-engineer design because the probabilistic model interprets language while deterministic code remains responsible for numerical truth. Anthropic's own tool-use model follows the same separation: applications declare tools and schemas, the model requests tool use, and application code executes the operation.
 
@@ -54,7 +60,7 @@ My overall assessment is **strong reference submission, approximately an 8/10 ar
 
 1. **Fix the demand semantics and close the metric-definition gap.** `forecast.py` forecasts `COUNT(*)` — orders — but then labels the resulting inventory recommendation in "units"; the dataset has a `quantity` field. For inventory planning, `SUM(quantity)` is usually the semantically consistent forecast target, or else the output must explicitly be called "forecast orders" rather than "units." Relatedly, `revenue_at_risk_usd` is the one registry metric whose formula is nowhere stated — define it before anyone depends on it (see the open question in § *Source basis*).
 2. **Eliminate duplicated metric SQL.** The README presents the registry as one computation path, but `charts.py` contains several dashboard-only SQL queries, including a duplicated carrier delay-rate formula. That is understandable for the take-home but weakens the single-source-of-truth claim.
-3. **Add CI and LLM-routing evaluations.** The nine deterministic smoke tests are useful, but the repository explicitly leaves the LLM orchestrator to manual end-to-end testing, and no GitHub Actions workflow was observed in the repository tree.
+3. **Add CI and LLM-routing evaluations.** The nine deterministic smoke tests are useful, but the repository explicitly leaves the LLM orchestrator to manual end-to-end testing, and no GitHub Actions workflow exists in the checked upstream tree.
 4. **Harden the public AI endpoint.** The constrained tools are a good security boundary, but `/api/ask` has no visible authentication or rate limiting. A public LLM-backed endpoint creates cost-abuse and unbounded-consumption risk even if the database itself is read-only. OWASP recommends minimizing agent functionality and permissions, validating tool operations in application code, and using rate limiting as an additional damage-control measure.
 
 **Recommended strategy:** for an actual interview submission, target the **medium scenario: about 9–12.5 experienced-engineer person-days**, but preserve the architectural restraint of the reference solution. Invest extra time in correctness contracts, tests, CI, small security controls, and polished explanation — not in an elaborate autonomous agent or sophisticated forecasting model unsupported by the data.
@@ -65,13 +71,16 @@ The original Notion page could not be directly retrieved in this research enviro
 
 | Confidence | Reconstructed expectation | Evidence |
 |---|---|---|
-| **Explicit from the brief, via candidate disclosure** | Disclose use of AI honestly and provide specific examples of AI-generated code. | The candidate states in `AI_USAGE.md` that this is directly required by the take-home brief. |
-| **Explicit bonus evidence** | Bonus topics include tests, caching, Docker, advanced explainability and ambiguous-query handling. | `AI_USAGE.md` explicitly refers to "spec section 14 bonuses." |
-| **Strongly inferred** | Analyze the supplied mock logistics dataset and expose operational KPIs. | The implementation contains dedicated data, registry, KPI and chart layers and describes itself as a logistics analytics dashboard (`README`). |
-| **Strongly inferred** | Provide natural-language analytics over the supplied data. | `/api/ask`, the LLM prompt (`prompt.py`), structured tools (`schemas.py`) and the Ask UI form a major part of the implementation. |
-| **Strongly inferred** | Include forecasting/demand prediction. | A dedicated forecast tool (`forecast.py`), forecast UI and methodology documentation are first-class project features. |
-| **Strongly inferred** | Make results understandable to a reviewer. | Query responses expose the selected metric, filters, date range, SQL, execution time, result rows and visualization spec. |
-| **Likely expected engineering quality** | Working deployment, documentation and automated tests. | The repository ships deployment configs, live-target documentation and deterministic smoke tests; tests are also named as a bonus in the brief reconstruction. |
+| **Explicit from candidate disclosure** | Disclose AI use honestly and provide concrete examples of AI-generated code. | The upstream `AI_USAGE.md` states that this is required by the take-home brief. |
+| **Explicit bonus evidence** | Tests, caching, Docker, advanced explainability and ambiguous-query handling are bonus topics. | The upstream `AI_USAGE.md` refers to the bonus section of the brief. |
+| **Verified in upstream reference** | Analyze the supplied logistics dataset and expose operational KPIs. | `backend/data/mock_logistics_data.csv`, `registry.py`, `api/kpis.py` and the dashboard implementation. |
+| **Verified in upstream reference** | Provide natural-language analytics over the data. | `/api/ask`, `prompt.py`, `schemas.py`, `orchestrator.py` and the Ask UI. |
+| **Verified in upstream reference** | Include demand forecasting. | `tools/forecast.py`, forecast schemas and the forecast UI. |
+| **Verified in upstream reference** | Make results inspectable to a reviewer. | Query responses expose the selected metric, filters, date range, display SQL, execution time, rows and visualization metadata. |
+| **Verified in upstream reference** | Provide deployment documentation and automated deterministic tests. | Railway/Vercel configuration, README instructions and nine upstream smoke tests. |
+| **Still assignment-dependent** | Any requirement not represented in the reference or candidate disclosure. | Reconcile the final build against the original Notion page and attachments before submission. |
+
+
 
 The supplied CSV has 400 rows and fields including `order_date`, `delivery_date`, `carrier`, `status`, `sku`, `product_category`, `quantity`, prices/order value, region and warehouse. Importantly, it **does not contain an expected-delivery or SLA-date field**, so deriving "late" from an expected-vs-actual delivery date is not possible from this CSV without an external SLA assumption. The repository documents 304 delivered, 55 delayed, 27 in transit, 11 exception and 3 canceled orders (sum: 400 ✓), as well as 355 unique SKUs, which explains why SKU-level forecasting was deliberately avoided.
 
@@ -90,11 +99,27 @@ That definition is defensible **provided reviewers accept `status='delivered'` a
 
 ### Open question: `revenue_at_risk_usd`
 
-The repository reportedly pins revenue at risk at roughly **$2,386.10**. No formula for this metric appears anywhere — it is the only one of the nine metrics left undefined, in a project whose main risk is undefined semantics.
+### Verified formula: `revenue_at_risk_usd`
 
-The figure also deserves a plausibility check before anything depends on it. If revenue at risk covers the 55 delayed plus 11 exception orders, that implies roughly **$36 per order**; including in-transit orders, roughly **$29**. That is possible for low-value stationery SKUs (the sample entities are `CRAYON` and `PAPER-0197`), but it is inconsistent with treating raw order value as revenue unless order values really are that small.
+The upstream registry defines this metric explicitly:
 
-**Action:** state the formula and its denominator explicitly, re-derive the value, and only then freeze it as a golden test constant. Until that is done, do not include it in the CI-pinned truths.
+```sql
+SUM(
+  CASE
+    WHEN status IN ('delayed', 'exception') THEN order_value_usd
+    ELSE 0
+  END
+)
+```
+
+It is a **revenue-exposure proxy**, not a prediction of realized loss, a service-level penalty, or recognized-revenue impairment. On the verified 400-row CSV:
+
+- delayed + exception rows: 55 + 11 = **66 orders**;
+- total raw order value: **$13,695.87**;
+- revenue at risk: **$2,386.10**;
+- exposure share: **17.42%** of raw order value.
+
+The upstream smoke test already pins this value with a small floating-point tolerance. The implementation plan should preserve that test while documenting the denominator and the “exposure proxy” interpretation in the UI and README.
 
 ### Time context
 
@@ -113,7 +138,7 @@ The table below treats the existing repository as the **reference option**, then
 | **API design** | Fixed dashboard REST endpoints, `/api/ask`, health endpoint; charts are server-generated result sets + viz specs. | **One generic `/analytics/query` endpoint.** **Pros:** smaller API, composable UI. **Cons:** less obvious reviewer-facing API and potentially more frontend coupling. | **GraphQL.** **Pros:** flexible client querying. **Cons:** unnecessary schema/operation complexity; analytics semantics still need a separate semantic layer. | Keep reviewer-friendly fixed endpoints **plus one generic typed analytics endpoint internally**, so chart presets do not require duplicated SQL. |
 | **LLM integration** | Exactly two calls: one selects a structured tool, application executes deterministically, second summarizes results. No ReAct loop or retries. | **Raw text-to-SQL.** **Pros:** huge language surface with little code. **Cons:** query correctness, schema drift and security become model-dependent. | **Multi-step ReAct/planner agent.** **Pros:** can answer comparisons and chained questions. **Cons:** more latency, cost, failure modes and evaluation burden. | **Reference pattern for MVP/medium.** Add multi-step planning only after a routing/evaluation harness exists. |
 | **Tools / validation** | Registry enums → JSON tool schema → Pydantic validation → parameterized SQL. Unknown dimensions/metrics fail closed. Pydantic supports field/model validators specifically for enforcing higher-level constraints. | **JSON Schema only.** **Pros:** model receives constrained schema. **Cons:** model schema alone is not a server-side trust boundary. | **Typed analytics DSL + value resolver.** **Pros:** strongest control, can validate entity values and resolve typos. **Cons:** more code. | Keep Pydantic and add **value-level validation/resolution**, `extra="forbid"`, and reject empty `IN` lists. |
-| **Forecasting** | Complete category×month series; linear least-squares trend when ≥6 non-zero months, otherwise 3-month moving average; 1–6 month horizon; 20% buffer. | **Naive last-value / moving-average baseline only.** **Pros:** extremely explainable and difficult to overfit. **Cons:** does not demonstrate much forecasting sophistication. | **Holt-Winters/SARIMA/Prophet.** **Pros:** handles trend/seasonality with sufficient history. **Cons:** twelve monthly points provide inadequate evidence for seasonal structure; creates false sophistication. | Keep simple methods but **forecast `SUM(quantity)` if the output is an inventory recommendation**. Add a naive baseline and publish an uncertainty interval rather than a more sophisticated model. |
+| **Forecasting** | Complete category×month series of `COUNT(*)` order totals; linear least-squares trend when ≥6 non-zero months, otherwise 3-month moving average; 1–6 month horizon; 20% buffer. The output then labels the safety-stock recommendation in “units” even though the series counts orders. | **Naive last-value / moving-average baseline only.** **Pros:** extremely explainable and difficult to overfit. **Cons:** does not demonstrate much forecasting sophistication. | **Holt-Winters/SARIMA/Prophet.** **Pros:** handles trend/seasonality with sufficient history. **Cons:** twelve monthly points provide inadequate evidence for seasonal structure; creates false sophistication. | Keep simple methods but **forecast `SUM(quantity)` if the output is an inventory recommendation**. Add a naive baseline and publish an uncertainty interval rather than a more sophisticated model. |
 | **Frontend** | Next.js 15, React 19, Recharts, Tailwind/TypeScript. The App Router is the current Next.js file-system router. | **Vite + React.** **Pros:** simpler SPA, fast build, likely sufficient because backend is separate. **Cons:** fewer integrated application conventions. | **Streamlit.** **Pros:** fastest analytics UI. **Cons:** substantially weaker demonstration of polished full-stack/product engineering. | Next.js or Vite React. **Next.js is useful if frontend polish counts; Vite is arguably leaner technically.** |
 | **Testing** | Nine offline pytest smoke tests pin data/KPI truths, validation and forecast structure; LLM orchestrator tested manually. | **Manual testing only.** **Pros:** fastest. **Cons:** poor senior-level signal and high regression risk. | **Layered unit/API/contract/LLM-eval/Playwright suite.** **Pros:** excellent reliability evidence. **Cons:** several additional days. | Expand the current smoke tests into a **small layered suite**; 30–50 LLM routing cases have particularly high interview value. |
 | **Deployment / DevOps** | Frontend on Vercel; backend on Railway using platform build configuration rather than Docker. | **Dockerized app on one PaaS.** **Pros:** reproducible and portable. **Cons:** slightly more setup. | **AWS ECS/Fargate + managed infrastructure.** **Pros:** realistic enterprise controls. **Cons:** many hours of infrastructure that add almost no take-home product value. | Vercel + Railway is good. Add **Docker only if portability/reproducibility is a scored bonus**, not because "senior" automatically means Kubernetes/AWS. |
@@ -137,11 +162,9 @@ Then the concentration chart becomes another registry-driven request.
 
 One caveat this design has to handle explicitly: **the nine metrics do not share a denominator.** `delay_rate` and `on_time_rate` exclude in-transit and canceled orders; `total_orders` and `total_revenue_usd` do not. Co-aggregating them in one grouped query therefore requires per-metric conditional aggregation (for example `SUM(CASE WHEN ... END)` over a common row set) rather than a shared `WHERE` clause. Get this wrong and the consolidation that was supposed to remove semantic drift becomes its new source. Make the differing denominators part of the registry declaration, and unit-test each metric against a hand-computed fixture both with and without a breakdown.
 
-**Second, the DuckDB concurrency note is unverified.** The repository creates one in-memory connection and returns `.cursor()` handles, describing them as appropriate for FastAPI's parallel dashboard requests. An earlier draft of this report asserted that current DuckDB documentation says cursors on the same connection cannot execute queries simultaneously, and recommended rewriting the README on that basis.
+**Second, the DuckDB concurrency note is now resolved.** The upstream code creates one shared in-memory connection and returns `cursor()` handles. DuckDB’s Python documentation says that `cursor()` creates another handle on the same connection, but “all cursors created from one connection cannot run queries at the same time”; a single connection is locked during queries and therefore serializes access. The implementation is therefore reasonable for a 400-row read-only take-home, but the README phrase “concurrent-safe cursor-per-call” should not be read as parallel query execution.
 
-**I could not confirm that claim.** DuckDB's documentation site was not reachable from the audit environment, and DuckDB's Python client describes `cursor()` as producing a duplicate connection intended precisely for multi-threaded use — which at minimum makes the assertion contestable. This is the only place where this report contradicts the reference implementation's own stated reasoning, so it needs a quotable source first.
-
-**Action:** verify against DuckDB's current documentation, then either (a) correct the README to "safe/serialized for this workload" if serialization is confirmed, or (b) leave the README alone. Either way, add a small concurrent-request test so the README's claim is backed by evidence rather than by either party's recollection. None of this matters for a 400-row workload; it matters because a senior README should not assert concurrency properties it has not measured.
+**Recommendation for the new submission:** either retain the shared connection and document “thread-safe request handling with serialized DuckDB query access,” or move to separate connections over a persisted/read-only database only if measured parallelism is actually needed. In both cases, add a one-time initialization guard and a small concurrent-request test. The current scope does not justify introducing a database service merely to parallelize tiny CSV aggregations. This conclusion is backed by the [DuckDB Python API documentation](https://duckdb.org/docs/lts/clients/python/overview.html), not by recollection.
 
 ## Comparative scoring matrix
 
@@ -235,7 +258,9 @@ This bottom-up total is the source of the 9–12.5 figure quoted throughout; the
 
 ### Hosting and model cost
 
-Hosting costs are modest. Vercel advertises Hobby at $0/month and Pro at $20/month with $20 of included usage credit, with Hobby intended for personal/non-commercial projects. Railway advertises Free at $0/month with a trial/usage model, Hobby at a **$5 minimum monthly usage** including $5 of usage credits, and Pro at a **$20 minimum** including $20 of credits. *(Both sets of figures are unverified in this pass — re-check before quoting.)* For a 400-row DuckDB service, compute is unlikely to dominate; the LLM is the variable cost driver.
+Hosting costs are modest but should be treated as a date-stamped assumption. On September 9, 2026, [Vercel pricing](https://vercel.com/pricing) lists Hobby at **$0/month** and Pro at **$20/month** with **$20 of included usage credit**. [Railway pricing](https://railway.com/pricing) lists Free at **$0/month** but states that the initial $5 credit is a 30-day trial followed by **$1/month**, Hobby at a **$5 minimum usage** with $5 of monthly usage credits, and Pro at a **$20 minimum usage** with $20 of credits. For this 400-row DuckDB service, compute is unlikely to dominate; the LLM is the variable cost driver.
+
+The upstream reference uses `anthropic/claude-sonnet-4.6` through OpenRouter. The live [OpenRouter models API](https://openrouter.ai/api/v1/models) snapshot for this revision lists **$3 per million input tokens**, **$15 per million output tokens**, and **$0.30 per million cached input tokens**.
 
 The repository defaults to `anthropic/claude-sonnet-4.6` through OpenRouter. As of September 9, 2026, OpenRouter lists that model at **$3 per million input tokens and $15 per million output tokens**, with cached input reads at **$0.30 per million** — verified against the [OpenRouter models API](https://openrouter.ai/api/v1/models).
 
@@ -698,10 +723,23 @@ The core design principle I would defend in the interview is therefore:
 
 That principle fits this assignment unusually well. It demonstrates AI fluency without making the application less trustworthy, preserves explainability, keeps operating costs predictable, allows the deterministic path to be thoroughly tested, and avoids spending valuable take-home time on agent complexity that the 400-row dataset does not justify. The reference repository's own architecture and AI-use disclosure suggest this constraint was intentional rather than accidental.
 
-## Outstanding actions before circulating this document
+## Decision and implementation gate
 
-1. Restore every citation in the *Citations to restore* table with a resolvable URL.
-2. Get the reference repository into the working tree, then confirm each code claim against the named file and delete the "unverified" qualifier where it now holds.
-3. Define `revenue_at_risk_usd` and re-derive its value before pinning it in CI.
-4. Verify or withdraw the DuckDB cursor/concurrency claim; add a concurrent-request test either way.
-5. Re-check Vercel and Railway plan pricing.
+This report is now complete as a research and architecture decision record. The previous “outstanding actions” were verification tasks; they are closed or converted into implementation gates.
+
+### Verified in this revision
+
+- The target repository is report-only; the application still needs to be built there.
+- The upstream reference code, CSV, tests, deployment configuration and AI disclosure were inspected.
+- `revenue_at_risk_usd` has a documented formula and verified value.
+- The DuckDB cursor/concurrency claim has been resolved against current documentation.
+- External engineering guidance and hosting/model price sources have been linked.
+
+### Required before submitting the new implementation
+
+1. Recover the original Notion brief and attachments manually if the candidate account can access them; map every requirement to a feature or an explicit scope decision.
+2. Implement the medium plan in `IMPLEMENTATION_PLAN.md`: data contract → metric registry → deterministic API → constrained LLM router → dashboard/Ask UX → forecast → CI/security/deployment.
+3. Correct the forecast target to `SUM(quantity)` when the output is described as inventory units, or relabel the output consistently as forecast orders.
+4. Consolidate dashboard metric logic where practical; keep status distribution and the client concentration combo chart only as explicit, tested multi-metric exceptions.
+5. Replace the hard-coded wall-clock date, add value-level filter validation, enforce non-empty `IN` lists, and add a lightweight rate/budget guard around `/api/ask`.
+6. Add deterministic CI, a mocked 30–50-case LLM routing evaluation set, a concurrent-request test, forecast baseline/backtest checks, and a candid `AI_USAGE.md`.
