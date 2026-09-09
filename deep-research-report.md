@@ -97,8 +97,6 @@ and delay rate is its complement, with in-transit and canceled shipments exclude
 
 That definition is defensible **provided reviewers accept `status='delivered'` as semantically meaning "on-time delivered."** It should therefore be documented as a business assumption rather than presented as an objectively derivable SLA metric.
 
-### Open question: `revenue_at_risk_usd`
-
 ### Verified formula: `revenue_at_risk_usd`
 
 The upstream registry defines this metric explicitly:
