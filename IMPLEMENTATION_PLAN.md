@@ -4,6 +4,14 @@ Updated: 2026-09-09 (UTC). Status: **planned, not implemented**. This revision c
 
 [deep-research-report.md](deep-research-report.md) owns the audit evidence, architecture alternatives, checked technology sources, and price snapshot. This plan owns scope, contracts, sequencing, estimates, and release gates. If either document changes a shared decision, update the other in the same change.
 
+## Source links
+
+- Original assignment brief and attachments: [Spaceship Senior Engineer Code Test](<https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24>)
+- Answer/reference repository: [KhresnaPanduI/spaceship-logistics-analytics](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics>)
+- Audited reference snapshot: [commit 1c1ee718](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3>)
+
+The Notion page is the source of truth for exact requirements and attached files. The reference repository is evidence and architectural context; do not copy its code or data without permission.
+
 ## 1. Build target and non-goals
 
 Deliver one React SPA plus Hono API on Cloudflare Workers with Static Assets, backed by one small D1 database. Use a strict metric registry, deterministic forecasts and answer templates, and at most one paid model generation per new natural-language question.
