@@ -1,8 +1,8 @@
 # Spaceship Logistics Analytics — Cost-First Implementation Plan
 
-Updated: 2026-09-09 (UTC). Status: **planned, not implemented**. This revision changes documentation only.
+Updated: 2026-09-11 (UTC). Status: **planned, not implemented**. This revision changes documentation only.
 
-[deep-research-report.md](deep-research-report.md) owns the audit evidence, architecture alternatives, checked technology sources, and price snapshot. This plan owns scope, contracts, sequencing, estimates, and release gates. If either document changes a shared decision, update the other in the same change.
+[deep-research-report.md](deep-research-report.md) owns audit evidence and analytical meaning. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) owns the complete setup, current stack, hosting/LLM matrices, prices and provider selection. This plan owns scope, contracts, sequencing, estimates and release gates. Update shared decisions in the same change.
 
 ## Source links
 
@@ -14,7 +14,7 @@ The Notion page is the source of truth for exact requirements and attached files
 
 ## 1. Build target and non-goals
 
-Deliver one React SPA plus Hono API on Cloudflare Workers with Static Assets, backed by one small D1 database. Use a strict metric registry, deterministic forecasts and answer templates, and at most one paid model generation per new natural-language question.
+Deliver one React SPA plus Hono API on Cloudflare Workers with Static Assets, backed by one small D1 database. Use a strict metric registry, deterministic forecasts and answer templates, and at most one model generation per new natural-language question. Evaluate Groq openai/gpt-oss-20b on Free first, with DeepInfra google/gemma-4-E4B-it as the low-price challenger. Use one selected live provider, with no automatic paid fallback.
 
 The default is a reviewer-gated demo, not an anonymous public paid endpoint or a production logistics platform. Preserve an entirely model-free dashboard and forecast form. A model outage must not remove access to valid deterministic analytics.
 
@@ -22,7 +22,7 @@ Target $0 hosting within free allowances; the model allowance is $2 per UTC cale
 
 Not in initial scope: SSR, multi-agent planning, raw text-to-SQL, RAG/embeddings, autonomous actions, uploaded datasets, multi-tenancy, OAuth/RBAC, queues, Redis/KV cache services, Kubernetes, paid monitoring, seasonal models, or an operational purchasing system.
 
-If the original brief mandates Python, use one FastAPI/DuckDB container serving the same built SPA. Do not implement both backends. Document the selected path at G00 and revise the estimate if existing code or mandatory requirements materially change the work.
+If the original brief mandates Python, use one FastAPI container serving the same built SPA, with a read-only DuckDB analytics snapshot and a durable shared database for usage counters. Northflank Sandbox is the first free container candidate; Cloud Run is a usage-based alternative. Do not keep spend counters on ephemeral container disk or implement both backends. Document the selected path at G00 and revise the estimate if existing code or mandatory requirements materially change the work.
 
 ## 2. Evidence gates and scope
 
@@ -33,7 +33,7 @@ Before substantive implementation, create docs/requirements.md with a row for ea
 | Unresolved item | Required action | Safe default while unresolved |
 |---|---|---|
 | Original Notion brief and attachments | Recover and read them; map exact deliverables, deadline, required stack, submission instructions, and bonuses. | Continue only as a provisional implementation of the reconstructed brief; do not claim full rubric compliance. |
-| Locally refactored or unpushed application code | Confirm whether there is code beyond the two committed documents before scaffolding over any workspace. | This repository is greenfield at audited commit 8fdab002; no code reuse assumed. |
+| Locally refactored or unpushed application code | Inspect existing workspace changes before scaffolding. | Latest inspected main e5a5e67 contains README, report and plan only; no application code reuse assumed. |
 | Assigned data and redistribution rights | Obtain the authorized CSV; record provenance, license/terms, and whether data or results may be public. | No copied upstream application code or publicly exposed data. |
 | Calendar coverage and field semantics | Confirm whether the file covers all of 2025 and what statuses/promotions mean. | Record unverified assumptions; forecasts stay exploratory. Do not assert operational validity. |
 | Model data treatment and deployment permission | Select an allowed provider/project and verify account terms and quotas. | LLM_ENABLED=false; local mock mode; no paid calls or deployment. |
@@ -50,9 +50,9 @@ Tests and ambiguity handling are P0 here because they protect the proposed syste
 
 ## 3. Repository and dependency plan
 
-Use one package.json and package-lock.json; npm ci in CI. Resolve stable compatible patches of TypeScript 7, React 19.2, Vite 8.1, Hono, Zod 4, Recharts, Wrangler, and the Cloudflare Vite plugin. Use Node 24 LTS for build tooling and the Worker runtime for API execution. Validate the full graph; a temporary TypeScript 6 pin requires a written compatibility reason.
+Use one package.json and package-lock.json; npm ci in CI. Resolve stable compatible patches of TypeScript 7, React 19.3, Vite 8.1, Hono, Zod 4, Recharts, Wrangler, and the Cloudflare Vite plugin. Use Node 24 LTS for build tooling and the Worker runtime for API execution. Validate the full graph; a temporary TypeScript 6 pin requires a written compatibility reason.
 
-Use Vitest 4.1+ with the current @cloudflare/vitest-plugin and Playwright. Generate Worker binding types from Wrangler. Pin the compatibility date, dependency patches, and CI action commit SHAs; avoid preview releases and moving model aliases. Sources and version caveats are in the report.
+Use Vitest 4.1+ with the current @cloudflare/vitest-plugin and Playwright. Generate Worker binding types from Wrangler. Pin the compatibility date, dependency patches, and CI action commit SHAs; avoid preview releases and moving model aliases. Sources, a proposed scaffold/configuration, local/remote database commands, secrets, deployment steps and version caveats are in the setup guide. Use that guide as the runbook; its commands are not yet implemented/verified in this repository.
 
 The paths below are **files to create**, not files already present.
 
@@ -66,7 +66,7 @@ The paths below are **files to create**, not files already present.
 | src/domain/answer.ts | Deterministic answer text and chart/table hints from validated results. |
 | src/worker/index.ts and routes/ | Hono routing, auth, body limits, errors, and request IDs. |
 | src/worker/data.ts | D1 adapter exposing only the analytical operations the domain needs. |
-| src/worker/router.ts and budget.ts | One provider adapter, schema conversion, token bounds, atomic spend reservations. |
+| src/worker/router.ts and budget.ts | One active provider, tested schema conversion/token bounds, atomic monetary and free-token reservations; a small challenger adapter for evaluation. |
 | scripts/import-data.ts | Offline CSV validation and deterministic seed generation; never an upload endpoint. |
 | migrations/ and data/manifest.json | Versioned schema plus data provenance/checksum/coverage; raw data tracked only when permitted. |
 | tests/unit/, tests/worker/, tests/e2e/ | Pure domain tests, local-runtime/D1 integration, browser journeys. |
@@ -176,7 +176,7 @@ Use HTTP 400 for malformed JSON, 401 for missing/expired session, 403 for origin
 2. Authenticate and check configured feature state. Mock mode returns conspicuously labeled fixtures; it never pretends a live model answered.
 3. Build compact instructions/schema from the registry, manifest vocabulary, data bounds, and runtime clock. Do not send CSV rows or result tables.
 4. Make at most one generation for a strict decision object: query_metric, forecast, clarify, or unsupported. The latter two execute no analytics. They use safe reason codes and server-rendered prompts, not unrestricted model prose.
-5. Use structured JSON output for the routing object, with the provider-supported schema subset generated from the contract. Test that conversion. No tool execution, search, code interpreter, URL context, or provider grounding is enabled.
+5. Use structured JSON output for the routing object, with the provider-supported schema subset generated from the contract. For Groq strict mode, all properties must be required and objects reject additional properties; normalize a tested nullable representation of optional fields back into the canonical domain contract. Verify the exact challenger model's support. No tool execution, search, code interpreter, URL context, or provider grounding is enabled.
 6. Parse an object only; reject multiple decisions, arrays, null, truncation, unknown names/keys, invalid enum values, and malformed arguments. A future native-function-calling adapter must reject multiple tool calls rather than taking the first.
 7. Revalidate in application code and execute only the permitted deterministic operation. Return the canonical interpretation so a reviewer can see a wrong-but-valid model selection.
 8. Build all numerical prose from result fields and full-scope summaries. No second model call and no chain-of-thought display.
@@ -221,17 +221,19 @@ Keep all data APIs protected unless G00 explicitly permits public data. Static a
 |---|---:|---|
 | Request body / question | 16 KiB / 1,000 trimmed characters | Before parsing / before provider access. |
 | Query complexity | Section 4 limits; maximum 100 returned groups | Strict schema and compiler; no free-form SQL. |
-| Provider input | 8,192 tokens including system instructions and schema | Verify the bound against the actual request; use supported countTokens or a tested conservative method, not characters ÷ 4. |
+| Provider input | 4,096 tokens including system instructions and schema | Verify the complete request bound with supported counting or a tested conservative method, not characters ÷ 4. The previous 8,192 cap exceeds Groq Free's 8K TPM. |
 | Provider output | 512 total billable tokens | Configure and verify model-specific output/thinking behavior; refuse activation if not bounded. |
 | Provider timeout / automatic retries | 15 seconds / 0 | Abort signal; no hidden SDK retry or silent model fallback. |
 | Advisory burst control | 5 Ask requests per minute per session/IP key | Edge limiter; HMAC identifiers, not raw IP logging. Not a billing counter. |
 | Generation attempts | 100 per UTC day and 1,000 per UTC month globally | Durable atomic conditional state update. |
-| Model allowance | $2 per UTC month globally | Conservative microdollar reservation before generation. |
+| Model allowance | $2 per UTC month globally | Conservative microdollar reservation before paid generation; confirmed free mode has zero monetary charge. |
+| Groq Free pacing | One generation per 60 seconds globally | Durable next-allowed timestamp; not a per-instance counter. |
+| Groq Free tokens | 180,000 reserved tokens per UTC day | Reserve verified input plus maximum billable output; independent of monetary and request caps. At maximum input/output, this admits 39 calls/day. |
 | Local/mock behavior | LLM_ENABLED=false | No network model access in default tests or development. |
 
-Use one durable budget-state row and an atomic conditional UPDATE/UPSERT that checks and advances daily/monthly count and reservation totals together. Never do read-check-write in separate requests. Derive period keys server-side, test rollover, and reject stale-period races rather than resetting newer counters backward.
+Use one durable budget-state row and an atomic conditional UPDATE/UPSERT that checks and advances daily/monthly counts, monetary reservations where applicable, free-token reservations, and pacing time together. Never do read-check-write in separate requests. Derive period keys server-side, test rollover, and reject stale-period races rather than resetting newer counters backward. Maintain application-wide paid caps across model changes; do not reset spent allowance when selecting another provider. Free-provider quota checks must use the relevant provider/configuration.
 
-Reserve against validated model prices and worst-case enforced token bounds: 1,024 microdollars for 2.5 Flash-Lite or 3,738 for 3.5 Flash-Lite at the report's price snapshot. Round up, not down. The normal usage estimate is not a hard reservation. A different model needs its own tested price/cap configuration.
+Reserve against the versioned rates and verified bounds in the setup guide: 461 microdollars per paid Groq 20B call or 134 per DeepInfra Gemma E4B call at 4,096 input / 512 total output. Use exact scaled arithmetic and round up. A confirmed free call still consumes request/token quota. GPT-OSS low reasoning does not disable reasoning; hiding it does not waive billing. If output truncates or a provider cannot enforce the bound, do not activate that configuration. A new model/bound requires updated price configuration and evaluation.
 
 If the reservation write fails, times out, or its success is uncertain, **do not generate**. If a generation times out, returns invalid output, or has an unknown billing outcome, retain the reservation. For this small demo, never refund reservations; reconcile actual usage for reporting only. Stop when either count or monetary allowance would be exceeded. Duplicate user retries consume another reservation; disable UI double-submission and do not automatically retry.
 
@@ -256,13 +258,13 @@ Estimates are **focused engineering hours**, not a deadline or a claim about AI 
 | P02 | Import contract, manifest, migrations/seeds, golden data checks. After P01. | 4–6 | Exact fixture facts and invalid-row tests pass; no live-data mutation. |
 | P03 | Registry, safe query compiler, ranking, ratios, full-scope evidence. After P02. | 6–9 | Independent numerical and malicious-input tests pass. |
 | P04 | Deterministic API and simple forecast/backtest/buffer behavior. After P03. | 5–8 | Typed API and forecast edge cases pass without a model. |
-| P05 | Router adapter, schema conversion, mock cases, held-out evaluation harness. After P03. | 4–6 | Wrong/malformed decisions fail safely; no claimed live accuracy. |
-| P06 | Reviewer sessions, durable reservations, token bounds, failures and concurrency. After P04/P05. | 5–8 | No unreserved paid path; access and budget tests pass. |
+| P05 | Groq adapter, small DeepInfra challenger adapter, schema conversion, mock cases and held-out evaluation harness. After P03. | 5–8 | Wrong/malformed decisions fail safely; no claimed live accuracy. |
+| P06 | Reviewer sessions, durable cost/free-token reservations, pacing, token bounds, failures and concurrency. After P04/P05. | 5–8 | No unreserved generation; access and budget tests pass. |
 | P07 | Dashboard, Ask, forecast form, evidence panel, accessible responsive states. After API contracts stabilize. | 6–9 | Core browser journeys pass; no client-side metric duplication. |
 | P08 | Authorized real-model evaluation, remote quota/CPU smoke, release docs and rollback check. After P06/P07. | 5–8 | All applicable release gates below pass with recorded evidence. |
-| **Base total** | **P00–P08** | **40–63** | **5.0–7.875 eight-hour person-days.** |
+| **Base total** | **P00–P08** | **41–65** | **5.125–8.125 eight-hour person-days.** |
 
-Add 20% contingency: **48–75.6 hours**, or approximately **6–9.5 eight-hour person-days**. External waiting for the brief, permissions, accounts, or review is not included. Re-estimate after P01 if the Worker stack is unfamiliar or the brief expands scope. P1/P2 work is not included.
+Add 20% contingency: **49.2–78 hours**, or approximately **6.2–9.8 eight-hour person-days**. The extra 1–2 base hours versus the previous estimate cover a second provider adapter for comparison. External waiting for the brief, permissions, accounts, or review is not included. Re-estimate after P01 if the Worker stack is unfamiliar or the brief expands scope. P1/P2 work is not included.
 
 If time is cut, remove P1/P2, reduce the number of dashboard charts, and shorten the demo narrative. Do not remove money/date correctness, access controls, durable caps, core tests, or disclosure. If live evaluation cannot be completed, ship a clearly labeled deterministic/mock prototype only if the assignment permits that reduced scope.
 
@@ -289,7 +291,7 @@ The normal suite has model networking disabled. A separate npm run eval:live is 
 | G03 Query safety | SQL-injection strings; unknown values; wrong primitives; extra fields; invalid dates; Monday/year boundaries; top-N ties/truncation. | Forbidden inputs never reach execution; results match independent expected aggregates. |
 | G04 Provider boundary | Mock arrays/null/multiple decisions, unknown metric, oversized output, truncation, timeout, 429/5xx. | Safe typed failure; no second generation, hidden retry, or fabricated answer. |
 | G05 Forecast | Quantity vs order count; canceled rows; missing/partial periods; zeros; short history; rolling folds; rounding. | No leakage, no artificial minimum-one buffer, correct units/dates, coverage warnings and weak-evidence labels. |
-| G06 Access and spend | Missing/tampered/expired session; secret in built assets; Origin/CSRF tests; concurrent requests; UTC rollover; uncertain DB/provider outcomes. | Unauthorized access blocked; no generation without a confirmed reservation; caps cannot be overspent by races under configured bounds. |
+| G06 Access and spend | Missing/tampered/expired session; secret in built assets; Origin/CSRF tests; concurrent paid/free requests; UTC rollover and pacing; provider switch without budget reset; uncertain DB/provider outcomes. | Unauthorized access blocked; no generation without a confirmed reservation; caps cannot be overspent by races under configured bounds. |
 | G07 Live routing | Held-out real-provider evaluation described below. | Selected model satisfies the declared routing thresholds; publish observed counts, failures, tokens, latency and cost. |
 | G08 Browser/runtime | Desktop/mobile, keyboard paths, loading/empty/error/clarify/unsupported, stale dataset label, provider-off mode, deep links, /api JSON 404. | Reviewer can complete the core journeys; no leaked secrets/data; API-only routing works. |
 | G09 Release | Clean checkout run, dependency/security review, measured runtime fit, authorized deployment, readiness, versioned docs, rollback exercise. | No unresolved critical correctness/security issue; evidence matches the deployed commit and data version. |
@@ -304,11 +306,11 @@ For each candidate, run one budgeted pass against the same frozen set. Proposed 
 
 Report one-run counts and failure examples. After selecting or tuning a model/prompt, run a second held-out confirmation set of the same size; do not repeatedly tune on the reported holdout. Keep raw responses private if they contain sensitive content; checked-in evidence may use hashes and redacted failure cases.
 
-Begin with 2.5 Flash-Lite and 3.5 Flash-Lite. Select the cheaper passing candidate; if only the newer model passes, accept its small measured cost. If neither passes, narrow capability, improve development cases, or evaluate a separately approved alternative—do not quietly lower thresholds or route to an expensive model.
+Begin with Groq openai/gpt-oss-20b and DeepInfra google/gemma-4-E4B-it. Prefer free Groq if it passes and quota/latency fit. For paid access, compare measured cost per successful task and integration effort; the nominal paid-model difference is only $0.1225/1,000 questions. If neither passes, improve development cases or evaluate a separately budgeted comparator such as Gemini 2.5 Flash-Lite; do not lower thresholds or add a silent premium fallback. Record model/version, provider, prompt/schema, pricing mode and all billable output.
 
-Initial two-model comparison plus one confirmation is up to 180 generations. Under the configured token ceilings, the worst case with a 3.5 confirmation is $0.5100 in conservative reservations: 60 × 1,024 + 120 × 3,738 = 510,000 microdollars. Allocate **$1 maximum for the initial evaluation exercise**, shared across its runs, with no automatic reruns or escalation. This is planned spend, not spend incurred in this audit.
+Initial two-model comparison plus one confirmation is up to 180 generations. If all Groq calls are paid, the more expensive confirmation is Groq: 120 × 461 + 60 × 134 = 63,360 microdollars, or **$0.06336** conservatively reserved at the current bounds. Free Groq lowers cash consumption but remains subject to its pacing/token quota. Allocate **$1 maximum for the initial evaluation exercise**, including these runs, with no automatic reruns or escalation. Deposits are separate cash commitments; no spend was incurred by this documentation rewrite.
 
-Use the same reservation logic in a separately authorized evaluation environment with a one-off ceiling of 180 generations and $1, distinct from the interactive demo's $2/month allowance. Never reset or bypass production counters to run evaluations. If evaluations instead share the interactive environment, honor its 100/day cap and spread the runs across UTC days. Record evaluation and interactive usage separately when reporting total cost.
+Use the same admission logic in a separately targeted evaluation environment with a one-off ceiling of 180 generations and $1, distinct from the demo's $2/month allowance. Provider limits are account-scoped: aggregate evaluation and demo usage if they share a quota, or keep live Ask off while evaluating. At maximum tokens a 60-case Groq Free pass needs more than one UTC day under the proposed 180K daily reservation. Never reset/bypass counters or create accounts to evade limits. Record evaluation and interactive usage separately when reporting total cost.
 
 ### Runtime measurement
 
@@ -328,7 +330,7 @@ Before an authorized release:
 2. Validate provider prices, token caps, project data terms, and hosting account allowances again. Keep live Ask disabled if any check fails.
 3. Apply reviewed migrations to the explicitly selected environment; seed analytics data without resetting budget state. Confirm the data checksum and golden aggregates.
 4. Deploy one same-origin application. Verify health, authenticated readiness/data version, all core journeys, correct headers, and no secrets or raw CSV in public assets.
-5. Enable paid Ask only after G06/G07 pass. Observe quota state, one permitted request, failure behavior, and measured resource use.
+5. Enable live Ask, free or paid, only after G06/G07 pass. Observe quota state, one permitted request, failure behavior, and measured resource use.
 6. Record rollback: disable Ask first for cost incidents; redeploy the last known-good Worker. Keep database migrations backward-compatible; restore/reseed analytics only through a reviewed procedure and never roll budget counters backward.
 7. Capture README run/deploy instructions, model-off behavior, limitations, cost settings, test/evaluation reports, architecture decisions, and the final requirement matrix.
 

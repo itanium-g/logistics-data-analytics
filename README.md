@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics
 
-Cost-first research, architecture, and implementation planning for the Spaceship Senior Engineer Code Test.
+Cost-first research, architecture, setup and implementation planning for the Spaceship Senior Engineer Code Test. Updated September 11, 2026.
 
 ## Source materials
 
@@ -16,10 +16,13 @@ The Notion page remains the authority for the assignment wording and attachments
 
 ## Repository contents
 
-- [deep-research-report.md](deep-research-report.md) — audit findings, evidence, architecture decision, technology choices, cost model, and limitations.
+- [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) — start here: complete proposed setup, current stack, hosting/database/VPS matrices, free and paid LLM comparisons, cost formulas, provider selection and deployment runbook.
+- [deep-research-report.md](deep-research-report.md) — audit findings, evidence, architecture decision, analytical meaning and limitations.
 - [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — requirements gate, contracts, phased backlog, estimates, test plan, and release gates.
 
-This is currently a documentation-only design repository. The application has not been implemented or benchmarked here.
+This is currently a documentation-only design repository. The application has not been implemented or benchmarked here; setup commands are proposed until the application files and scripts exist.
+
+Recommended starting point: React 19.3 + Hono on Cloudflare Workers Static Assets + D1, with Groq GPT-OSS 20B Free as the first router candidate and DeepInfra Gemma 4 E4B as the low-price challenger. Target $0 within quotas; Workers Paid adds a $5/month base if measured runtime limits require it. No model has passed a live project evaluation yet. See the setup guide for dated sources, cash-versus-usage costs and constraints.
 
 ## Reconstructed scope
 

@@ -1,8 +1,8 @@
 # Spaceship Logistics Analytics — Audited Research and Architecture
 
-Updated: 2026-09-09 (UTC). Status: **design complete subject to the evidence gates below; application not implemented or benchmarked in this repository**.
+Updated: 2026-09-11 (UTC). Status: **design complete subject to the evidence gates below; application not implemented or benchmarked in this repository**.
 
-This report explains the evidence and decisions. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns the executable contracts, backlog, estimates, and acceptance gates. It supersedes the earlier medium-scope recommendation.
+This report owns audit evidence and analytical meaning. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) owns the complete setup, current stack, hosting/LLM matrices and cost calculations. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns contracts, backlog, estimates and acceptance gates. Shared decisions are updated together.
 
 ## 1. Decision
 
@@ -10,9 +10,9 @@ Build a **single-origin TypeScript modular monolith**: React SPA and Hono API on
 
 For this 400-row exercise, the strongest design is a small, inspectable system with exact metrics, explicit assumptions, tests, and bounded costs. It does not need an always-on Python server, two hosting vendors, server-side rendering, a vector database, or an autonomous agent.
 
-The operating-cost target is **$0 hosting within free quotas, plus approximately $0.23–$0.95 for 1,000 ordinary model-routed questions**, depending on the evaluated model. Those are workload estimates, not a free-service or accuracy guarantee. The proposed application-level model allowance is $2/month, with independent request caps; paid usage remains disabled until its guards and privacy settings are verified. See section 6.
+The operating-cost target is **$0 for a reviewer demo within both hosting and model quotas**. Paid model candidates range from $0.038 to $0.23 for 1,000 questions at the nominal 1,500-input/200-total-output workload; Groq GPT-OSS 20B is $0.1725 at that workload. These are token-consumption estimates, not account-opening cash, measured reasoning usage, or quality guarantees. Workers Paid adds a $5/month base when needed. Keep the $2/month application model ceiling and independent request/token caps.
 
-Choose the cheapest supported model that passes the project's real routing evaluation. Start by evaluating Gemini 2.5 Flash-Lite against the newer Gemini 3.5 Flash-Lite; the older stable model is a cost candidate, not a claim that it is the most recent model or equally accurate. Do not use a premium coding model as the runtime router simply because it helped author the report.
+Evaluate **Groq openai/gpt-oss-20b Free** against **DeepInfra google/gemma-4-E4B-it**. Prefer free Groq if it passes the routing/latency gates and quota fits; compare measured cost per successful task and migration effort before choosing paid access. DeepInfra Llama 3.1 8B is the cheapest standard paid token baseline found in the shortlist; Gemini 2.5 Flash-Lite remains an optional comparator. No model has passed a live project evaluation yet. A premium coding assistant used to author documents does not determine the runtime model.
 
 **Decision boundary:** no mandatory language or deadline was recovered from the earlier chat. The original assignment is still unavailable. If it mandates Python, a particular framework, Docker deployment, or capabilities beyond this scope, reconcile that before implementation. If substantial unpushed Python application code already exists, audit it before a rewrite: engineering time can outweigh years of small hosting savings.
 
@@ -24,7 +24,8 @@ Choose the cheapest supported model that passes the project's real routing evalu
 | [Answer/reference repository](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics>) ([audited snapshot 1c1ee718](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3>)) | Inspectable code, CSV, tests, and the reference author's decisions. | Authoritative assignment requirements or permission to copy the implementation. |
 | [Reference AI disclosure](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/AI_USAGE.md) | The author reports an AI-disclosure requirement and bonus topics including caching, Docker, tests, explainability, and ambiguity handling. | Independent verification of the original rubric. |
 | [Original Notion brief and attachments](<https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24>) | Identifies the assignment source and linked materials to verify. | The connected Notion workspace did not expose the page contents during this update; inferred scope remains provisional and is not quoted as authoritative. |
-| Official vendor documentation linked below | A pricing and capability snapshot checked on 2026-09-09. | Account eligibility, actual performance, future pricing, or the compatibility of an unbuilt dependency lockfile. |
+| [Current target snapshot e5a5e67](https://github.com/itanium-g/logistics-data-analytics/tree/e5a5e67cb11c9d6e797ce9fe9421dfed2e77d8a9) | Before this rewrite, main contained README, report and plan; recent source links were preserved. | An implemented application. |
+| Official vendor documentation linked here and in the setup guide | Broader provider research September 10; recommended stack and selected prices/capabilities refreshed September 11. | Account eligibility, actual performance, future pricing, or compatibility of an unbuilt lockfile. |
 
 Dashboards, natural-language analytics, category forecasting, inspectable results, deployment, tests, and documentation are a reasonable reconstruction from the reference, not a verified exhaustive brief. Treat them as the proposed scope until Gate G00 in the plan resolves the original requirements.
 
@@ -50,6 +51,9 @@ Severity describes the consequence **if carried into the build**, not a vulnerab
 | A12 | Medium | Removing one of two model calls was equated with halving the bill; prompt caching was advertised without workload evidence. | Price actual token paths; cache only when measured benefit exceeds complexity and any write/storage cost. |
 | A13 | Medium | Old plan line items summed to 8.75–12.0 days, not the stated 9.0–12.5; priorities disagreed about evaluations and intervals. | One authoritative phased estimate and P0/P1/P2 scope in the plan; real evaluation is P0 for a live Ask release, calibrated intervals are not. |
 | A14 | Medium | Subjective architecture scores and external benchmarks implied project-specific evidence. | Replace numerical ratings with testable trade-offs and clearly distinguish projections from observations. |
+| A15 | Medium | Gemini-only pricing omitted materially cheaper and recurring free APIs. | Add complete hosting/LLM matrices, suitability gates, deposits, trial distinctions and cost sensitivity. |
+| A16 | Medium | The old 8,192-input-token cap exceeds Groq Free's documented 8K TPM before output. | Use a proposed 4,096 input / 512 billable output cap with durable free pacing and token reservations. |
+| A17 | Medium | The prior stack snapshot predates React 19.3; fixed model names were treated too much like immutable versions. | Refresh stable dependencies and record served model versions/lifecycle changes; evaluate before migration. |
 
 Code evidence: [registry](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/registry.py), [query builder](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/tools/query_metric.py), [orchestrator](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/llm/orchestrator.py), [forecast](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/tools/forecast.py), [chart handlers](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/api/charts.py), and [smoke tests](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/tests/test_smoke.py).
 
@@ -125,12 +129,12 @@ Versions are stable release lines checked on the audit date, not an already-test
 |---|---|---|
 | Language | TypeScript 7.x, strict mode | Shared contracts across UI/API. If a required tool's compiler integration is incompatible, document a temporary TypeScript 6.x pin rather than silently mixing versions. [Release](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/) |
 | Build tooling | Node.js 24 LTS; Vite 8.1.x | Node is the local/CI toolchain, **not** the production Worker runtime. [Node releases](https://nodejs.org/en/about/previous-releases), [Vite release](https://vite.dev/blog/announcing-vite8-1) |
-| UI | React 19.2.x; Recharts; ordinary CSS or optional Tailwind | SPA fits this interactive dashboard; SSR/SEO is not a stated requirement. Use a compatible stable chart release, not a copied floating reference version. [React versions](https://react.dev/versions) |
+| UI | React 19.3.x; Recharts; ordinary CSS or optional Tailwind | SPA fits this interactive dashboard; SSR/SEO is not a stated requirement. Use a compatible stable chart release, not a copied floating reference version. [React versions](https://react.dev/versions) |
 | API/runtime | Hono on Workers; Cloudflare Vite plugin | Small Web-API-based server and same-origin static assets. Verify the resolved Hono release and dependency graph; pin Wrangler and a tested compatibility date. [Hono guide](https://hono.dev/docs/getting-started/cloudflare-workers), [Vite integration](https://developers.cloudflare.com/workers/vite-plugin/) |
 | Validation | Zod 4 strict objects; generated JSON Schema | One contract source, with an explicit adapter for the provider's supported schema subset. Server validation remains authoritative. [Zod 4](https://zod.dev/v4), [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/structured-output) |
 | Data | D1/SQLite; SQL migrations and prepared statements | Relational aggregation plus durable quota state without another billed service. No ORM is needed for these few tables. [Prepared statements](https://developers.cloudflare.com/d1/worker-api/prepared-statements/) |
 | Tests | Vitest 4.1+ with @cloudflare/vitest-plugin; Playwright | Test Worker bindings in the actual local runtime, plus a small browser suite. Do not scaffold the older pool-workers integration from stale examples. [Current test setup](https://developers.cloudflare.com/workers/testing/vitest-integration/write-your-first-test/) |
-| Model transport | Small direct Gemini REST adapter using fetch | Avoid a gateway account or agent framework for one provider. Exact model ID, standard pricing mode, timeout, token limits, and no automatic retries. |
+| Model transport | Direct fetch to one active provider; Groq first, DeepInfra challenger in evaluation | Test each provider's schema and token controls. No gateway, agent framework, hidden retries or automatic paid fallback. See the setup guide's capability matrix. |
 | CI/deploy | GitHub Actions, one build pipeline, Wrangler | PR checks without secrets; separately authorized release deployment. No paid monitoring service or duplicate hosting build pipeline initially. |
 
 Workers' free CPU allowance is tight. Measure compiled schema validation, JSON handling, and forecast code under realistic concurrent requests before committing to the free tier. Local workerd tests establish compatibility, not production latency or quota headroom. Static assets should bypass Worker execution; API routes must never fall through to the SPA HTML response.
@@ -141,7 +145,7 @@ Workers' free CPU allowance is tight. Measure compiled schema validation, JSON h
 |---|---|---|
 | Static-only browser analytics | Hosting can be free; no protected server-held model key. | Useful as an offline/read-only fallback. Do not embed an API key to manufacture a “free AI” architecture. |
 | Workers + D1 + React | One deployment, finite free compute/database quotas, external model metering. | Default for this greenfield, tiny dataset. Validate CPU headroom and regional latency. |
-| One Python container serving the built React SPA; FastAPI + DuckDB | One service, familiar analytics tooling; Railway Free credit may be insufficient, Hobby starts at $5. | Use if the brief requires Python, valuable Python code already exists, or Worker compatibility costs more than it saves. |
+| One Python container serving the built React SPA; FastAPI + DuckDB + durable usage state | Northflank Sandbox is the first free container candidate; Cloud Run is a usage-based alternative. Use durable Postgres for counters on ephemeral hosts. | Use if the brief requires Python, valuable Python code exists, or Worker compatibility costs outweigh savings. Check the complete hosting matrix; do not assume local container files persist. |
 | Next.js frontend + separate Python backend | Two runtimes, deployment surfaces, and cross-origin configuration. | Keep only for a concrete requirement; not the cost-first default. Vercel Hobby is limited to non-commercial personal use. [Terms](https://vercel.com/docs/plans/hobby) |
 | Postgres / managed auth / queues / object store / enterprise semantic layer | Additional components, operations, and possible charges. | Add only when a requirement appears: concurrent ingestion, tenants, large files, long jobs, or governed shared metrics. |
 
@@ -149,61 +153,27 @@ For the Python fallback, DuckDB's [Python overview](https://duckdb.org/docs/lts/
 
 ## 6. Operating cost and cost controls
 
-All figures below are USD, excluding taxes, optional domains, other account usage, and engineering time. Recheck the linked prices, model availability, and account quotas before deployment.
+[SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) is the authoritative provider/price matrix and setup guide. It distinguishes recurring free quotas, promotional credits, monthly minimums, deposits, service tiers, and gross token usage. Update it with the plan when selecting a model or changing limits.
 
-### Hosting
-
-| Item | Current allowance / price | Planning implication |
+| Decision | Current proposal | Evidence / implication |
 |---|---|---|
-| Worker API, Free | 100,000 requests/day; 10 ms CPU per invocation | Target $0, subject to measured runtime fit. [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
-| Static assets | Static asset requests are free and unlimited under the documented routing conditions | Serve SPA assets directly, not through a blanket run-worker-first rule. [Static asset billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) |
-| D1, Free | 5 million rows read/day; 100,000 rows written/day; 5 GB account storage | Quotas are not “unlimited SQL”; rows scanned count. A free database is limited to 500 MB. [Pricing](https://developers.cloudflare.com/d1/platform/pricing/), [limits](https://developers.cloudflare.com/d1/platform/limits/) |
-| Workers Paid | $5/month minimum, plus usage beyond included allowances | An explicit upgrade option if Free CPU headroom fails; not a step to take automatically. [Pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
-| Railway Free / Hobby fallback | Free costs $0 and includes $1 monthly resource credit; Hobby costs at least $5/month with included usage | Do not call the credit a subscription, or promise a continuously running Python service fits it. [Plans](https://docs.railway.com/pricing/plans) |
-| Domain, CI, observability | Use the provider hostname and existing included CI/log allowances | Do not buy a domain, enable chargeable add-ons, or assume the account has unused allowance. |
+| Hosting | Workers Static Assets + API + D1 Free | 100K dynamic requests/day, 10 ms CPU/invocation; D1 reads/writes/storage have separate limits. [Workers](https://developers.cloudflare.com/workers/platform/pricing/), [D1](https://developers.cloudflare.com/d1/platform/pricing/) |
+| Paid hosting transition | Workers Paid, $5/month base plus overages | Measure CPU and account usage before choosing it. No upgrade has occurred. |
+| First free model candidate | Groq GPT-OSS 20B | Explicit strict-schema support; documented Free quota 8K tokens/minute and 200K/day requires token-aware pacing. [Schemas](https://console.groq.com/docs/structured-outputs), [limits](https://console.groq.com/docs/rate-limits) |
+| Paid challenger | DeepInfra Gemma 4 E4B | $0.02/M input and $0.10/M output; $0.05 for the nominal 1K-question workload. Model/schema fit remains untested. [Price](https://deepinfra.com/google/gemma-4-E4B-it) |
+| Paid continuity option | Groq GPT-OSS 20B | $0.075/M input and $0.30/M output; nominal $0.1725/1K questions. Avoid a migration solely to save $0.1225/month. [Price](https://console.groq.com/docs/models) |
+| Input/output reservation | 4,096 input + 512 total billable output tokens | Full instructions/schema and reasoning count. Verify exact provider controls; 200-output comparison assumptions are not enforced ceilings. |
+| Application caps | 100 attempts/day; 1,000/month; $2/month paid model allowance | Each applies independently. Free provider pacing/token caps can admit fewer calls. |
 
-Illustrative database workload: 1,000 dashboard loads × 6 aggregates × 400 scanned rows = 2.4 million rows read **per month**, before Ask, forecasts, access, and budget queries. This suggests ample room for a small reviewer demo, not a guarantee: daily bursts and all account workloads must fit daily quotas. Combine compatible aggregates and inspect query plans before adding indexes.
+Reserve conservatively in integer microdollars before a paid generation. The setup guide computes model-specific amounts at the current bounds: 461 for Groq 20B and 134 for DeepInfra Gemma E4B. At most one atomic conditional D1 update admits a call, advancing the relevant count, monetary and free-token reservations together. Uncertain admission means no model call. Retain reservations after failures or unknown outcomes; do not retry automatically.
 
-### Model pricing and selection
+For Groq Free, initially enforce one generation per 60 seconds globally and 180K reserved input-plus-maximum-output tokens/day. This is deliberately below the documented quota and allows 39 calls/day at maximum token size. A confirmed free route has zero monetary charge but still needs durable quota protection. Use a dedicated provider project/key; other account consumption may still cause throttling.
 
-Standard text-token rates and computed estimates, without caching or batch discounts:
+Confirm permitted data handling provider by provider. Groq exposes ZDR controls with documented exceptions for default retention; Gemini's free/paid data treatment differs. Do not infer data policy solely from whether an API is free or paid. [Groq data controls](https://console.groq.com/docs/your-data), [Gemini pricing/data treatment](https://ai.google.dev/gemini-api/docs/pricing)
 
-| Stable model ID | Input / million tokens | Output / million tokens | 1,000 questions at 1,500 input + 200 output tokens each |
-|---|---:|---:|---:|
-| gemini-2.5-flash-lite | $0.10 | $0.40 | $0.230 |
-| gemini-3.1-flash-lite | $0.25 | $1.50 | $0.675 |
-| gemini-3.5-flash-lite | $0.30 | $2.50 | $0.950 |
+Optimization order: keep dashboard/forecasts deterministic; use one bounded routing call and deterministic answer rendering; enforce counts/tokens/cost; measure before adding plan/prompt caching. A shared edge limiter is useful for abuse suppression, but Cloudflare's [rate-limit binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) is not a global spend ledger.
 
-Source: [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing). Output pricing includes thinking tokens. Disable thinking where supported, or include its verified bound in the reservation. These are token assumptions—not observed application usage. Schema tokens, longer answers, failed attempts, and any later retries change costs.
-
-The newer [3.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) is stable and supports structured output. The [deprecation schedule](https://ai.google.dev/gemini-api/docs/deprecations) still lists stable 2.5 Flash-Lite without an announced shutdown at the audit date. Pin a supported ID, record the evaluation date, and re-evaluate migrations rather than using a moving “latest” alias.
-
-The pricing page distinguishes free-tier data use for product improvement from paid-tier treatment. Default to a paid project for permitted non-public questions; do not assume “paid” means zero retention or unrestricted data processing. A true $0 model demo is optional only for explicitly authorized synthetic/public inputs, suitable terms, and available free quota. Model credentials remain server-side.
-
-### Budget formula and guard
-
-For N paid generations:
-
-~~~text
-estimated_cost_usd =
-  N × (input_tokens × input_rate + billable_output_tokens × output_rate) / 1,000,000
-~~~
-
-At the proposed hard request bounds of 8,192 input and 512 total billable output tokens, the cost ceiling before rounding is $0.001024 per 2.5 Flash-Lite generation, or $0.0037376 for 3.5 Flash-Lite. Round reservations **up** to whole microdollars: 1,024 or 3,738 respectively. The normal 1,500/200 estimate is not the spend-reservation amount.
-
-Reserve this conservative amount with one atomic conditional database update before generation. Enforce UTC daily/monthly limits and the $2 monthly allowance; consume reservations on timeouts or unknown outcomes and do not retry automatically. If token bounds, price configuration, or the durable reservation cannot be verified, do not call the paid model. This bounds calls through this application under the stated prices; it does not cover leaked credentials, another application sharing the key, or later provider price changes. Provider alerts are additional monitoring, not a substitute for enforcement.
-
-Cloudflare's [rate-limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) is local and eventually consistent. Use it for cheap burst suppression, **not** global spend accounting. Durable D1 enforcement is the billing boundary.
-
-### Optimization order
-
-1. No model calls for dashboard, charts, direct filters, forecast forms, or deterministic rendering.
-2. One bounded generation for a new free-text question; no summary call, agent loop, grounding, or silent premium-model fallback.
-3. Bound retries, request size, output, allowed operations, and daily/monthly consumption.
-4. Use ordinary static/browser caching. Add a versioned model-plan cache only if repeat-question measurements justify it.
-5. Evaluate provider prompt caching only after checking minimum lengths, hit rates, TTL, and write/storage charges.
-
-Removing a call removes that call's actual token cost; it does not necessarily halve total spending. At this workload, model-cache savings may be cents. A custom cache service or a multi-day platform migration can easily cost more in engineering time than it saves.
+For Python or another container runtime, the database backing the budget guard must be durable across restarts and shared by replicas. A read-only DuckDB snapshot may be bundled for analytics; ephemeral SQLite usage counters cannot enforce a durable cost ceiling. The setup guide compares Northflank, Cloud Run and paid-container/VPS alternatives.
 
 ## 7. Reliability, security, and reviewer value
 
@@ -221,6 +191,6 @@ Release evidence must include exact data tests, query correctness, hostile-outpu
 
 The authoritative build estimate, task dependencies, runnable command contract, scope cuts, and release gates are in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). This is an implementation-ready proposal, not an assertion that the original assignment has been fully satisfied.
 
-This audit completed source inspection, current primary-document research, independent CSV checks, and refactoring of the report and plan. It did **not** run the reference application's test suite, build a new application, measure Worker CPU or latency, evaluate a live model, provision infrastructure, or incur model-evaluation spend.
+The earlier audit completed reference-source inspection and independent CSV checks. This rewrite preserved those findings, refreshed the recommended stack/providers, added the complete setup/comparison guide, and aligned the report and plan. It did **not** run the reference application's test suite, build a new application, measure Worker CPU or latency, evaluate a live model, provision infrastructure, or incur model-evaluation spend.
 
 Remaining decisions are explicit: recover the brief, confirm data/coverage and redistribution terms, disclose any unpushed implementation, select a model by real evaluation, and approve any live paid deployment. Until those gates pass, claim “audited design and plan,” not “production-ready system.”
