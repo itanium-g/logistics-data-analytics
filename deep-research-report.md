@@ -1,196 +1,142 @@
-# Spaceship Logistics Analytics — Audited Research and Architecture
+# Spaceship Logistics Analytics Research and Architecture
 
-Updated: 2026-09-11 (UTC). Status: **design complete subject to the evidence gates below; application not implemented or benchmarked in this repository**.
+Updated: 2026-09-11 UTC. **Supplied requirements verified; application not implemented or benchmarked.**
 
-This report owns audit evidence and analytical meaning. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) owns the complete setup, current stack, hosting/LLM matrices and cost calculations. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns contracts, backlog, estimates and acceptance gates. Shared decisions are updated together.
+The supplied assignment supports the existing low-cost TypeScript architecture, but changes the delivery scope. Build one small public demo with five KPIs, two charts, live Query/Forecast routing, a four-month SKU forecast and numerical inventory target. The 6–10 hour expectation takes priority over the former 41–65 hour hardening backlog.
 
-## 1. Decision
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns current contracts and sequencing. [Requirements](docs/requirements.md) maps the source brief. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) preserves the provider survey and setup runbook. [Data audit](docs/data-audit.md) owns independently calculated fixture facts.
 
-Build a **single-origin TypeScript modular monolith**: React SPA and Hono API on Cloudflare Workers with Static Assets; D1 for the small relational dataset and durable usage controls. Keep calculations deterministic. Use at most one model generation to translate a new question into a validated analytical operation, then render the answer from computed results.
+## 1. Evidence and source authority
 
-For this 400-row exercise, the strongest design is a small, inspectable system with exact metrics, explicit assumptions, tests, and bounded costs. It does not need an always-on Python server, two hosting vendors, server-side rendering, a vector database, or an autonomous agent.
-
-The operating-cost target is **$0 for a reviewer demo within both hosting and model quotas**. Paid model candidates range from $0.038 to $0.23 for 1,000 questions at the nominal 1,500-input/200-total-output workload; Groq GPT-OSS 20B is $0.1725 at that workload. These are token-consumption estimates, not account-opening cash, measured reasoning usage, or quality guarantees. Workers Paid adds a $5/month base when needed. Keep the $2/month application model ceiling and independent request/token caps.
-
-Evaluate **Groq openai/gpt-oss-20b Free** against **DeepInfra google/gemma-4-E4B-it**. Prefer free Groq if it passes the routing/latency gates and quota fits; compare measured cost per successful task and migration effort before choosing paid access. DeepInfra Llama 3.1 8B is the cheapest standard paid token baseline found in the shortlist; Gemini 2.5 Flash-Lite remains an optional comparator. No model has passed a live project evaluation yet. A premium coding assistant used to author documents does not determine the runtime model.
-
-**Decision boundary:** no mandatory language or deadline was recovered from the earlier chat. The original assignment is still unavailable. If it mandates Python, a particular framework, Docker deployment, or capabilities beyond this scope, reconcile that before implementation. If substantial unpushed Python application code already exists, audit it before a rewrite: engineering time can outweigh years of small hosting savings.
-
-## 2. Evidence and limits
-
-| Evidence | What it establishes | What it does not establish |
+| Evidence | Establishes | Limitation |
 |---|---|---|
-| [Target repository at 8fdab002](https://github.com/itanium-g/logistics-data-analytics/tree/8fdab0029a065b230bcdc7f81c18bc3836fb0e4c) | The audited baseline contains only this report and the implementation plan. | A working application, passing application tests, or a deployment. |
-| [Answer/reference repository](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics>) ([audited snapshot 1c1ee718](<https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3>)) | Inspectable code, CSV, tests, and the reference author's decisions. | Authoritative assignment requirements or permission to copy the implementation. |
-| [Reference AI disclosure](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/AI_USAGE.md) | The author reports an AI-disclosure requirement and bonus topics including caching, Docker, tests, explainability, and ambiguity handling. | Independent verification of the original rubric. |
-| [Original Notion brief and attachments](<https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24>) | Identifies the assignment source and linked materials to verify. | The connected Notion workspace did not expose the page contents during this update; inferred scope remains provisional and is not quoted as authoritative. |
-| [Current target snapshot e5a5e67](https://github.com/itanium-g/logistics-data-analytics/tree/e5a5e67cb11c9d6e797ce9fe9421dfed2e77d8a9) | Before this rewrite, main contained README, report and plan; recent source links were preserved. | An implemented application. |
-| Official vendor documentation linked here and in the setup guide | Broader provider research September 10; recommended stack and selected prices/capabilities refreshed September 11. | Account eligibility, actual performance, future pricing, or compatibility of an unbuilt lockfile. |
+| [Supplied coding assignment](docs/assignment/README.md#original-files) | Numbered requirements, bonuses, rubric, 6–10 hour expectation and submission items. | No deadline or prescribed KPI formulas. |
+| [PDF](docs/assignment/README.md#original-files) and [Word specification](docs/assignment/README.md#original-files) | Corroborating core requirements; four-page PDF. | Shorter specification does not repeat the bonus list. |
+| [Supplied CSV](docs/assignment/README.md#original-files) | Observable data facts and exact bytes. | No SLA dates, stock, lead times or coverage guarantee. |
+| [Notion source](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24) | User supplied the landing-page text and linked files. | No fresh Notion retrieval is claimed in this update. |
+| [Reference revision](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3) | Earlier audit's independent code/architecture comparison. | Not the assignment authority or permission to reuse application code. |
+| [Target baseline da1d4a4](https://github.com/itanium-g/logistics-data-analytics/tree/da1d4a408c80ebcd462acd5c89b17a325a5316af) | Four Markdown documents, no app source. | No working app, test run or deployment. |
+| Vendor documentation in the setup guide | Earlier provider research and selected current stack/Workers/Groq checks. | Not a fresh exhaustive provider sweep, tested lockfile or account-readiness result. |
 
-Dashboards, natural-language analytics, category forecasting, inspectable results, deployment, tests, and documentation are a reasonable reconstruction from the reference, not a verified exhaustive brief. Treat them as the proposed scope until Gate G00 in the plan resolves the original requirements.
+All four user-supplied files were read, and the coding brief and specification PDF were visually inspected. Source filenames and hashes are recorded in the [source catalog](docs/assignment/README.md). The supplied CSV has SHA-256 b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82 and Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, identical to the earlier reference fixture.
 
-The reference tree has no license file in the audited snapshot. Use it as evidence and architectural inspiration; do not assume unrestricted reuse of its code, data, or assets. Obtain the assigned dataset and its redistribution terms before shipping. This revision does not copy application code or publish data.
+Source review is resolved; original files remain user-supplied inputs rather than repository content. Coverage/status semantics and provider readiness remain explicit assumptions or future checks. No reference code is copied; no open-source license for supplied assignment materials is inferred.
 
-## 3. Audit findings and corrections
+## 2. Changes required by the supplied brief
 
-Severity describes the consequence **if carried into the build**, not a vulnerability proved in an application in this target repository.
+| Finding | Implication | Current decision |
+|---|---|---|
+| Category-only forecasting and 1–3 month horizons excluded the supplied SKU/four-month example | The planned subset omitted a prominent expected journey. | Known SKU forecasts for 1–4 months are P0. Sparse data produces warnings and a simple baseline. |
+| Prior baseline estimated 41–65 hours | It over-scoped the 6–10 hour assignment. | One provider, small acceptance set and no default login; extended hardening deferred. |
+| Every query used order_date | Delivery-event questions could be numerically wrong. | Allowlist order_date and delivery_date; state the chosen basis. |
+| Exceptions counted as lateness | Data does not establish late delivery for exceptions. | Metric v2 separates exceptions and exposes all denominators. |
+| Relative questions against old data lacked a reviewer-friendly resolution | Silent re-anchoring would be misleading; current dates often return empty results. | Explicit dataset/current date context, shown before asking and in evidence. |
+| Inventory output risked becoming only a disclaimer | The brief requires an inventory recommendation. | Return a numerical demand coverage target, method and unavailable-stock limitations. |
+| Original source access was still marked unresolved | Planning unnecessarily depended on an obsolete retrieval gate. | G00 source review complete; functional gates remain pending. |
+| Deployment/handoff was not concretely tracked | A repository alone does not satisfy the submission. | Checklist for public URL, private-repo access, credentials if needed and deployed revision. |
 
-| ID | Severity | Finding | Correction in this revision |
-|---|---|---|---|
-| A01 | High | Earlier executive/risk sections called revenue at risk undefined, contradicting the registry and the report's own verified formula. | Define it as raw value on delayed or exception rows: $2,386.10. Label it exposure, not expected loss. |
-| A02 | High | Reference forecast counts orders but calls the buffered result inventory units; it also forces a minimum recommendation of one. | Forecast non-canceled quantity, allow zero, and separate a demand-buffer scenario from a purchase decision. |
-| A03 | High | “On-time” and “completed” labels overstate what statuses prove without an SLA field or event history. | Preserve reference formulas for comparison, but label them status-based proxies and expose the denominator. |
-| A04 | High | Mocked responses were treated as evidence of model routing accuracy. | Separate deterministic integration tests from a held-out, real-provider evaluation. No accuracy result is claimed yet. |
-| A05 | High | Taking the first tool call silently drops additional operations; JSON arrays/null can escape object-oriented parsing. | Require exactly one validated routing decision; reject malformed, extra, or multiple operations before execution. |
-| A06 | High | Alphabetical group ordering plus LIMIT cannot answer “top”; summarizing the first 20 rows cannot establish a global ranking or total. | Aggregate the full scope, rank before limiting, use deterministic tie-breaking, and label returned versus total groups. No model-written numerical summary. |
-| A07 | High | Public paid Ask endpoint lacked a credible durable cost boundary. | Reviewer access, input/output caps, atomic durable reservations, provider timeout, and fail-closed behavior precede paid activation. |
-| A08 | Medium | Separate dashboard SQL weakens the single-metric-definition claim. | All KPI/chart/Ask paths use the same registry and query compiler; composite charts request multiple registered metrics. |
-| A09 | Medium | Hard-coded “today” and a fixed complete-year forecast grid conceal stale or incomplete coverage. | Runtime clock and versioned data manifest; explicit relative-date policy and coverage flags. |
-| A10 | Medium | Railway's $1 allowance was described as a monthly charge. | It is Free-plan monthly resource credit; Hobby is a separate $5 minimum commitment. |
-| A11 | Medium | Universal DuckDB cursor-serialization wording ignored conflicting official documentation. | Avoid relying on that assertion; the Python fallback requires an explicit concurrency policy and tests. |
-| A12 | Medium | Removing one of two model calls was equated with halving the bill; prompt caching was advertised without workload evidence. | Price actual token paths; cache only when measured benefit exceeds complexity and any write/storage cost. |
-| A13 | Medium | Old plan line items summed to 8.75–12.0 days, not the stated 9.0–12.5; priorities disagreed about evaluations and intervals. | One authoritative phased estimate and P0/P1/P2 scope in the plan; real evaluation is P0 for a live Ask release, calibrated intervals are not. |
-| A14 | Medium | Subjective architecture scores and external benchmarks implied project-specific evidence. | Replace numerical ratings with testable trade-offs and clearly distinguish projections from observations. |
-| A15 | Medium | Gemini-only pricing omitted materially cheaper and recurring free APIs. | Add complete hosting/LLM matrices, suitability gates, deposits, trial distinctions and cost sensitivity. |
-| A16 | Medium | The old 8,192-input-token cap exceeds Groq Free's documented 8K TPM before output. | Use a proposed 4,096 input / 512 billable output cap with durable free pacing and token reservations. |
-| A17 | Medium | The prior stack snapshot predates React 19.3; fixed model names were treated too much like immutable versions. | Refresh stable dependencies and record served model versions/lifecycle changes; evaluate before migration. |
+The brief permits any stack. PostgreSQL, Python and Docker are not mandatory. Query history, caching, tests, Docker, advanced explainability and ambiguity handling are optional bonuses. Basic filters/metrics/data evidence is required. The rubric is 15% Product & UX, 15% Frontend, 20% Backend & Architecture, 20% Data Correctness, 15% AI Orchestration, 10% Forecasting and 5% Deployment.
 
-Code evidence: [registry](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/registry.py), [query builder](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/tools/query_metric.py), [orchestrator](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/llm/orchestrator.py), [forecast](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/tools/forecast.py), [chart handlers](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/app/api/charts.py), and [smoke tests](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/tests/test_smoke.py).
+## 3. Verified data and analytical meaning
 
-## 4. Verified data facts and analytical meaning
-
-The [pinned reference CSV](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/backend/data/mock_logistics_data.csv), Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, was independently parsed for this audit. Money totals below were calculated in integer cents, not rounded binary-floating-point sums.
-
-| Check | Observed result |
+| Check | Observed value |
 |---|---:|
 | Rows / columns / unique order IDs | 400 / 17 / 400 |
-| Observed order-date range | 2025-01-01 through 2025-12-30 |
+| Order-date range | 2025-01-01 through 2025-12-30 |
 | Delivered / delayed / exception | 304 / 55 / 11 |
-| In transit / canceled | 27 / 3 |
-| Rows with a delivery date | 370 |
-| Duplicate order IDs / delivery dates before order dates | 0 / 0 |
-| Raw order value, all statuses | $13,695.87 |
-| Raw value on delayed or exception rows | $2,386.10 |
-| Quantity, all statuses / excluding canceled | 1,310 / 1,303 |
-| Unique SKUs / categories | 355 / 8 |
-| Rows where quantity × unit price differs from raw order value | 0 |
+| In-transit / canceled | 27 / 3 |
+| Dated records | 370 |
+| Raw order value / delayed-or-exception value | USD 13,695.87 / USD 2,386.10 |
+| Total units / non-canceled units | 1,310 / 1,303 |
+| SKUs / categories | 355 / 8 |
+| SKUs appearing once / twice / three times | 313 / 39 / 3 |
 
-These checks describe this file, not the trustworthiness or completeness of a real logistics feed. Order IDs contain “2026” while order dates are in 2025; treat IDs as opaque identifiers and use the date columns for time analysis.
+Counts, dates and exact decimal monetary totals were independently computed. Order IDs contain 2026 although the dates are 2025; IDs are opaque. A CSV parser must handle commas inside quoted city fields.
 
-### Metric policy
+### Delivery metric version 2
 
-The reference has nine metric IDs. Retain them for traceability, with honest display labels and definitions; add total_units and demand_units for explicit quantity semantics. The plan contains the exact metric contract.
+The employer names KPIs without defining formulas. The selected assumptions are delivered = on-time proxy and delayed = late proxy, with unknown exception outcomes excluded.
 
-- on_time_rate is 304 / 370 = **82.162162%**, but display **“Delivered-status share (proxy)”**. The denominator is the selected status set {delivered, delayed, exception}, not a proven set of completed, SLA-assessed deliveries.
-- delay_rate is 66 / 370 = **17.837838%**, labeled **“Delayed/exception share (proxy)”**. It is not delayed_orders / total_orders.
-- total_revenue_usd is the raw sum of order_value_usd, including canceled rows and without subtracting promotions. Display **“Raw order value”**, not recognized or net revenue.
-- revenue_at_risk_usd is raw value in {delayed, exception}. It is exposure associated with those statuses, not a probability-weighted financial loss.
-- Zero denominators produce null and an “N/A” explanation, not zero. Averages return their eligible count; ratios return numerator and denominator. Aggregate ratios from summed counts, never an average of group percentages.
+| Metric | Calculation | Fixture result |
+|---|---|---:|
+| On-time delivery rate, status proxy | delivered / (delivered + delayed) | 304/359 = 84.68% |
+| Delay rate, status proxy | delayed / (delivered + delayed) | 55/359 = 15.32% |
+| Average delivery time, delivery-status records | Mean dated delivered/delayed calendar-day duration | 1,324/359 = 3.69 days |
 
-There is no promised-delivery date, stock on hand, inbound purchase quantity, backorder position, or lead-time field. Do not infer SLA compliance, causal carrier performance, net sales, or a reorder quantity from absent data.
+These are not exact SLA measurements. The prior reference definitions remain valid for different quantities: delivered share 304/370 = 82.16%, issue share 66/370 = 17.84%, all-dated mean 1,417/370 = 3.83 days. Do not mix those exception-inclusive formulas with v2 labels. A null denominator yields N/A, not zero.
 
-### Forecast policy
+December 2025 has four delayed-status delivery events by delivery_date but three delayed-status order cohorts by order_date. Therefore the late-deliveries example must use the delivery date and disclose the proxy assumption. Under v2, GLS has the highest carrier late share, 2/7 = 28.57%, with a small-denominator warning and no causal claim.
 
-Forecast **recorded non-canceled units per product category per month**. This is a transparent proxy for demand, not latent demand corrected for stockouts. In-transit, delayed, and exception quantities remain included because the default is booked non-canceled demand, not completed sales. The excluded canceled quantity is seven units.
+Raw order value is not recognized/net revenue. Value on delayed/exception records is associated exposure, not expected financial loss. These extra financial metrics are optional.
 
-Use last-month naive and trailing-three-month mean baselines, with time-ordered evaluation. Twelve monthly bins provide weak evidence for generalization and annual seasonality; 355 SKUs across 400 rows make default SKU forecasts particularly hard to justify.
+### Forecast and inventory
 
-A manifest must distinguish observed dates from certified coverage. A last order on December 30 does **not** prove December is incomplete or complete. If coverage cannot be confirmed, any January–December complete-grid assumption must be explicitly recorded as a synthetic-demo assumption; results are exploratory and cannot support operational ordering. Do not silently convert missing ingestion periods into zero demand.
+SKU forecasts use recorded non-canceled quantity and show sparse-history limitations. Assume January–December 2025 is the complete synthetic observation grid, record assumed coverage separately from observed dates, and return coverage_unverified. Zero-filling is conditional on that assumption.
 
-A 20% buffer may be shown as a user-visible scenario: ceil(sum of forecast units × 1.20). It is neither statistically calibrated safety stock nor an instruction to buy that amount. Zero demand remains zero. Prediction intervals and seasonality are deferred until data and evaluation can justify them.
+The sparse SKU baseline repeats the mean of 12 monthly quantities. CRAYON-0008 has seven units, giving 7/12 per month for January–April 2026. The visible 20% buffer produces ceil((7/3) × 1.2) = **3 units** of demand coverage.
 
-## 5. Architecture and current stack
+Return that numerical planning target with history/future visualization, data table, method, dates, sample size and assumptions. Stock, inbound supply, lead times and backorders are missing, so the target is not a net purchase order or calibrated safety stock. Do not invent accuracy, confidence intervals or present a historical forecast as current September 2026 advice.
 
-### Recommended topology
+## 4. Architecture and decision comparison
 
 ~~~mermaid
 flowchart TD
-    UI["React dashboard and Ask"] -->|Typed queries| API["Hono API: access and validation"]
-    UI -->|Question| GUARD["Access and durable spend guard"]
-    GUARD -->|One generation| ROUTER["Model router"]
-    ROUTER --> VALID["Strict operation validation"]
-    API --> DOMAIN["Metric registry and forecast functions"]
-    VALID --> DOMAIN
-    DOMAIN --> DB["D1: analytics tables"]
-    GUARD --> BUDGET["D1: atomic usage state"]
-    DOMAIN --> RESULT["Typed evidence and deterministic answer"]
+    UI["Dashboard and Ask"] --> API["Validation and routing"]
+    API -->|Direct tools| DOMAIN["Query and Forecast functions"]
+    API -->|Natural language| QUOTA["Durable free quota guard"]
+    QUOTA --> MODEL["One model endpoint"]
+    MODEL --> CHECK["Validated tool decision"]
+    CHECK --> DOMAIN
+    QUOTA --> DB["D1 orders and usage"]
+    DOMAIN --> DB
+    DOMAIN --> RESULT["Computed answer and evidence"]
     RESULT --> UI
 ~~~
 
-The SPA and API share one Workers deployment and origin; analytics and budget tables share one small D1 database. They are separate modules, not separate services. The model gets the question, schema, permitted vocabulary, and time context—not the CSV or computed result rows.
+One Worker deployment serves React and Hono on the same origin. D1 holds analytics and separate quota state. Analytical functions expose only reads; the Worker binding can write usage state, so this is an application boundary rather than a database-enforced read-only credential.
 
-Analytics functions have a read-only application interface. The Worker itself needs D1 writes for usage state; this is **not** a database-enforced read-only credential. No request handler accepts SQL, uploads, migrations, arbitrary URLs, or administrative commands.
+Use trusted expression maps and bound values, strict schemas and known enums. The model receives a question, compact schema, date context and necessary vocabulary, not CSV rows or results. Validate exactly one decision and compute the answer. For SKU questions, resolve literal candidates server-side instead of inserting all 355 IDs into every model prompt.
 
-### Technology choices
-
-Versions are stable release lines checked on the audit date, not an already-tested lockfile. Resolve exact compatible patches at scaffold time, commit one package-lock.json, and use npm ci.
-
-| Layer | Choice | Rationale / compatibility policy |
+| Option | Main tradeoff | Decision |
 |---|---|---|
-| Language | TypeScript 7.x, strict mode | Shared contracts across UI/API. If a required tool's compiler integration is incompatible, document a temporary TypeScript 6.x pin rather than silently mixing versions. [Release](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/) |
-| Build tooling | Node.js 24 LTS; Vite 8.1.x | Node is the local/CI toolchain, **not** the production Worker runtime. [Node releases](https://nodejs.org/en/about/previous-releases), [Vite release](https://vite.dev/blog/announcing-vite8-1) |
-| UI | React 19.3.x; Recharts; ordinary CSS or optional Tailwind | SPA fits this interactive dashboard; SSR/SEO is not a stated requirement. Use a compatible stable chart release, not a copied floating reference version. [React versions](https://react.dev/versions) |
-| API/runtime | Hono on Workers; Cloudflare Vite plugin | Small Web-API-based server and same-origin static assets. Verify the resolved Hono release and dependency graph; pin Wrangler and a tested compatibility date. [Hono guide](https://hono.dev/docs/getting-started/cloudflare-workers), [Vite integration](https://developers.cloudflare.com/workers/vite-plugin/) |
-| Validation | Zod 4 strict objects; generated JSON Schema | One contract source, with an explicit adapter for the provider's supported schema subset. Server validation remains authoritative. [Zod 4](https://zod.dev/v4), [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/structured-output) |
-| Data | D1/SQLite; SQL migrations and prepared statements | Relational aggregation plus durable quota state without another billed service. No ORM is needed for these few tables. [Prepared statements](https://developers.cloudflare.com/d1/worker-api/prepared-statements/) |
-| Tests | Vitest 4.1+ with @cloudflare/vitest-plugin; Playwright | Test Worker bindings in the actual local runtime, plus a small browser suite. Do not scaffold the older pool-workers integration from stale examples. [Current test setup](https://developers.cloudflare.com/workers/testing/vitest-integration/write-your-first-test/) |
-| Model transport | Direct fetch to one active provider; Groq first, DeepInfra challenger in evaluation | Test each provider's schema and token controls. No gateway, agent framework, hidden retries or automatic paid fallback. See the setup guide's capability matrix. |
-| CI/deploy | GitHub Actions, one build pipeline, Wrangler | PR checks without secrets; separately authorized release deployment. No paid monitoring service or duplicate hosting build pipeline initially. |
+| React + Hono + Workers + D1 | One deployment with small fixed data; CPU and account quotas require checking. | Selected low-cost design. |
+| Static-only app | Cheap deterministic analytics, but cannot protect a server-held model key. | Does not alone satisfy the live AI backend path. |
+| FastAPI container serving React + read-only data snapshot | Familiar Python tooling, with container/persistence operations. | Reconsider if existing useful Python code appears or Worker setup costs too much time. |
+| Separate Next.js and Python services | Two runtimes and deployment surfaces. | No current requirement justifies the extra setup. |
+| Postgres/auth/queues/vector database | More services and operational scope. | Add only for concrete later needs. |
 
-Workers' free CPU allowance is tight. Measure compiled schema validation, JSON handling, and forecast code under realistic concurrent requests before committing to the free tier. Local workerd tests establish compatibility, not production latency or quota headroom. Static assets should bypass Worker execution; API routes must never fall through to the SPA HTML response.
+Retain compatible stable React 19.3, Vite 8.1, TypeScript 7, Hono, Zod 4 and Node 24 LTS build tooling as the setup target. Resolve/test exact patches and commit the lockfile during implementation. A TypeScript 6 compatibility pin is acceptable when integrations require it. Build-tool versions do not establish a verified application.
 
-### Alternatives and switch triggers
+## 5. Cost and reliability
 
-| Option | Cost / operational shape | Decision |
-|---|---|---|
-| Static-only browser analytics | Hosting can be free; no protected server-held model key. | Useful as an offline/read-only fallback. Do not embed an API key to manufacture a “free AI” architecture. |
-| Workers + D1 + React | One deployment, finite free compute/database quotas, external model metering. | Default for this greenfield, tiny dataset. Validate CPU headroom and regional latency. |
-| One Python container serving the built React SPA; FastAPI + DuckDB + durable usage state | Northflank Sandbox is the first free container candidate; Cloud Run is a usage-based alternative. Use durable Postgres for counters on ephemeral hosts. | Use if the brief requires Python, valuable Python code exists, or Worker compatibility costs outweigh savings. Check the complete hosting matrix; do not assume local container files persist. |
-| Next.js frontend + separate Python backend | Two runtimes, deployment surfaces, and cross-origin configuration. | Keep only for a concrete requirement; not the cost-first default. Vercel Hobby is limited to non-commercial personal use. [Terms](https://vercel.com/docs/plans/hobby) |
-| Postgres / managed auth / queues / object store / enterprise semantic layer | Additional components, operations, and possible charges. | Add only when a requirement appears: concurrent ingestion, tenants, large files, long jobs, or governed shared metrics. |
+The default profile targets **$0 within quotas**, with Groq openai/gpt-oss-20b Free as the first router candidate. Workers Free lists 100,000 dynamic requests/day and 10 ms CPU per invocation; Paid has a $5 monthly minimum. These are vendor limits, not measured fit. [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/)
 
-For the Python fallback, DuckDB's [Python overview](https://duckdb.org/docs/lts/clients/python/overview) and [multiple-thread guide](https://duckdb.org/docs/lts/guides/python/multiple_threads) use conflicting wording about cursor handles and concurrent execution. Do not base correctness on an untested interpretation. Choose explicit serialization around initialization and execute/fetch, or independently owned connections to a persisted read-only snapshot; test the pinned version. Do not run DuckDB-specific SQL unchanged against SQLite.
+Groq documents strict structured-output support for GPT-OSS 20B and free limits including 8K tokens/minute and 200K/day. The application still needs semantic validation and actual account checks. [Structured outputs](https://console.groq.com/docs/structured-outputs), [rate limits](https://console.groq.com/docs/rate-limits)
 
-## 6. Operating cost and cost controls
+The plan bounds complete input to 4,096 tokens and total output to 512, reserves free quota atomically, admits at most one generation/minute globally and uses no hidden retry or paid fallback. At maximum size the 180K daily application reservation permits 39 calls. Public Ask can exhaust free quota; the dashboard and direct forecast remain available.
 
-[SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) is the authoritative provider/price matrix and setup guide. It distinguishes recurring free quotas, promotional credits, monthly minimums, deposits, service tiers, and gross token usage. Update it with the plan when selecting a model or changing limits.
+P0 uses a 20-case live acceptance check, roughly 20 minutes under pacing, rather than a 180-call multi-provider experiment. No model has been evaluated yet. Keep paid models, the former $2/month ledger and custom reviewer sessions in an optional profile. The setup guide preserves their comparison arithmetic and limitations.
 
-| Decision | Current proposal | Evidence / implication |
-|---|---|---|
-| Hosting | Workers Static Assets + API + D1 Free | 100K dynamic requests/day, 10 ms CPU/invocation; D1 reads/writes/storage have separate limits. [Workers](https://developers.cloudflare.com/workers/platform/pricing/), [D1](https://developers.cloudflare.com/d1/platform/pricing/) |
-| Paid hosting transition | Workers Paid, $5/month base plus overages | Measure CPU and account usage before choosing it. No upgrade has occurred. |
-| First free model candidate | Groq GPT-OSS 20B | Explicit strict-schema support; documented Free quota 8K tokens/minute and 200K/day requires token-aware pacing. [Schemas](https://console.groq.com/docs/structured-outputs), [limits](https://console.groq.com/docs/rate-limits) |
-| Paid challenger | DeepInfra Gemma 4 E4B | $0.02/M input and $0.10/M output; $0.05 for the nominal 1K-question workload. Model/schema fit remains untested. [Price](https://deepinfra.com/google/gemma-4-E4B-it) |
-| Paid continuity option | Groq GPT-OSS 20B | $0.075/M input and $0.30/M output; nominal $0.1725/1K questions. Avoid a migration solely to save $0.1225/month. [Price](https://console.groq.com/docs/models) |
-| Input/output reservation | 4,096 input + 512 total billable output tokens | Full instructions/schema and reasoning count. Verify exact provider controls; 200-output comparison assumptions are not enforced ceilings. |
-| Application caps | 100 attempts/day; 1,000/month; $2/month paid model allowance | Each applies independently. Free provider pacing/token caps can admit fewer calls. |
+Measure Worker CPU separately from network latency during the future deployment. Keep secrets server-side, report failures clearly, and use scoped provider/deployment credentials. No public write/upload/admin endpoints, arbitrary model SQL, model-written numerical summaries or unrestricted provider tools are planned.
 
-Reserve conservatively in integer microdollars before a paid generation. The setup guide computes model-specific amounts at the current bounds: 461 for Groq 20B and 134 for DeepInfra Gemma E4B. At most one atomic conditional D1 update admits a call, advancing the relevant count, monetary and free-token reservations together. Uncertain admission means no model call. Retain reservations after failures or unknown outcomes; do not retry automatically.
+## 6. Earlier audit findings retained
 
-For Groq Free, initially enforce one generation per 60 seconds globally and 180K reserved input-plus-maximum-output tokens/day. This is deliberately below the documented quota and allows 39 calls/day at maximum token size. A confirmed free route has zero monetary charge but still needs durable quota protection. Use a dedicated provider project/key; other account consumption may still cause throttling.
+The [earlier report at da1d4a4](https://github.com/itanium-g/logistics-data-analytics/blob/da1d4a408c80ebcd462acd5c89b17a325a5316af/deep-research-report.md) preserves the full prior reference audit and source links. Its useful principles remain:
 
-Confirm permitted data handling provider by provider. Groq exposes ZDR controls with documented exceptions for default retention; Gemini's free/paid data treatment differs. Do not infer data policy solely from whether an API is free or paid. [Groq data controls](https://console.groq.com/docs/your-data), [Gemini pricing/data treatment](https://ai.google.dev/gemini-api/docs/pricing)
+- Use units rather than order counts for inventory forecasts; allow zero recommendations.
+- Separate mock integration checks from live routing evidence.
+- Reject multiple/malformed tool decisions instead of executing the first.
+- Aggregate and rank before limiting; expose full-scope totals and group denominators.
+- Share metric definitions across dashboard and Ask.
+- Distinguish source dates, certified coverage and assumptions.
+- Bound paid usage durably if paid access is later introduced.
+- Separate recurring free allowances, trial credits, deposits and actual consumption in cost comparisons.
+- Prefer measured evidence to subjective scores or claims of production readiness.
 
-Optimization order: keep dashboard/forecasts deterministic; use one bounded routing call and deterministic answer rendering; enforce counts/tokens/cost; measure before adding plan/prompt caching. A shared edge limiter is useful for abuse suppression, but Cloudflare's [rate-limit binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) is not a global spend ledger.
+The earlier report's unavailable-source statements, category-only scope, exception-inclusive KPI defaults and extended timebox are superseded by this revision. No old audit statement is presented as a fresh run of the reference application's tests.
 
-For Python or another container runtime, the database backing the budget guard must be durable across restarts and shared by replicas. A read-only DuckDB snapshot may be bundled for analytics; ephemeral SQLite usage counters cannot enforce a durable cost ceiling. The setup guide compares Northflank, Cloud Run and paid-container/VPS alternatives.
+## 7. Completion status
 
-## 7. Reliability, security, and reviewer value
+Completed: review of all supplied files, data/hash checks, requirement mapping, revised scope, metric/date/forecast decisions, source provenance and documentation alignment.
 
-The central invariant is: **the model selects an operation; application code owns permissions, SQL, arithmetic, and the presented numbers**. This is consistent with the least-functionality and bounded-consumption principles described by [OWASP Excessive Agency](https://genai.owasp.org/llmrisk/llm062025-excessive-agency/) and [OWASP Unbounded Consumption](https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/).
-
-A prompt is not a security control. Enforce strict server schemas, known dimension values, bound parameters, maximum complexity, and a fixed outbound provider URL. Distinguish clarification, unsupported requests, invalid model output, and provider failure. Never show raw provider responses, secrets, or fabricated fallback answers.
-
-Ship a reviewer-friendly dashboard and Ask screen with definitions, applied filters, data version, dates, eligible counts, result tables, query evidence, limitations, and readable error states. A plan panel exposes the interpreted query and bound parameters; it does not reveal chain-of-thought or claim numerical summaries were generated faithfully by a prompt.
-
-Protect all analytical API routes by default until data-publication permission is established. A lightweight high-entropy reviewer access token exchanged for a short-lived secure session is adequate for a single-reviewer demo, not a substitute for production identity management. Do not bake a shared token into the JavaScript bundle. Logs should capture request IDs, status, timings, token counts, quota rejections, and data/model versions—not raw questions or data rows by default.
-
-Release evidence must include exact data tests, query correctness, hostile-output rejection, concurrent budget tests, actual model-routing results, and browser/runtime smoke checks. Mock-only CI must remain free of external model calls. Forecast diagnostics must report small-sample limitations; no confidence level or forecasting accuracy is asserted in advance.
-
-## 8. Scope and completion status
-
-The authoritative build estimate, task dependencies, runnable command contract, scope cuts, and release gates are in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). This is an implementation-ready proposal, not an assertion that the original assignment has been fully satisfied.
-
-The earlier audit completed reference-source inspection and independent CSV checks. This rewrite preserved those findings, refreshed the recommended stack/providers, added the complete setup/comparison guide, and aligned the report and plan. It did **not** run the reference application's test suite, build a new application, measure Worker CPU or latency, evaluate a live model, provision infrastructure, or incur model-evaluation spend.
-
-Remaining decisions are explicit: recover the brief, confirm data/coverage and redistribution terms, disclose any unpushed implementation, select a model by real evaluation, and approve any live paid deployment. Until those gates pass, claim “audited design and plan,” not “production-ready system.”
+Pending: application implementation, actual tests, live model evaluation, infrastructure setup, deployment, reviewer-access check and employer submission. Use the [submission checklist](docs/submission-checklist.md) and [AI disclosure](AI_USAGE.md). No deployment or paid action was performed.

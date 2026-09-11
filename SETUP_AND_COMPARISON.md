@@ -2,22 +2,24 @@
 
 Updated: **2026-09-11 UTC**. Project: [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics).
 
-**Recommended starting point: React + Hono on Cloudflare Workers with Static Assets and D1; evaluate Groq `openai/gpt-oss-20b` on its free tier.** Compare it with DeepInfra `google/gemma-4-E4B-it` before selecting the live router. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
+**Recommended starting point: React + Hono on Cloudflare Workers with Static Assets and D1; evaluate Groq `openai/gpt-oss-20b` on its free tier.** For the 6–10 hour submission, use one adapter. DeepInfra `google/gemma-4-E4B-it` is an optional P2 comparison. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
 
 This is the complete replacement for the earlier separate setup and provider comparisons. It owns the setup, provider matrices, price assumptions, and selection policy. [The report](deep-research-report.md) owns audit evidence and analytical meaning; [the implementation plan](IMPLEMENTATION_PLAN.md) owns contracts, tasks, and release gates. The repository remains **documentation only**: the commands and configuration below describe the application to build, and have not been executed as an application setup.
+
+**Assignment reconciliation:** the [supplied originals](docs/assignment/README.md) and [requirements matrix](docs/requirements.md) now govern scope. P0 is a public synthetic-data demo with no login, one free model adapter, known-SKU forecasts for 1–4 months and a 20-case live acceptance set. The former custom sessions, paid ledger, second adapter and 180-call experiment are optional P2 work. The plan's metric v2 and explicit order-date/delivery-date rules apply to every profile.
 
 Prices are USD unless stated otherwise. The broader survey was checked September 10; the recommended stack, primary model shortlist, and selected provider details were refreshed September 11. This covers major relevant options, not every regional reseller or every model SKU. Account dashboards control actual eligibility and limits. Taxes, domains, payment fees, email/SMS, additional account usage, and engineering time are excluded unless a row says otherwise.
 
 ## 1. Decision matrix
 
-Choose an option only after confirming the assignment's mandatory stack, authorized dataset, and model data terms at G00. No routing accuracy or latency result has been measured for this project.
+The supplied brief permits any stack and the authorized sample has been inspected. G00 source review is complete; check the chosen provider account and model data terms before activation. No routing accuracy or latency result has been measured for this project.
 
 | Objective | Complete setup | Estimated monthly recurring cost at the comparison workload | Decision / condition |
 |---|---|---:|---|
 | Lowest cash cost for the reviewer demo | Workers Static Assets + Hono + D1 + Groq GPT-OSS 20B Free | **$0** within every quota | First candidate. Free model requests can throttle; require passing routing evaluation. |
 | Small paid bill with the same model integration | Same hosting + Groq GPT-OSS 20B paid | **$0.1725** token usage; **$5.1725** if Workers Paid is needed | Prefer operational continuity if Groq already passes and its free quota becomes restrictive. |
 | Cheapest paid token baseline found in this shortlist | Same hosting + DeepInfra Llama 3.1 8B Instruct Turbo | **$0.0380** token usage; **$5.0380** with Workers Paid | Older model; useful price baseline. Quality and exact schema support need evaluation. |
-| Low-price, newer paid model candidate | Same hosting + DeepInfra Gemma 4 E4B | **$0.0500** token usage; **$5.0500** with Workers Paid | Main low-price challenger. Verify its actual endpoint/schema behavior and passing results. |
+| Low-price, newer paid model candidate | Same hosting + DeepInfra Gemma 4 E4B | **$0.0500** token usage; **$5.0500** with Workers Paid | Optional P2 challenger. Verify endpoint/schema behavior and passing results. |
 | One hosting/inference vendor | Workers + D1 + Workers AI Qwen3 30B A3B FP8 | **$0** within free quotas | Fewer accounts; model-specific JSON support and daily neuron consumption need checking. Paid overflow requires the $5 Workers base. |
 | Python or Docker required | One FastAPI container serving the built SPA + read-only DuckDB snapshot + durable Postgres usage state on Northflank Sandbox + selected LLM | **$0** hosting sandbox + selected model | First free container candidate. Check sandbox resources and fit; never store spend counters only on ephemeral disk. |
 | Usage-based container deployment | Static frontend + Cloud Run API + durable database + selected LLM | Potentially **$0** inside all allowances; otherwise usage-based | Suitable for Python/Go/Java when container support matters. Builds, database, storage and network charges are separate. |
@@ -31,7 +33,7 @@ Selection order: mandatory requirements and permitted data treatment → correct
 
 ```mermaid
 flowchart TD
-    UI["React dashboard, Ask and forecast"] --> API["Hono: session and validation"]
+    UI["React dashboard, Ask and forecast"] --> API["Hono validation"]
     API -->|Direct query or forecast| DOMAIN["Metrics and forecast functions"]
     API -->|Natural-language question| GUARD["Durable quota reservation"]
     GUARD --> MODEL["One selected LLM endpoint"]
@@ -53,10 +55,10 @@ One Worker deployment serves the SPA and API on one origin. Only the question, c
 | API | Current stable Hono + Workers + Cloudflare Vite plugin | Web API runtime, same-origin deployment, local binding emulation. [Hono](https://hono.dev/docs/getting-started/cloudflare-workers), [Cloudflare React guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/) |
 | Validation | Zod **4**, strict objects, provider schema adapter | One canonical domain contract; accommodate the provider's supported JSON Schema subset without weakening application validation. [Zod](https://zod.dev/v4) |
 | Database | D1 / SQLite, SQL migrations, prepared statements | Tiny relational dataset plus durable counters; no ORM or separate cache service initially. [D1](https://developers.cloudflare.com/d1/get-started/) |
-| Model transport | Direct server-side `fetch`; one active provider | Start with Groq; use a small DeepInfra adapter in the evaluation harness. No SDK with hidden retries, agent framework, or gateway is required. |
-| Tests | Vitest **4.1+**, `@cloudflare/vitest-plugin`, Playwright | Worker/D1 integration plus a small browser suite. Use the current plugin rather than copying the older pool integration. [Test setup](https://developers.cloudflare.com/workers/testing/vitest-integration/write-your-first-test/) |
-| Source / CI / deploy | GitHub, one npm lockfile, GitHub Actions, pinned Wrangler | Offline PR checks, one deployment path, scoped credentials, reproducible releases. |
-| Access / logs | Reviewer session, structured provider logs | Secure cookie and secret-backed token exchange; record IDs, outcomes, timing and usage. No raw questions, secrets or dataset rows in default logs. |
+| Model transport | Direct server-side `fetch`; one active provider | Start with Groq only; a DeepInfra evaluation adapter is optional P2. No SDK with hidden retries, agent framework, or gateway is required. |
+| Tests | Vitest **4.1+**, `@cloudflare/vitest-plugin`; optional Playwright | Focused domain/Worker checks for P0; browser automation is optional. Use the current plugin rather than copying the older pool integration. [Test setup](https://developers.cloudflare.com/workers/testing/vitest-integration/write-your-first-test/) |
+| Source / CI / deploy | GitHub, one npm lockfile, pinned Wrangler; optional Actions | Reproducible local checks and one deployment path; CI automation follows when the core is verified. |
+| Access / logs | Public synthetic demo, structured provider logs | No login in P0; optional gate requires working reviewer credentials. Record IDs, outcomes, timing and usage, not secrets, raw questions or source rows. |
 
 Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search, RAG, agents, Kubernetes, or paid monitoring without a requirement that justifies the cost and maintenance.
 
@@ -64,7 +66,7 @@ Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search
 
 ### 3.1 Confirm prerequisites and preserve existing work
 
-Read the [assignment and attachments](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24), and use the [reference answer](https://github.com/KhresnaPanduI/spaceship-logistics-analytics) as audit context. The linked Notion contents have not been recovered here; the scope remains provisional. Do not substitute the reference author's choices for a mandated stack.
+Read the [supplied assignment files](docs/assignment/README.md) and [requirements matrix](docs/requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review is complete and no application setup has been run.
 
 Install Node 24 LTS and Git. Inspect the latest repository and any unpushed work before scaffolding. No account or model key is needed for the offline build. A live deployment later needs a Cloudflare account; live model evaluation needs a provider account with permitted inputs and confirmed quota.
 
@@ -74,23 +76,23 @@ Create the scaffold in a **new sibling directory**, then review and integrate it
 npm create cloudflare@latest -- logistics-app-scaffold --framework=react
 cd logistics-app-scaffold
 npm install hono zod recharts
-npm install -D vitest@^4.1.0 @cloudflare/vitest-plugin @playwright/test
+npm install -D vitest@^4.1.0 @cloudflare/vitest-plugin
 ```
 
-Choose TypeScript and decline immediate deployment in the scaffolder. Resolve the stable lines in the stack table, inspect the resulting scripts/dependency graph, and commit exact resolved versions in `package-lock.json`. `@latest` is a one-time discovery step; subsequent installs use `npm ci`. The official [scaffold guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/) describes the generated app; the paths below are this project's proposed organization.
+Choose TypeScript and decline immediate deployment in the scaffolder. Resolve the stable lines in the stack table, inspect the resulting scripts/dependency graph, and commit exact resolved versions in `package-lock.json`. `@latest` is a one-time discovery step; subsequent installs use `npm ci`. Add Playwright only if browser automation is selected after P0. The official [scaffold guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/) describes the generated app; the paths below are this project's proposed organization.
 
 | Path to create | Responsibility |
 |---|---|
 | `src/web/` | Dashboard, Ask, forecast form, tables/charts and accessible states. |
 | `src/shared/contracts.ts` | Strict API schemas, canonical enums and inferred types. |
 | `src/domain/` | Registry, query compilation, forecasts and deterministic answers. |
-| `src/worker/` | Hono routes, session handling, D1 adapter, model adapter and quota guard. |
+| `src/worker/` | Hono routes, D1, one model adapter and free quota guard; sessions are optional P2. |
 | `migrations/` | Analytics schema and durable usage-state schema. |
 | `scripts/import-data.ts` | Offline authorized CSV validation and seed generation. |
 | `data/manifest.json` | Provenance, checksum, coverage, dimensions and schema/data version. |
 | `evals/` | Development cases, frozen holdouts and redacted measured results. |
 | `tests/` | Domain, Worker/D1 and browser tests. |
-| `docs/requirements.md` | Requirement, source, acceptance test and required/bonus/unverified status. |
+| `docs/requirements.md` (already present) | Requirement/source matrix; update actual evidence during implementation. |
 
 ### 3.2 Configure one Worker and local D1
 
@@ -121,12 +123,12 @@ Use the Cloudflare Vite plugin after the React plugin. Keep the template's compa
     "LLM_MAX_BILLABLE_OUTPUT_TOKENS": "512",
     "LLM_DAILY_ATTEMPT_LIMIT": "100",
     "LLM_MONTHLY_ATTEMPT_LIMIT": "1000",
-    "LLM_MONTHLY_BUDGET_MICROUSD": "2000000"
+    "LLM_MONTHLY_BUDGET_MICROUSD": "0"
   }
 }
 ```
 
-The all-zero database ID is a local-development placeholder. Replace it with the real database ID before any remote command. Keep evaluation in a separately targeted database/environment. Vite generates the deployment configuration and asset directory; do not hard-code a conflicting `assets.directory` into the input configuration. [Vite configuration behavior](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/)
+The all-zero database ID is a local-development placeholder. Replace it with the real database ID before any remote command. Keep evaluation in a separately targeted database/environment and coordinate account-wide model quota. P0 sets the paid budget to zero; reject paid billing mode regardless of any copied provider configuration. Vite generates the deployment configuration and asset directory; do not hard-code a conflicting `assets.directory` into the input configuration. [Vite configuration behavior](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/)
 
 Static navigation should serve the SPA directly. `/api` and `/api/*` must always enter Hono, including browser navigations, so unknown API routes return JSON 404 and never SPA HTML. Test both normal fetch requests and `Sec-Fetch-Mode: navigate`. Configure ordinary static asset delivery without enabling an additional chargeable cache feature. [Selective Worker routing](https://developers.cloudflare.com/workers/static-assets/routing/worker-script/)
 
@@ -153,17 +155,17 @@ npx wrangler d1 execute DB --local --file .generated/seed.sql
 npm run dev
 ```
 
-Exclude raw private data, generated seeds, local database state and secrets from Git. Parse CSV with a quoted-field parser; validate identifiers, real calendar dates, status, units and decimal money. Store currency as integer cents. Record observed dates separately from certified coverage.
+Import the exact user-supplied mock CSV from an explicit local input path and verify its catalog checksum. Original files are not committed in this update. Exclude generated seeds, local database state, secrets and any unrelated private data from Git. Do not package the original DOCX/PDF files into public web assets. Parse CSV with a quoted-field parser; validate identifiers, real calendar dates, status, units and decimal money. Store currency as integer cents. Record observed dates separately from certified coverage.
 
-For the pinned reference fixture, independently reproduce **400 orders, $13,695.87 raw order value, 1,310 total units, and 1,303 non-canceled units**. Do not force these values onto a replacement dataset. Use the full metric and forecast contracts in the implementation plan. The 2025 data is historical; relative-date questions need an explicit anchor.
+For the supplied fixture, independently reproduce **400 orders, $13,695.87 raw order value, 1,310 total units, and 1,303 non-canceled units**. Do not force these values onto a replacement dataset. Use metric v2 and the SKU/four-month contract in the implementation plan. The dataset is historical; relative-date mode and order_date versus delivery_date must be explicit. All prior reference KPI proxies are comparative facts, not current dashboard defaults.
 
-Build in this order: deterministic data/metrics → query and forecast APIs → dashboard/evidence → reviewer access and quota guard → model routing → live evaluation. The dashboard and forecast form must work when the LLM is disabled or unavailable.
+Build in this order: import/data metrics → query API → dashboard/evidence → SKU forecast → free quota guard and one model adapter → live acceptance and deployment. The dashboard and forecast form must work when the LLM is disabled or unavailable.
 
 ### 3.4 Configure the selected LLM safely
 
 Create only the provider account selected for evaluation. For the first candidate, obtain a Groq key, confirm the free model quota, and review data controls. Store local secrets in an ignored `.dev.vars` file and remote secrets in Workers secrets. The file must not be imported by frontend code.
 
-| Setting | Groq first candidate | DeepInfra challenger |
+| Setting | Groq P0 candidate | DeepInfra optional P2 challenger |
 |---|---|---|
 | Secret name | `GROQ_API_KEY` | `DEEPINFRA_API_KEY` |
 | Server endpoint | `https://api.groq.com/openai/v1/chat/completions` | `https://api.deepinfra.com/v1/openai/chat/completions` |
@@ -187,15 +189,17 @@ Use one live provider per deployment and no automatic paid fallback. Direct mode
 | Complete model input | 4,096 tokens, including schema and instructions | Fit below Groq Free's 8K TPM; still requires burst control. Use verified token counting or a conservative tested bound. |
 | Total billable output | 512 tokens | Include reasoning; reject paid activation if the bound cannot be verified. |
 | Attempts | 100/day; 1,000/month globally | Count calls and failures durably; these are ceilings, not guaranteed throughput. |
-| Paid model budget | $2 per UTC month | Atomic conservative reservation in integer microdollars. |
+| Paid model budget | $0 in P0; $2/month only for optional P2 | Reject paid mode in P0. P2 requires atomic monetary reservations before activation. |
 | Groq Free pacing | One admitted generation per 60 seconds globally | Simple initial pacing for a small reviewer demo; persists across Worker instances. |
 | Groq Free daily token reservation | 180,000 input + maximum-output tokens | Headroom below the documented 200K/day; applies in addition to request caps. |
 | Provider timeout / automatic retries | 15 seconds / zero | Safe failure; no second model call or surprise spend. |
-| Live evaluation | 180 generations and $1 total, separate environment | Two 60-case candidates plus one 60-case confirmation. |
+| P0 live acceptance | 20 free calls, coordinated with account quota | 12 supported, 4 ambiguous/missing-input and 4 unsupported/adversarial cases. |
+
+The compact prompt must fit known-SKU requests without listing all 355 IDs: pass literal candidates from the question and validate membership in the server's manifest. P0's 20 calls reserve at most 92,160 tokens and take about 20 minutes under the pacing rule. A second adapter is not required.
 
 At the maximum 4,608 tokens reserved per call, the proposed 180K free-token guard admits **39 calls/day**, even though the app's request ceiling is 100. At the illustrative 1,500 input + 512 reserved output it admits **89**. Account usage elsewhere can lower availability further. Return a clear limit message and preserve direct analytics when a quota is reached; do not bypass it with another account or provider.
 
-Before provider access, one atomic conditional D1 update checks and advances request counts, paid reservations where applicable, free token reservations, and the next allowed call time. A free call reserves quota even when its monetary reservation is zero. Use server-derived UTC periods; uncertain writes fail closed. Keep a reservation after timeout, invalid output or an unknown outcome. Never implement the billing guard as separate read/check/write calls or a Worker global variable.
+Before P0 provider access, one atomic conditional D1 update checks and advances request counts, free token reservations and the next allowed call time. Monetary reservation is added only if the optional paid profile is selected. A free call reserves quota even when its monetary reservation is zero. Use server-derived UTC periods; uncertain writes fail closed. Keep a reservation after timeout, invalid output or an unknown outcome. Never implement the billing guard as separate read/check/write calls or a Worker global variable.
 
 Use a dedicated provider project/key, versioned prices, and independently enforced model controls. The app budget covers this app's admitted calls at configured prices; provider-wide spend, leaked credentials, deposits and future pricing changes are outside that arithmetic.
 
@@ -203,17 +207,16 @@ The planned command contract after implementation is:
 
 ```sh
 npm ci
-npm run lint
 npm run typecheck
-npm run test:unit
-npm run test:worker
+npm test
 npm run build
-npm run test:e2e
-# Separate, manually initiated live evaluation after credentials and guards are ready:
+# Separate, manually initiated live acceptance after credentials and guards are ready:
 npm run eval:live
 ```
 
-Ordinary CI has model networking disabled. Evaluate each candidate on the same frozen 60-case set: 40 supported, 10 ambiguous, 10 unsupported/adversarial. Require at least 38/40 correct supported plans, 10/10 appropriate clarifications and 10/10 safe unsupported outcomes. Use a fresh confirmation set after selection. Publish observed plan accuracy, failures, billable tokens, p50/p95 latency, quota failures and cost per successful task. These are proposed gates, not measured results.
+Ordinary tests have model networking disabled. P0 evaluates one provider on 20 frozen cases: 12 supported, 4 ambiguous/missing-input and 4 unsupported/adversarial. Include the brief's analytics examples and known-SKU four-month forecasts. Require every expected outcome in this declared subset and no forbidden execution. Report actual counts, failures, tokens and latency; do not claim general 100% accuracy. If tuning is needed, keep regression cases and use fresh equivalent confirmation cases within quota. Lint/CI and an automated browser suite may follow after core verification.
+
+Optional P2: compare two providers on separate development/held-out cases, with the earlier 60-case sets and 180-generation/$1 ceiling. This larger exercise is outside the 6–10 hour submission estimate, and free pacing may require multiple days. Do not treat it as a P0 release dependency.
 
 ### 3.6 Deploy and operate the selected configuration
 
@@ -230,16 +233,14 @@ Copy the returned real ID into the reviewed D1 binding; confirm the selected acc
 ```sh
 npx wrangler d1 migrations apply DB --remote
 npx wrangler d1 execute DB --remote --file .generated/seed.sql
-npx wrangler secret put REVIEWER_ACCESS_TOKEN
-npx wrangler secret put SESSION_SIGNING_KEY
 npx wrangler secret put GROQ_API_KEY
 npm run build
 npx wrangler deploy
 ```
 
-Secret commands are interactive; never paste real values into the documentation, command arguments or public issue logs. Supply high-entropy reviewer/session secrets. Keep live Ask disabled for the first deployment, verify the real data version and authenticated journeys, then enable it only after the selected configuration passes evaluation and quota tests. Rebuild after configuration changes because the Vite deployment output contains a configuration snapshot.
+Secret commands are interactive; never paste real values into the documentation, command arguments or public issue logs. P0 has no reviewer/session secrets. If the optional gate is selected later, configure its high-entropy secrets and provide tested credentials at handoff. Keep live Ask disabled for the first deployment, verify the data version and public deterministic journeys, then enable it after the selected free configuration passes live acceptance and quota tests. Rebuild after configuration changes because the Vite deployment output contains a configuration snapshot.
 
-Use the provider hostname initially. CI deployment should use a narrowly scoped token and the repository's existing release policy; do not enable a second deployment pipeline for the same commit. Test SPA deep links, JSON API 404s, expired sessions, provider-off behavior and capped requests.
+Use the provider hostname initially. CI deployment should use a narrowly scoped token and the repository's existing release policy; do not enable a second deployment pipeline for the same commit. Test SPA deep links, JSON API 404s, public reviewer access, provider-off behavior and capped requests. Test sessions only if that optional profile is implemented.
 
 Measure Worker CPU separately from network latency. The free invocation limit is 10 ms CPU; target measured p95 below 8 ms with realistic inputs and concurrency. If it does not fit after simple improvements, Workers Paid adds a $5/month base. Confirm the actual paid plan and resource usage before changing the cost estimate.
 
@@ -345,7 +346,7 @@ The 10,000-question column is a comparison scenario, not permission to exceed th
 | [DeepInfra / meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo](https://deepinfra.com/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo) | $0.020 | $0.040 | **$0.0380** | $0.380 | Lowest standard paid token estimate found in this shortlist; older-model baseline. |
 | [Novita / Llama 3.1 8B Instruct](https://novita.ai/pricing) | $0.020 | $0.050 | **$0.0400** | $0.400 | Alternative host; test exact endpoint and schema. |
 | [Workers AI / @cf/ibm-granite/granite-4.0-h-micro](https://developers.cloudflare.com/workers-ai/platform/pricing/) | $0.017 | $0.112 | **$0.0479** | $0.479 | Gross equivalent before neuron allowance; $5 platform base if paid overflow is needed. |
-| [DeepInfra / google/gemma-4-E4B-it](https://deepinfra.com/google/gemma-4-E4B-it) | $0.020 | $0.100 | **$0.0500** | $0.500 | Main low-price challenger; actual routing quality unmeasured. |
+| [DeepInfra / google/gemma-4-E4B-it](https://deepinfra.com/google/gemma-4-E4B-it) | $0.020 | $0.100 | **$0.0500** | $0.500 | Optional P2 challenger; actual routing quality unmeasured. |
 | [Together / LFM2.5-8B-A1B](https://www.together.ai/models/liquid-lfm2-5-8b-a1b) | $0.030 | $0.120 | **$0.0690** | $0.690 | Compact reasoning model; count reasoning and required initial credit purchase. |
 | [Alibaba / Qwen-Turbo, international non-thinking](https://www.alibabacloud.com/help/en/model-studio/model-pricing) | $0.050 | $0.200 | **$0.1150** | $1.150 | Singapore/international price mode; verify exact deployed model ID and region. |
 | [Workers AI / @cf/qwen/qwen3-30b-a3b-fp8](https://developers.cloudflare.com/workers-ai/platform/pricing/) | $0.051 | $0.335 | **$0.1435** | $1.435 | Gross equivalent before daily free neurons; verify JSON behavior. |
@@ -372,7 +373,7 @@ At 1,500 input and **2,000** billable output tokens/question, Groq 20B would cos
 | Candidate | Schema evidence | Principal uncertainty | Integration / operating cost | Selection position |
 |---|---|---|---|---|
 | Groq GPT-OSS 20B | Explicit strict-schema model support | Correct routing within bounded reasoning/output; free burst availability | Direct fetch; free first, inexpensive paid continuity | **Evaluate first** |
-| DeepInfra Gemma 4 E4B | Provider documents schema-constrained output on many models | Exact model/schema compatibility, correctness, token accounting and opening deposit | Small second adapter; about $0.05/1K at nominal workload | **Evaluate challenger** |
+| DeepInfra Gemma 4 E4B | Provider documents schema-constrained output on many models | Exact model/schema compatibility, correctness, token accounting and opening deposit | Small second adapter; about $0.05/1K at nominal workload | **Optional P2 challenger** |
 | DeepInfra Llama 3.1 8B Turbo | Provider-level structured-output support | Older model may miss ambiguities/filter semantics; endpoint fit unverified | Cheapest standard token baseline here | Price benchmark; evaluate only if useful |
 | Workers AI Qwen3 30B A3B FP8 | Model/API JSON behavior must be verified | Do not assume strict-schema support from a generic JSON-mode example | Inference binding and one vendor; daily neuron cap | Evaluate if reducing accounts matters |
 | Gemini 2.5 Flash-Lite | Documented structured-output API | Model lifecycle, selected project terms and actual plan accuracy | Separate REST schema adapter; $0.23/1K nominal | Optional comparator if initial shortlist fails |
@@ -380,7 +381,7 @@ At 1,500 input and **2,000** billable output tokens/question, Groq 20B would cos
 | Vercel Gateway / OpenRouter | Depends on selected model and provider route | Hidden retries, fallback/provider changes, free-catalog availability | Extra control layer/account | Use only for a concrete benefit |
 | Local Ollama | Depends on model and quantization | Local hardware, context throughput and uptime | No API token bill; operational/electricity cost | Offline experiments, not automatic cheapest public deployment |
 
-For the first evaluation, compare Groq 20B with DeepInfra Gemma E4B, then confirm the selected candidate. Choose free Groq if it passes and its availability fits. If paid access is needed, compare the measured cost per successful task and the effort of changing providers. The nominal difference between paid Groq and Gemma is only **$0.1225/month** at 1,000 questions; engineering work should be justified by more than that saving.
+For P0, evaluate Groq 20B only and use it if it passes the declared subset and availability checks. A later P2 comparison can add DeepInfra Gemma E4B and a fresh confirmation set. If paid access is needed, compare the measured cost per successful task and the effort of changing providers. The nominal difference between paid Groq and Gemma is only **$0.1225/month** at 1,000 questions; engineering work should be justified by more than that saving.
 
 ### 5.4 Trials, deposits and other provider classes
 
@@ -402,7 +403,7 @@ For the first evaluation, compare Groq 20B with DeepInfra Gemma E4B, then confir
 
 ## 6. Budget arithmetic and practical purchase decision
 
-The runtime must use the selected provider's verified maximum billable input/output, not the nominal comparison workload. At the proposed **4,096 input / 512 total-output** bounds:
+P0 permits no paid generation. The following arithmetic is retained for optional paid access and provider comparison. If activated later, the runtime must use verified maximum billable input/output, not the nominal comparison workload. At the proposed **4,096 input / 512 total-output** bounds:
 
 | Paid configuration | Unrounded worst-case USD/call | Reservation rounded up to whole microdollars |
 |---|---:|---:|
@@ -414,7 +415,7 @@ The runtime must use the selected provider's verified maximum billable input/out
 
 Formula: `ceil(max_input_tokens × input_rate + max_billable_output_tokens × output_rate)` yields microdollars when rates are USD/million. Implement with exact decimal/rational or appropriately scaled integer arithmetic so binary-floating rounding cannot under-reserve. Free mode uses zero monetary charge only when the actual account/model route is confirmed free; it still consumes request/token quota.
 
-For two 60-case candidates and a 60-case confirmation, the more expensive confirmation is Groq: `120 × 461 + 60 × 134 = 63,360 microdollars`, or **$0.06336** conservatively reserved if every Groq call is paid. Free Groq reduces cash usage; it does not waive pacing or quota. The separate $1 evaluation ceiling is a maximum, not a forecast or permission to run repeatedly.
+For the optional P2 comparison of two 60-case candidates and a 60-case confirmation, the more expensive confirmation is Groq: `120 × 461 + 60 × 134 = 63,360 microdollars`, or **$0.06336** conservatively reserved if every Groq call is paid. Free Groq reduces cash usage; it does not waive pacing or quota. The separate $1 evaluation ceiling is a maximum, not a forecast or permission to run repeatedly.
 
 | Purchase decision | Default now | Change trigger |
 |---|---|---|
@@ -422,7 +423,7 @@ For two 60-case candidates and a 60-case confirmation, the more expensive confir
 | Database | D1 Free | Dataset size, writes, contention or features outgrow the limits; measure before migrating. |
 | Model account | Groq Free candidate | Fails evaluation, permitted-data policy, sustained availability or quota needs. |
 | Paid model | No automatic purchase; compare actual passing candidates | Explicit live setup and measured need; include checkout/deposit in cash budget. |
-| Domain | Provider hostname | A custom domain is required for the deliverable. |
+| Domain | Provider hostname | Only if a custom domain is later requested; the brief accepts a public provider URL. |
 | Other services | None initially | A concrete requirement for files, named-user auth, email, jobs or observability appears. |
 
 The practical target remains **$0 for a quota-limited reviewer demo**, with a measured upgrade path around **$5/month hosting plus cents of ordinary model usage**. Application implementation, live routing evaluation, production performance and account eligibility remain unverified. Refresh the chosen prices and terms before activation, keep deterministic analytics available, and record the actual deployed model/configuration rather than declaring an untested provider the winner.
