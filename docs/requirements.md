@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-Reviewed: 2026-09-11 UTC. **Source review complete; all application acceptance is pending.**
+Reviewed: 2026-09-13 UTC. **Source review complete. All requirements except deployment and live model evaluation are implemented and verified locally**; see [Current status](#current-status) for the exceptions and [README.md](../README.md#verification-performed) for the evidence.
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -80,4 +80,23 @@ Status labels, dataset date anchoring, exception exclusion, coverage completenes
 
 ## Current status
 
-Source acquisition and requirements mapping are complete. No implementation, application tests, live-provider acceptance, deployment, reviewer-access check or employer submission is complete. There is no supplied deadline; do not invent one.
+Requirement outcomes as executed on this machine. The reproduction commands are in [README.md](../README.md#local-setup).
+
+The source layout was also checked against the adopted architecture: pure analytics remains under `src/domain/`, shared contracts and the SQL port under `src/shared/`, data/bootstrap code under `src/data/`, and platform adapters under `src/worker/`. This is a maintainability refactor; it does not change the API contract or analytical results.
+
+| Requirement | Status |
+|---|---|
+| R01, R02, R03, R05, R06, R07, R08, R10 | **Met and verified locally.** Five KPIs at 400 / 304 / 55 / 84.68% / 3.69 days, two charts with matching tables, deterministic chart selection, a shared evidence panel on every result, a validated plan panel, and one shared metric registry and query executor used by both the dashboard and the question path. |
+| R04, R09 | **Implemented; verified against a stubbed transport only.** All four operations route correctly and every number is rendered from a computed field, but no live provider call has been made. |
+| R11, R12, R13 | **Met and verified locally.** A known SKU returns four monthly values with exact dates, a history and future chart, a numerical coverage target of 3 units for CRAYON-0008, the methodology, and the stock and lead-time limitations. |
+| R14 | **Not met.** The application is not deployed, so there is no publicly accessible URL. |
+| R15 | **Not applicable, recorded.** No authentication in this profile, so credentials are "Not required". |
+| R16 | **Met and verified.** No secrets in the repository or the built bundle; the environment example uses placeholders. |
+| R17, R18, R23 | **Met.** TypeScript on Workers and D1 with a structured contract, an allowlisted compiler, bound values and separated domain functions, built within the timebox. |
+| R19, R20, R21, R22 | **Met.** The README records commands that were actually executed, the architecture and data flow, tool routing with worked examples, and the assumptions, unsupported queries and future work. |
+| R24 | **Met.** [AI_USAGE.md](../AI_USAGE.md) records the actual implementation assistance and the defects the checks caught. |
+| R25 | **Not met.** No deployed URL, and reviewer access to the private repository is unverified. |
+
+Optional bonuses: B03 (tests) is included well beyond the minimum. B01, B02, B04 and B05 were not implemented. B06 is partially implemented: safe clarification exists, elaborate conversational follow-ups do not.
+
+Two gaps are therefore outstanding for submission: **deployment** and **live model evaluation**. There is no supplied deadline; do not invent one.

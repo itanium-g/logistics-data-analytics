@@ -135,8 +135,10 @@ The [earlier report at da1d4a4](https://github.com/itanium-g/logistics-data-anal
 
 The earlier report's unavailable-source statements, category-only scope, exception-inclusive KPI defaults and extended timebox are superseded by this revision. No old audit statement is presented as a fresh run of the reference application's tests.
 
+The implemented source layout now keeps pure analytics in `src/domain/`, runtime-neutral contracts and the SQL port in `src/shared/`, persisted-manifest and import/bootstrap code in `src/data/`, and Cloudflare-specific adaptation in `src/worker/`. The public Worker entrypoint remains `src/worker/index.ts`.
+
 ## 7. Completion status
 
-Completed: review of all supplied files, data/hash checks, requirement mapping, revised scope, metric/date/forecast decisions, source provenance and documentation alignment.
+Completed: review of all supplied files, data/hash checks, requirement mapping, revised scope, metric/date/forecast decisions, source provenance, application implementation, local typecheck/tests/build/smoke, source-layout refactor and documentation alignment.
 
-Pending: application implementation, actual tests, live model evaluation, infrastructure setup, deployment, reviewer-access check and employer submission. Use the [submission checklist](docs/submission-checklist.md) and [AI disclosure](AI_USAGE.md). No deployment or paid action was performed.
+Pending: live model evaluation, infrastructure setup, deployment, reviewer-access check and employer submission. Use the [submission checklist](docs/submission-checklist.md) and [AI disclosure](AI_USAGE.md). No deployment or paid action was performed.

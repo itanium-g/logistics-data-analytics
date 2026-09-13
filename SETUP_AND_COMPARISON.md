@@ -66,7 +66,7 @@ Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search
 
 ### 3.1 Confirm prerequisites and preserve existing work
 
-Read the [supplied assignment files](docs/assignment/README.md) and [requirements matrix](docs/requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review is complete and no application setup has been run.
+Read the [supplied assignment files](docs/assignment/README.md) and [requirements matrix](docs/requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review and the local application implementation are complete; use the commands in [README.md](README.md#local-setup) for the current checkout. Deployment and live model evaluation remain outstanding.
 
 Install Node 24 LTS and Git. Inspect the latest repository and any unpushed work before scaffolding. No account or model key is needed for the offline build. A live deployment later needs a Cloudflare account; live model evaluation needs a provider account with permitted inputs and confirmed quota.
 
@@ -79,14 +79,15 @@ npm install hono zod recharts
 npm install -D vitest@^4.1.0 @cloudflare/vitest-plugin
 ```
 
-Choose TypeScript and decline immediate deployment in the scaffolder. Resolve the stable lines in the stack table, inspect the resulting scripts/dependency graph, and commit exact resolved versions in `package-lock.json`. `@latest` is a one-time discovery step; subsequent installs use `npm ci`. Add Playwright only if browser automation is selected after P0. The official [scaffold guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/) describes the generated app; the paths below are this project's proposed organization.
+Choose TypeScript and decline immediate deployment in the scaffolder. Resolve the stable lines in the stack table, inspect the resulting scripts/dependency graph, and commit exact resolved versions in `package-lock.json`. `@latest` is a one-time discovery step; subsequent installs use `npm ci`. Add Playwright only if browser automation is selected after P0. The official [scaffold guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/react/) describes the generated app; the paths below describe this project's current organization.
 
 | Path to create | Responsibility |
 |---|---|
 | `src/web/` | Dashboard, Ask, forecast form, tables/charts and accessible states. |
-| `src/shared/contracts.ts` | Strict API schemas, canonical enums and inferred types. |
-| `src/domain/` | Registry, query compilation, forecasts and deterministic answers. |
-| `src/worker/` | Hono routes, D1, one model adapter and free quota guard; sessions are optional P2. |
+| `src/shared/` | Strict API contracts, canonical enums, dataset constants, errors and the runtime-neutral SQL port. |
+| `src/domain/` | Pure registry, date interpretation, query compilation, forecasts and deterministic answers. |
+| `src/data/` | Manifest repository, CSV validation and deterministic seed SQL generation. |
+| `src/worker/` | Hono routes, the D1 adapter, one model adapter and free quota guard; sessions are optional P2. |
 | `migrations/` | Analytics schema and durable usage-state schema. |
 | `scripts/import-data.ts` | Offline authorized CSV validation and seed generation. |
 | `data/manifest.json` | Provenance, checksum, coverage, dimensions and schema/data version. |
