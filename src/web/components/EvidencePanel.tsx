@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { DIMENSION_LABELS, TIME_GRAIN_LABELS } from "../../domain/chart.ts";
 import { describeScope } from "../../domain/format.ts";
 import type { QueryResponse } from "../../shared/contracts.ts";
@@ -8,6 +9,8 @@ interface EvidencePanelProps {
   readonly tableCaption: string;
   /** Collapsed by default on the dashboard, open for a question answer. */
   readonly defaultOpen?: boolean;
+  /** Meaningful label differentiating count, metric, and chart disclosures. */
+  readonly evidenceLabel?: string;
 }
 
 function describeFilters(result: QueryResponse): string {
@@ -26,7 +29,16 @@ function describeFilters(result: QueryResponse): string {
  * checkable rather than merely displayed. It exposes the validated plan, not any
  * model reasoning.
  */
-export function EvidencePanel({ result, tableCaption, defaultOpen = false }: EvidencePanelProps) {
+export function EvidencePanel({
+  result,
+  tableCaption,
+  defaultOpen = false,
+  evidenceLabel = "Result evidence",
+}: EvidencePanelProps) {
+  const instanceId = useId().replaceAll(":", "");
+  const summaryId = `evidence-summary-${instanceId}`;
+  const warningsId = `evidence-warnings-${instanceId}`;
+  const assumptionsId = `evidence-assumptions-${instanceId}`;
   const grouping =
     result.plan.breakdown !== null
       ? `Broken down by ${DIMENSION_LABELS[result.plan.breakdown]}`
@@ -35,8 +47,11 @@ export function EvidencePanel({ result, tableCaption, defaultOpen = false }: Evi
         : "Single value over the whole scope";
 
   return (
-    <details className="evidence" open={defaultOpen}>
-      <summary>Evidence: filters, definitions and underlying data</summary>
+    <details className="evidence" open={defaultOpen} aria-labelledby={summaryId}>
+      <summary id={summaryId}>
+        <span className="evidence-label">{evidenceLabel}</span>
+        <span>Evidence: filters, definitions and underlying data</span>
+      </summary>
 
       <dl className="evidence-list">
         <dt>Date basis</dt>
@@ -73,8 +88,8 @@ export function EvidencePanel({ result, tableCaption, defaultOpen = false }: Evi
       </dl>
 
       {result.warnings.length > 0 && (
-        <section aria-labelledby="evidence-warnings">
-          <h4 id="evidence-warnings">Caveats for this result</h4>
+        <section aria-labelledby={warningsId}>
+          <h4 id={warningsId}>Caveats for this result</h4>
           <ul className="evidence-warnings">
             {result.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
@@ -84,8 +99,8 @@ export function EvidencePanel({ result, tableCaption, defaultOpen = false }: Evi
       )}
 
       {result.assumptions.length > 0 && (
-        <section aria-labelledby="evidence-assumptions">
-          <h4 id="evidence-assumptions">Assumptions behind these metrics</h4>
+        <section aria-labelledby={assumptionsId}>
+          <h4 id={assumptionsId}>Assumptions behind these metrics</h4>
           <ul className="evidence-assumptions">
             {result.assumptions.map((assumption) => (
               <li key={assumption}>{assumption}</li>

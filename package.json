@@ -20,6 +20,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "5.3.0",
     "hono": "4.13.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
