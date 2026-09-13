@@ -13,11 +13,13 @@ Updated: 2026-09-13 UTC. This repository now contains a working application in a
 | **Implementation** | **Kiro CLI (claude-opus-5) drove the build in this session** | Scaffolded the project, wrote every source file under `src/`, `scripts/`, `migrations/` and `tests/`, and updated this documentation. Work proceeded through eight reviewed steps, each ending with typecheck, tests, build and a runtime smoke run before moving on. |
 | **Structure follow-up** | **Codex assistance with codebase-memory MCP** | Read the indexed code graph, moved data/bootstrap concerns into `src/data/`, separated the shared SQL port from the Worker D1 adapter, audited `.gitignore`, updated path documentation, and reran typecheck plus the full test suite. |
 
+| UI redesign follow-up | OpenDesign reference generation and Codex assistance | Applied the responsive Overview and Forecasts workspaces, theme selector, AI Analyst states, accessible evidence surfaces and chart styling while preserving the existing API contracts. Verified with the focused UI tests, the full suite, production checks and local Chrome DevTools review; representative captures are checked in under docs/screenshots/. |
+
 ### What the assistant did in the implementation session
 
 - Resolved and pinned exact dependency versions after querying the registry, and recorded the two deviations from the plan's targets in the README rather than silently accepting them.
 - Wrote the importer, schema, metric registry, date interpretation, bounded query compiler, forecast, decision validation, prompt builder, answer renderer, quota guard, provider adapter, Hono routes, React UI and the whole test suite.
-- Wrote and ran the checks: 195 tests in 11 files, three TypeScript projects, the production build, and a 13-check runtime smoke harness against workerd.
+- Wrote and ran the checks: 206 tests in 13 files, three TypeScript projects, the production build, and a 13-check runtime smoke harness against workerd.
 - Read the repository with the codebase-memory MCP graph before the structure follow-up; the graph was refreshed after the moves and reported no partial or skipped source files.
 
 ### Defects the checks caught, and what changed

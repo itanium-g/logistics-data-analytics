@@ -227,6 +227,10 @@ If tuning is needed, keep failures as regressions and confirm with fresh equival
 
 Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`; `npm run db:seed`; `npm run typecheck`; `npm test`; `npm run build`; `npm run smoke`. Ordinary tests never call a model: the routing tests substitute the HTTP transport. A live evaluation runner is not implemented, so `npm run eval:live` does not exist; the frozen cases would be executed manually against an enabled provider. Lint and CI were not added.
 
+## Local browser verification update
+
+The redesign was reviewed locally in Chrome DevTools at 360, 390, 768, 1280 and 1920px. The review covered the Overview and Forecasts workspaces, light/dark themes, assistant open/closed states, expanded filters, evidence, charts, tables, keyboard focus, Escape dismissal, focus restoration, reduced motion and page-level overflow. Tracked captures are listed in docs/screenshots/README.md. Deployment and deployed-browser verification remain outstanding.
+
 ## 10. Release and handoff
 
 Deployment is future work. Freeze lockfile, data checksum, metric version, provider/model and deployed commit. Seed the selected environment without resetting usage. Use one deployment path and scoped secrets; no provider keys in browser bundles or Git.

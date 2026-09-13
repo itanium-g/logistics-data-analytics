@@ -33,6 +33,8 @@ npm run db:seed
 npm run dev
 ```
 
+Open `http://localhost:5173/#overview`. Use the header to switch between the Overview and Forecasts workspaces, choose System/Light/Dark appearance, and open the AI Analyst. Overview filters and forecast inputs stay in place while moving between workspaces; the assistant uses its own date-context selector.
+
 `npm run data:import` verifies the input SHA-256 against the catalogued value, validates all 17 columns of every row, and refuses to write anything if a field is invalid or if a control total does not reproduce. Use `--input` for a different path and `--allow-checksum-mismatch` only when deliberately importing another dataset:
 
 ```sh
@@ -43,7 +45,7 @@ Verification commands, all of which pass on a clean install:
 
 ```sh
 npm run typecheck   # three TypeScript projects: browser, worker, component tests
-npm test            # 195 tests in 11 files
+npm test            # 206 tests in 13 files
 npm run build       # SPA plus Worker bundle
 npm run smoke       # 13 checks against the built app on workerd
 ```
@@ -198,7 +200,7 @@ These fail honestly rather than approximating:
 All on this machine, on a clean `npm ci`:
 
 - **Import:** every control total in [docs/data-audit.md](docs/data-audit.md) reproduced independently — 400 rows and 400 unique ids, order dates 2025-01-01 to 2025-12-30, latest delivery date 2025-12-31, 304/55/11/27/3 by status, 370 dated and 30 missing delivery dates, 1310 total and 1303 non-canceled units, USD 13,695.87 raw value, USD 2,386.10 on delayed or exception records, 355 SKUs, 8 categories, 9 carriers, 30 clients, 5 regions, 9 warehouses, 22 promotion rows, zero value mismatches, the twelve monthly controls, and the 313/39/3 SKU frequency profile. The importer refuses to emit output if any control disagrees.
-- **195 automated tests in 11 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. A documentation test fails if the README names a script that does not exist, omits an environment variable the Worker reads, or if a dependency stops being pinned exactly.
+- **206 automated tests in 13 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. A documentation test fails if the README names a script that does not exist, omits an environment variable the Worker reads, or if a dependency stops being pinned exactly.
 - **Analytics:** the five KPIs to full precision, null-denominator cases, the delivered-only mean of 3.25 days kept as a separately labelled fact, a proof that a mean of per-carrier rates is not the aggregate ratio, all three brief examples, chart and table parity, truncation after full-scope ranking, and undefined rates ordered last.
 - **Query safety:** injected SQL in filter values and in metric, dimension and grain positions is rejected with the dataset intact; oversized, empty and non-JSON bodies, cross-origin POSTs, inverted and impossible date ranges, and conflicting date inputs are all refused.
 - **Forecast:** the CRAYON-0008 example exactly — monthly series `[6,0,0,1,0,0,0,0,0,0,0,0]`, sparse method, 7/12 units for each of January to April 2026, a 7/3 base and a coverage target of exactly 3 units, as of 2025-12-31. Rounding once is proved distinct from rounding per month; unknown SKUs, canceled-only SKUs, and horizon and buffer bounds are all covered.
@@ -208,6 +210,10 @@ All on this machine, on a clean `npm ci`:
 - **Secrets:** the built client bundle contains no key value, no provider endpoint and no `Authorization` header. The only occurrence of `GROQ_API_KEY` is the variable *name* in help text explaining how to enable the feature.
 
 Two things the automated checks do not cover, and where they are covered instead: Recharts measures its container, which jsdom reports as zero-sized, so chart SVGs are asserted in the browser smoke rather than in jsdom; and the model's actual routing quality is not measured at all, because no live provider call has been made.
+
+## Browser verification
+
+The local application was inspected in Chrome DevTools at 360, 390, 768, 1280 and 1920px. Review covered Overview, Forecasts, light/dark themes, assistant closed/open states, expanded filters, evidence, chart/table rendering, keyboard focus, Escape dismissal, focus restoration, reduced motion and page-level overflow. The captured reference images are checked in under [docs/screenshots](docs/screenshots/README.md).
 
 ## What is not done
 

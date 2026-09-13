@@ -30,7 +30,7 @@ A ticked box below means it was executed on this machine and the result observed
 
 ## Engineering and deployment checks
 
-- [x] Focused numerical, date and forecast tests pass against the supplied dataset. 195 tests in 11 files.
+- [x] Focused numerical, date and forecast tests pass against the supplied dataset. 206 tests in 13 files.
 - [x] Model outputs are validated; raw model SQL cannot execute. Prose, unknown tools, a `raw_sql` key, injected identifiers and two populated branches all execute nothing.
 - [x] Supplied analytical data remains read-only through request paths. No route writes to `orders`; only the usage table is written.
 - [ ] Twenty-case live acceptance results and limitations recorded. Cases are frozen in `evals/cases.json` but **have not been executed**.
@@ -40,11 +40,13 @@ A ticked box below means it was executed on this machine and the result observed
 - [x] Source layout and ignore rules have been reviewed. Runtime-neutral SQL contracts are separated from the Worker D1 adapter; data/bootstrap modules are isolated under `src/data/`; secrets, generated output, local state, caches and supplied assignment originals are gitignored.
 - [ ] Public app is usable from a fresh browser without local setup. Requires deployment.
 - [x] Data table, API 404 behaviour and keyboard reachability checked. JSON 404 for unknown API paths including navigations; controls are focusable with no negative tab index.
-- [ ] Desktop and mobile checked on a real deployment. Responsive CSS exists and the jsdom mount test passes, but no device testing has been done.
+- [ ] Desktop and mobile checked on a real deployment. Local Chrome DevTools inspection covered the responsive app at 360, 390, 768, 1280 and 1920px; deployed-browser verification remains pending.
 - [ ] Actual hosting limits and deployed data/revision match documentation. Free-tier CPU fit is unmeasured.
 - [ ] Repository access for reviewers verified using the intended handoff method.
 - [x] If authentication is used, credentials work. Not applicable: no authentication in this profile.
 - [x] Rollback and provider-disable instructions recorded. Setting `LLM_ENABLED` to `"false"` disables questions while leaving analytics working; restoring data never restores usage counters.
+
+- [x] Local Chrome DevTools visual review completed at 360, 390, 768, 1280 and 1920px for both themes, Overview, Forecasts and assistant states. Captures are listed in [the screenshot review](screenshots/README.md).
 
 ## README and disclosure checks
 
