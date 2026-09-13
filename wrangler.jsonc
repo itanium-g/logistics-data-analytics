@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "logistics-analytics-demo",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-09-11",
+  "assets": {
+    // Non-API navigations are served the SPA shell directly by the asset layer.
+    "not_found_handling": "single-page-application",
+    // /api and /api/* must always enter the Worker, including browser
+    // navigations, so unknown API routes return JSON 404 and never SPA HTML.
+    "run_worker_first": ["/api", "/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "logistics-analytics-demo",
+      // All-zero placeholder for local development only. Replace with the real
+      // database id from `wrangler d1 create` before any --remote command.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Every value is a string and is parsed explicitly at runtime; the string
+    // "false" must never be treated as truthy. See src/worker/env.ts.
+    "LLM_ENABLED": "false",
+    "LLM_PROVIDER": "groq",
+    "LLM_MODEL": "openai/gpt-oss-20b",
+    "LLM_BILLING_MODE": "free",
+    "LLM_MAX_INPUT_TOKENS": "4096",
+    "LLM_MAX_BILLABLE_OUTPUT_TOKENS": "512",
+    "LLM_DAILY_ATTEMPT_LIMIT": "100",
+    "LLM_MONTHLY_ATTEMPT_LIMIT": "1000",
+    "LLM_DAILY_TOKEN_LIMIT": "180000",
+    "LLM_MIN_INTERVAL_SECONDS": "60",
+    "LLM_TIMEOUT_MS": "15000"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

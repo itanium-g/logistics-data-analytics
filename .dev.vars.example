@@ -1,0 +1,13 @@
+# Local development secrets for `wrangler dev` / `vite dev`.
+# Copy to .dev.vars (which is gitignored) and fill in real values.
+# Never commit real keys. This file must contain placeholders only.
+
+# Server-side provider key. Required only to enable natural-language questions.
+# Without it, /api/ask returns a clear provider_disabled state and the dashboard,
+# query API and SKU forecast continue to work.
+GROQ_API_KEY=replace-with-your-groq-api-key
+
+# Natural-language routing is off by default. Set this to the exact string "true"
+# in wrangler.jsonc vars (or here) to enable it. Any other spelling is rejected
+# at startup rather than being treated as truthy.
+LLM_ENABLED=false
