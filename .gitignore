@@ -1,0 +1,38 @@
+# Dependencies and build output
+node_modules/
+dist/
+.generated/
+coverage/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# Local Wrangler / D1 state
+.wrangler/
+worker-configuration.d.ts
+
+# Secrets: never commit provider keys
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+
+# Supplied assignment originals are user-provided inputs, not repository content.
+# See docs/assignment/README.md: they carry no open-source license grant.
+docs/assignment/*.csv
+docs/assignment/*.docx
+docs/assignment/*.pdf
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local agents
+.agents/

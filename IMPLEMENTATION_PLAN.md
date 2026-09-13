@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-Updated: 2026-09-11 UTC. **Planning only. No application implementation or deployment has begun.**
+Updated: 2026-09-13 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
@@ -70,17 +70,20 @@ The earlier 41–65 hours (49.2–78 with contingency) included custom sessions,
 
 Resolve compatible stable patches of React 19.3, Vite 8.1, TypeScript 7, Hono, Zod 4, Recharts and Wrangler at scaffold time. Node 24 LTS is the build toolchain; APIs run on Workers. Use one package.json and lockfile. A TypeScript 6 pin is acceptable if compiler integrations need it; record the reason rather than spending the timebox on a migration. Primary sources are in the setup guide.
 
-These are **future files**, not implementation created by this plan:
+These paths now exist and hold the implementation:
 
 | Path | Responsibility |
 |---|---|
 | src/web/ | Dashboard, Ask, forecast, charts/tables and shared evidence view. |
-| src/shared/contracts.ts | Strict request/response schemas, metric/dimension enums. |
-| src/domain/ | Metrics, safe query compilation, forecast and deterministic answers. |
-| src/worker/ | Routes, D1, one provider adapter and quota admission. |
+| src/shared/ | Strict request/response contracts, dataset constants, errors and the runtime-neutral `SqlDb` port. |
+| src/domain/ | Pure metrics, safe query compilation, date interpretation, forecast and deterministic answers. |
+| src/data/ | Persisted manifest access, CSV validation and deterministic seed generation. |
+| src/worker/ | Routes, D1 adapter (`db.ts`), one provider adapter and quota admission. |
 | scripts/import-data.ts | Quoted-field CSV validation and deterministic seed generation. |
 | migrations/ and data/manifest.json | Analytics/usage schema and provenance. |
 | tests/ and evals/ | Focused checks, frozen live cases and actual results. |
+
+The implementation follows this layout: `src/domain/` has no dependency on the Worker environment, `src/shared/db.ts` defines the SQL port, and `src/worker/db.ts` supplies the D1 adapter. The data/bootstrap modules live under `src/data/` so scripts, tests and Worker routes share them without presenting persistence code as domain logic.
 
 Import the user-supplied mock_logistics_data.csv from an explicit local input path and verify its checksum. Original source files are not committed in this update. Keep generated seeds, local database state, secrets and compiled output out of Git. Do not create a second competing source dataset.
 
@@ -205,24 +208,24 @@ P2 paid activation requires a reviewed reviewer gate and atomic monetary reserva
 
 ## 9. Acceptance evidence
 
-All gates below are **pending implementation**, apart from G00. Documentation checks are not application tests.
+Gate status as executed on this machine. "Met" means the check ran and the result was observed; the reproduction commands are in [README.md](README.md#local-setup).
 
-| Gate | Evidence before submission |
-|---|---|
-| G01 Data | Original checksum, 400 unique rows, 17 fields, invariants and golden totals. |
-| G02 Analytics | Five KPI results, empty/null cases, dashboard/Ask parity, full ranking and denominators. |
-| G03 Query safety | Unknown keys/values, bad dates, SQL-like inputs and extra/multiple model operations cannot bypass validation. |
-| G04 Forecast | Sparse known SKU, four months, CRAYON-0008 result, unknown SKU, zero demand, canceled exclusion and rounding. |
-| G05 Live AI | Frozen 20-case acceptance set, selected live provider, human-defined expected canonical plans/results. |
-| G06 Quotas/errors | Confirmed free route, token bounds, concurrent admission, rollover, timeout/429 behavior and no paid fallback. |
-| G07 Browser/runtime | Five cards, two charts, Ask chart/table, SKU forecast, date labels, keyboard/mobile, empty/error and model-off states. |
-| G08 Handoff | Tested clean-checkout instructions, reachable public URL, README, disclosure and credentials state. |
+| Gate | Status | Evidence |
+|---|---|---|
+| G01 Data | **Met** | Source SHA-256 verified at import; 400 unique rows, 17 fields, every control total in the data audit reproduced independently. The importer refuses to emit output if any control disagrees. |
+| G02 Analytics | **Met** | Five KPI results to full precision, empty and null-denominator cases, dashboard/Ask parity through shared domain functions, full-scope ranking before truncation, and denominators exposed on every ratio. |
+| G03 Query safety | **Met** | Unknown keys and values, bad dates, SQL-like inputs in value and identifier positions, and extra or multiple model operations all rejected with the dataset intact. |
+| G04 Forecast | **Met** | Sparse known SKU, four months, the exact CRAYON-0008 result of 3 units, unknown SKU, zero demand, canceled exclusion, and rounding once after summing. |
+| G05 Live AI | **Not met** | 20 cases frozen in `evals/cases.json` with expected plans and facts, defined before any run. They have not been executed against a provider. Passing them against a stubbed transport does not satisfy this gate. |
+| G06 Quotas and errors | **Partially met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are all verified locally. The free route itself is unconfirmed because no account has been used. |
+| G07 Browser and runtime | **Partially met** | Five cards, two charts, Ask panel, SKU forecast, date labels, empty/error/model-off states, keyboard reachability and JSON API 404 verified through a jsdom mount test and 13 workerd smoke checks. Real-device and deployed-browser checks are outstanding. |
+| G08 Handoff | **Partially met** | Clean-checkout instructions executed successfully; README, disclosure and credentials state are complete. There is no public URL and reviewer repository access is unverified. |
 
 Use 12 supported, 4 missing/ambiguous-input and 4 unsupported/adversarial live cases. Include all three quoted analytics examples, two SKU/four-month variations, filters, ranking, date basis and empty ranges. Define acceptable plans before execution. Require all 20 expected outcomes for the declared subset and no forbidden execution; publish counts rather than claiming general 100% accuracy.
 
 If tuning is needed, keep failures as regressions and confirm with fresh equivalent cases within quota. Record added time. Mock-only evaluation does not pass G05. Two-provider 60-case holdouts remain P2.
 
-Future script contract: npm ci; npm run typecheck; npm test; npm run build; npm run eval:live. Live evaluation is manual/quota-aware; ordinary tests never call a model. Add lint/CI and automated browser checks only when the core is verified. These commands do not exist yet.
+Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`; `npm run db:seed`; `npm run typecheck`; `npm test`; `npm run build`; `npm run smoke`. Ordinary tests never call a model: the routing tests substitute the HTTP transport. A live evaluation runner is not implemented, so `npm run eval:live` does not exist; the frozen cases would be executed manually against an enabled provider. Lint and CI were not added.
 
 ## 10. Release and handoff
 
@@ -236,4 +239,4 @@ Rollback: disable Ask for quota/provider incidents, restore the previous working
 
 Complete docs/submission-checklist.md with repository, deployed URL, access, revision and checks. The repository is private; verify reviewer access at handoff without silently changing visibility.
 
-**Done means:** required features work on the deployed revision with acceptance evidence. Source review and planning are complete; implementation, application tests, live evaluation, deployment and employer submission remain pending.
+**Done means:** required features work on the deployed revision with acceptance evidence. The application is implemented and locally verified against gates G01 to G04, with G06 and G07 partially met. Deployment, live model evaluation and employer submission remain pending, so this is not yet done by that definition.

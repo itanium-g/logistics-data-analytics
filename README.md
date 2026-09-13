@@ -1,72 +1,237 @@
 # Spaceship Logistics Analytics
 
-Planning and source materials for the Spaceship Senior Engineer Code Test. Updated September 11, 2026.
+A logistics analytics application over the supplied 400-order synthetic dataset: a React dashboard with five KPIs and two charts, a bounded query API, a known-SKU demand forecast with an inventory coverage target, and a natural-language routing boundary in which a model selects one operation and the application computes every number.
 
-**Status: documentation only. The application has not been implemented or deployed.** The supplied assignment and all four attachments have now been reviewed. The plan targets the brief's 6–10 hour effort and preserves its required features.
-
-## Start here
+**Status: implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Everything below was executed on this machine; the two gaps are stated plainly in [What is not done](#what-is-not-done).
 
 | Document | Purpose |
 |---|---|
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Small build scope, decisions, contracts, time budget and acceptance gates. |
-| [Requirements matrix](docs/requirements.md) | Source-by-source requirements, optional bonuses, rubric and example expectations. |
-| [Assignment materials](docs/assignment/README.md) | Supplied DOCX/PDF/CSV filenames, checksums and external links; originals are not committed. |
-| [Data audit](docs/data-audit.md) | Verified 400-row facts, KPI assumptions, date basis and sparse SKU history. |
-| [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) | Future setup runbook and retained hosting/LLM comparison matrices. |
-| [deep-research-report.md](deep-research-report.md) | Earlier reference audit and updated architecture analysis. |
-| [Submission checklist](docs/submission-checklist.md) | Repository access, deployed URL, credentials and release evidence. |
-| [AI_USAGE.md](AI_USAGE.md) | Actual research/planning assistance and verification performed. |
+| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Scope, contracts, sequencing and acceptance gates. |
+| [Requirements matrix](docs/requirements.md) | Source-by-source requirements and the evidence for each. |
+| [Data audit](docs/data-audit.md) | Independently calculated dataset facts and metric definitions. |
+| [Assignment materials](docs/assignment/README.md) | Supplied file names and checksums; the originals are not committed. |
+| [AI_USAGE.md](AI_USAGE.md) | Disclosure of AI assistance. |
+| [Submission checklist](docs/submission-checklist.md) | Handoff state. |
+| [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) | Retained hosting and provider comparison research. |
 
-## Assignment and reference links
+## Local setup
 
-- [Original Notion brief](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24)
-- [Reference answer repository](https://github.com/KhresnaPanduI/spaceship-logistics-analytics)
-- [Audited reference revision](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3)
+Requires Node 24 or newer (verified on **Node v24.21.0**, npm **11.19.0**) and the supplied `mock_logistics_data.csv`.
 
-The supplied coding brief and specification now establish requirements directly. The reference is comparison material; its code is not copied. The source catalog records assignment provenance and are not covered by an invented open-source license.
+```sh
+npm ci
+```
 
-## Planned product and architecture
+npm 11 blocks package install scripts by default. `esbuild` and `workerd` need theirs, and `package.json` already records that approval in `allowScripts`, so `npm ci` completes without prompting. If you install with an older npm and the Workers runtime is missing, run `npm install-scripts approve esbuild` and `npm install-scripts approve workerd`.
 
-Build one React dashboard and Hono API on Cloudflare Workers Static Assets, with D1 for the read-only dataset and separate usage counters. Evaluate Groq openai/gpt-oss-20b Free as the first live router. The target is $0 within quotas; actual account eligibility, runtime fit and model quality remain untested.
+Place the supplied CSV at `docs/assignment/mock_logistics_data.csv` (the default input path; the originals are gitignored and are not repository content), then import, migrate and seed:
 
-The model converts a question into one validated Query or Forecast decision. Application code performs all arithmetic, selects a chart from the result shape, and renders the answer and evidence. Dashboard and direct forecast forms work without a model. No login is planned for the supplied synthetic demo.
+```sh
+npm run data:import
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
 
-Required behavior: five KPI cards, at least two charts, dynamic natural-language analytics, known-SKU forecasts for up to four months, a historical/future visualization, numerical inventory planning target, methodology, filters and underlying data.
+`npm run data:import` verifies the input SHA-256 against the catalogued value, validates all 17 columns of every row, and refuses to write anything if a field is invalid or if a control total does not reproduce. Use `--input` for a different path and `--allow-checksum-mismatch` only when deliberately importing another dataset:
 
-## Local setup and environment variables
+```sh
+npm run data:import -- --input /absolute/path/to/mock_logistics_data.csv
+```
 
-There is no package.json, application scaffold, migration or executable setup script yet. The commands in the [setup guide](SETUP_AND_COMPARISON.md) are proposed future steps, not a runnable application at this revision. Replace this section with clean-checkout instructions verified against the implemented app before submission.
+Verification commands, all of which pass on a clean install:
 
-| Planned setting | Purpose |
+```sh
+npm run typecheck   # three TypeScript projects: browser, worker, component tests
+npm test            # 195 tests in 11 files
+npm run build       # SPA plus Worker bundle
+npm run smoke       # 13 checks against the built app on workerd
+```
+
+`npm run smoke` builds nothing itself: run `npm run build` first. It starts the Cloudflare preview server, which is workerd plus the static-asset layer, so it exercises the same routing model as a deployment.
+
+### Environment variables
+
+Non-secret values live in `wrangler.jsonc` under `vars`; the secret lives in `.dev.vars` locally. Copy [.dev.vars.example](.dev.vars.example) to `.dev.vars` (gitignored) if you want to enable natural-language questions.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DB` | local D1 | D1 binding for analytics, the provenance manifest and usage counters. |
+| `GROQ_API_KEY` | unset | Server-side provider secret. Never referenced by browser code. |
+| `LLM_ENABLED` | `"false"` | Enables `/api/ask`. Only the exact strings `"true"` and `"false"` are accepted. |
+| `LLM_PROVIDER` / `LLM_MODEL` | `groq` / `openai/gpt-oss-20b` | Single provider adapter and model. |
+| `LLM_BILLING_MODE` | `"free"` | Anything other than `free` is refused. |
+| `LLM_MAX_INPUT_TOKENS` | `4096` | Complete input bound, including the schema. Exceeding it refuses the request. |
+| `LLM_MAX_BILLABLE_OUTPUT_TOKENS` | `512` | Output cap, including reasoning tokens. |
+| `LLM_DAILY_ATTEMPT_LIMIT` / `LLM_MONTHLY_ATTEMPT_LIMIT` | `100` / `1000` | Durable request ceilings. |
+| `LLM_DAILY_TOKEN_LIMIT` | `180000` | Daily token reservation, below the documented free allowance. |
+| `LLM_MIN_INTERVAL_SECONDS` | `60` | Global pacing between generations. |
+| `LLM_TIMEOUT_MS` | `15000` | Provider timeout. There are zero automatic retries. |
+
+With the defaults, `/api/ask` returns a `provider_disabled` state that explains itself, and the dashboard, query API and forecast all keep working. To try routing locally, put a real key in `.dev.vars` and set `LLM_ENABLED` to `"true"`.
+
+## Architecture and data flow
+
+One Worker serves the SPA and the API on a single origin. `wrangler.jsonc` sends `/api` and `/api/*` to the Worker first — including browser navigations — so a mistyped API path returns JSON 404 rather than the SPA shell with a 200.
+
+```mermaid
+flowchart TD
+    CSV["mock_logistics_data.csv (supplied, not committed)"]
+      -->|"scripts/import-data.ts: checksum, validation, integer cents"| SEED[".generated/seed.sql + data/manifest.json"]
+    SEED --> D1[("D1: orders, data_manifest, llm_usage")]
+
+    subgraph browser["src/web"]
+      DASH["Dashboard: 5 KPIs, 2 charts, filters"]
+      ASK["Ask panel"]
+      FC["Forecast form"]
+      EV["Shared evidence panel + table"]
+    end
+
+    DASH --> Q["POST /api/query"]
+    FC --> F["POST /api/forecast"]
+    ASK --> A["POST /api/ask"]
+
+    A --> GUARD["atomic D1 quota admission"]
+    GUARD --> MODEL["one generation, strict JSON schema"]
+    MODEL --> VAL["decision validation: exactly one operation"]
+    VAL --> DOMAIN
+    Q --> DOMAIN["src/domain: pure analytics and interpretation"]
+    F --> DOMAIN
+    DOMAIN --> DATA["src/data: manifest access"]
+    DATA --> D1
+    DOMAIN --> RES["typed result: rows, summary, assumptions, warnings, chart hint"]
+    RES --> EV
+```
+
+| Path | Responsibility |
 |---|---|
-| DB binding | Local/deployed D1 database for imported analytics and separate quota state. |
-| GROQ_API_KEY | Server-side provider secret; never commit or expose in browser code. |
-| LLM_ENABLED | False for ordinary local tests; enabled for the verified live demo. |
-| LLM_PROVIDER / LLM_MODEL / LLM_BILLING_MODE | groq / openai/gpt-oss-20b / free for the initial profile. |
-| Token, request and pacing limits | Bounds documented in the plan and setup guide. |
+| `src/shared/` | Contract enums and response types, dataset constants, error taxonomy and the runtime-neutral `SqlDb` port. No request validator is imported into the browser entrypoints. |
+| `src/domain/` | Pure metric registry, date interpretation, bounded query compiler, forecast, chart selection, value formatting, decision validation, prompt construction and answer rendering. |
+| `src/data/` | Persisted manifest reads plus CSV validation and deterministic seed SQL generation. |
+| `src/worker/` | Hono routes, the D1 adapter in `db.ts`, request guards, quota guard and one provider adapter. |
+| `src/web/` | Dashboard, Ask panel, forecast form, charts, tables, shared evidence panel. |
+| `scripts/` | Offline importer and the local smoke harness. |
+| `migrations/`, `data/manifest.json` | Schema and import provenance. |
+| `tests/`, `evals/` | Automated checks and the frozen live-acceptance cases. |
 
-The future importer takes the user-supplied CSV from an explicit local path and verifies it against the [source catalog](docs/assignment/README.md#original-files). Required build tools and exact compatible dependency versions must be pinned and verified during implementation.
+The boundary is intentional: domain code depends on the runtime-neutral SQL port and typed manifest model, never on Cloudflare's environment binding. D1-specific adaptation stays in `src/worker/db.ts`; importer and persisted-manifest concerns stay in `src/data/`.
 
-## Assumptions and limitations
+Design decisions worth naming:
 
-- The CSV contains 400 orders, 355 SKUs and historical 2025 dates. Sparse SKU forecasts are illustrative baselines.
-- No promised-delivery date exists. On-time and delay rates use explicit status proxies; exceptions are separate. See metric version 2 in the data audit.
-- Dataset mode visibly anchors relative questions to January 1, 2026. Delivery-event questions use delivery_date; order cohorts use order_date. Current mode can return empty ranges.
-- Complete 2025 coverage is a synthetic-demo assumption. Forecasts show that uncertainty and their historical as-of date.
-- Inventory output is a buffered demand coverage target. Stock, inbound supply and lead time are missing, so net purchases and service-level guarantees are unsupported.
-- Arbitrary SQL, causal explanations, uploads, multi-step agent actions and exact SLA calculations are outside the supported subset.
-- No application tests, live routing results or deployment performance are claimed.
+- **The dashboard and the natural-language path call the same domain functions.** Neither has its own SQL or its own arithmetic, so they cannot report different numbers for the same question.
+- **All SQL identifiers come from constant maps and every value is bound.** The request shape has no field capable of holding an expression, a join or a second statement, so injection is rejected at the schema before any compilation.
+- **Aggregation happens in SQL; ranking and truncation happen in TypeScript.** Group counts here are at most a few hundred, and doing it this way makes `total_groups` exact, keeps ties stable and puts undefined rates last without depending on engine-specific NULL ordering.
+- **Money is integer cents, parsed from the source string.** `11.69 * 100` is `1168.9999999999998` in IEEE-754; the importer never multiplies.
+- **`delivery_days` is derived once at import.** Average delivery time is then a plain average with no engine-specific date arithmetic.
+- **Ratios always carry their numerator and denominator; averages carry their eligible count.** A rate with no denominator returns null with an explanation, never `0.00%`.
+- **Usage counters live in their own table and code path.** Re-importing data replaces order rows and the manifest but never touches consumed quota, and the generated seed never names the usage table.
+
+## Question interpretation and tool selection
+
+`POST /api/ask` gives the model the question, the operation contract, the date context and the small filter vocabularies. It does not receive source rows, computed results, database access or the full 355-item SKU list — SKU-shaped tokens are extracted from the question and checked against the imported data instead.
+
+The model returns one JSON object under a strict schema and may select exactly one of four operations:
+
+| Operation | When | What runs |
+|---|---|---|
+| `query_metric` | Counts, rates, averages, trends, rankings | The same bounded query compiler the dashboard uses. |
+| `forecast` | Future demand for one named SKU | The same forecast function the forecast form uses. |
+| `clarify` | A required detail is genuinely missing | Nothing. The missing field is named and no value is assumed. |
+| `unsupported` | The data cannot answer the question | Nothing. The reason and the closest supported question are returned. |
+
+Strict structured output requires every property to be present, so the wire schema carries all four branches with unused ones null. Validation then rejects a missing branch, a second populated branch, an unknown tool, extra keys, prose, code fences and truncated output. A decision that parses but selects the wrong plan is treated as a routing failure, not an answer. Arguments are then validated by the same schema the direct API uses, so a plan that would produce an invalid query is refused rather than approximated.
+
+Every number in the answer text is read from a computed result field and formatted by the same functions the dashboard uses. The plan panel shows the validated interpretation; it does not show model reasoning.
+
+Worked examples, all verified against the deterministic API:
+
+| Question | Interpretation | Result |
+|---|---|---|
+| Show delayed orders by week for the last 3 months | `delayed_orders`, week grain, order date, 2025-10-01 to 2025-12-31 | Weekly line chart; the buckets sum to 10. A boundary week starts before 1 October, and the requested bounds are still reported unchanged. |
+| Which carrier has the highest delay rate? | `delay_rate` by carrier, ranked descending over the full scope | GLS at 28.57%, shown as 2 of 7 records, with 9 carrier groups ranked. |
+| How many orders were delivered late last month? | `total_orders`, **delivery date** basis, December 2025, status `delayed` | 4. Filtering order date instead would answer 3, which is a different question. |
+| Predict demand for SKU CRAYON-0008 for the next 4 months | forecast, horizon 4, buffer 20% | 7/12 units per month for January to April 2026 and a coverage target of 3 units. |
+| How much inventory should I plan? | clarify, missing `sku` | A question back. No SKU is guessed and no number appears. |
+| What is the exact on-time SLA rate? | unsupported | Explains that no promised dates or SLA thresholds exist, and offers the labelled status proxy. |
+
+## Metrics
+
+Metric version 2. The brief names the KPIs without prescribing formulas, so these definitions are explicit project choices.
+
+| Metric | Definition within the selected scope | Value over the whole dataset |
+|---|---|---|
+| Total orders | Count of orders; `order_id` uniqueness is enforced at import | 400 |
+| Delivered orders | `status = delivered` | 304 |
+| Delayed orders (status proxy) | `status = delayed`; exceptions counted separately | 55 |
+| On-time delivery rate (status proxy) | delivered / (delivered + delayed) | 304/359 = 84.68% |
+| Average delivery time (delivery-status records) | Mean whole calendar days for dated delivered or delayed records | 1324/359 = 3.69 days |
+
+Supporting metrics: delay rate (55/359 = 15.32%), exception, in-transit and canceled counts, total and non-canceled units, raw order value, and order value on delayed or exception records.
+
+## Assumptions and simplifications
+
+- `delivered` is the on-time proxy and `delayed` is the late proxy. The dataset has no promised delivery date and no SLA threshold, so **exact SLA compliance cannot be measured**. `exception` records have an unknown outcome and are excluded from rate denominators; a delivery date on an exception row does not establish delivery.
+- January to December 2025 is assumed to be a complete synthetic observation window. The last order is dated 2025-12-30, which proves neither completeness nor incompleteness, so observed bounds and assumed coverage are recorded separately and every forecast reports `coverage_unverified`.
+- Dataset mode is the default and anchors relative expressions to 2026-01-01, the day after assumed coverage ends, so "last month" means December 2025. Current mode uses today's UTC date and can legitimately return nothing; ranges are never silently shifted into 2025.
+- Order cohort questions use `order_date`; delivery-event questions use `delivery_date`. A delivery-date scope necessarily excludes in-transit and canceled orders, which have no delivery date.
+- Order identifiers contain `2026` while all dates are 2025. Identifiers are opaque and are never parsed for dates.
+- Order value is the raw supplied amount. It is not net revenue, and promotion discounts are not subtracted. Value on delayed or exception records is associated exposure, not measured loss.
+- The forecast baseline repeats a single monthly average with no seasonality, trend or promotion effect. Every SKU in this dataset is sparse — 313 of 355 appear once — so the twelve-month mean branch applies throughout; a trailing three-month mean is used only when at least six months recorded demand.
+- The inventory output is a demand-coverage target: the horizon baseline plus a visible buffer, rounded up once after summing. It is **not** a net purchase quantity, a reorder point, a calibrated safety stock or a service-level guarantee, because stock on hand, inbound supply, lead times and backorders are absent from the dataset.
+- No accuracy, confidence interval or backtest is claimed. Twelve sparse observations cannot establish forecast quality.
+- The public demo has no authentication, which is appropriate for supplied synthetic data and is not a pattern for real customer data. The origin check on POST requests is hardening, not authentication.
+
+## Unsupported queries
+
+These fail honestly rather than approximating:
+
+- Exact SLA compliance, promised delivery dates, causes of delay, cost of delay, customer identities: no such data exists.
+- Arbitrary SQL. The contract has no field that can carry an expression; a `raw_sql` key is rejected before anything executes.
+- A time series and a dimension breakdown in one result, and ranking a time series. The caller is asked to choose a trend or a ranking.
+- Category-level forecasts, horizons beyond four months, custom forecast start dates and alternative forecast methods.
+- More than three metrics, more than five filters, more than 20 values per filter, or a limit above 100.
+- Uploads, edits and deletes. Request paths expose no write to the analytics tables.
+- Multi-step agent actions, and any answer whose numbers would come from the model rather than from a computation.
+
+## Verification performed
+
+All on this machine, on a clean `npm ci`:
+
+- **Import:** every control total in [docs/data-audit.md](docs/data-audit.md) reproduced independently — 400 rows and 400 unique ids, order dates 2025-01-01 to 2025-12-30, latest delivery date 2025-12-31, 304/55/11/27/3 by status, 370 dated and 30 missing delivery dates, 1310 total and 1303 non-canceled units, USD 13,695.87 raw value, USD 2,386.10 on delayed or exception records, 355 SKUs, 8 categories, 9 carriers, 30 clients, 5 regions, 9 warehouses, 22 promotion rows, zero value mismatches, the twelve monthly controls, and the 313/39/3 SKU frequency profile. The importer refuses to emit output if any control disagrees.
+- **195 automated tests in 11 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. A documentation test fails if the README names a script that does not exist, omits an environment variable the Worker reads, or if a dependency stops being pinned exactly.
+- **Analytics:** the five KPIs to full precision, null-denominator cases, the delivered-only mean of 3.25 days kept as a separately labelled fact, a proof that a mean of per-carrier rates is not the aggregate ratio, all three brief examples, chart and table parity, truncation after full-scope ranking, and undefined rates ordered last.
+- **Query safety:** injected SQL in filter values and in metric, dimension and grain positions is rejected with the dataset intact; oversized, empty and non-JSON bodies, cross-origin POSTs, inverted and impossible date ranges, and conflicting date inputs are all refused.
+- **Forecast:** the CRAYON-0008 example exactly — monthly series `[6,0,0,1,0,0,0,0,0,0,0,0]`, sparse method, 7/12 units for each of January to April 2026, a 7/3 base and a coverage target of exactly 3 units, as of 2025-12-31. Rounding once is proved distinct from rounding per month; unknown SKUs, canceled-only SKUs, and horizon and buffer bounds are all covered.
+- **Routing boundary:** tests stub the HTTP transport, not the adapter, so the real provider code runs — request body, status handling, usage, finish reason and error mapping — with no network. Proven: all four operations route correctly; prose, an unknown tool, a `raw_sql` key, an injected metric name and two populated branches all execute nothing; timeout, 429 with `Retry-After`, 500 and truncation map to distinct codes; a timeout makes exactly one call.
+- **Quota:** five concurrent requests competing for a single remaining slot admit exactly one and refuse four; daily attempt, monthly attempt and token limits bind; a reservation is retained after a provider failure; a UTC day rollover starts a fresh allowance; a disabled provider consumes nothing.
+- **Runtime:** 13 smoke checks against the built app on workerd, covering the API and SPA routing split, the metric contract from local D1, both query examples, the forecast target, the disabled-provider state and SPA deep links.
+- **Secrets:** the built client bundle contains no key value, no provider endpoint and no `Authorization` header. The only occurrence of `GROQ_API_KEY` is the variable *name* in help text explaining how to enable the feature.
+
+Two things the automated checks do not cover, and where they are covered instead: Recharts measures its container, which jsdom reports as zero-sized, so chart SVGs are asserted in the browser smoke rather than in jsdom; and the model's actual routing quality is not measured at all, because no live provider call has been made.
+
+## What is not done
+
+- **Not deployed.** There is no public URL. Deployment needs a Cloudflare account, a real D1 database id in place of the all-zero local placeholder, remote migrations and seeding, and `wrangler secret put GROQ_API_KEY`.
+- **The live model route has not been evaluated.** [evals/cases.json](evals/cases.json) freezes 20 cases — 12 supported, 4 ambiguous, 4 adversarial — with expected plans and facts defined before any run. They have not been executed against a provider. Passing them against a stubbed transport does not establish live routing accuracy.
+- Cloudflare's free tier allows 10 ms CPU per invocation. Local timings say nothing about that; it needs measuring on a deployment.
+
+## Known characteristics
+
+The client bundle is about 626 kB (185 kB gzipped), mostly Recharts, which trips Vite's 500 kB chunk warning. It is a warning, not an error, and code splitting was left out of this scope.
+
+Resolved dependency versions, pinned exactly: React 19.3.0, Vite 8.3.0, TypeScript 7.0.2, Hono 4.13.7, Zod 4.6.4, Recharts 3.10.1, Wrangler 4.131.1, Vitest 4.1.11, csv-parse 7.0.2, jsdom 30.0.1. Two deviations from the plan's targets: Vite resolved to 8.3.0 rather than 8.1, and Vitest is pinned to 4.1.11 because `@cloudflare/vitest-pool-workers` still requires the 4.x line. That pool is not installed — tests run in plain Node against `node:sqlite` instead, which keeps the SQL real without a second runtime in the test loop.
 
 ## Future improvements
 
-After the required submission works, consider category forecasts, query history, richer validation cases, time-ordered forecast evaluation, model comparison and optional access controls. Production identity, calibrated inventory policies, larger datasets and operational hardening require separate scope.
+Category-level forecasts, query history, export, code splitting for the chart bundle, time-ordered forecast evaluation with a naive baseline comparison, a second provider comparison, an automated browser suite, and access controls if the dataset ever stops being synthetic. Production identity, calibrated inventory policies and larger datasets are separate scope.
 
-## Submission status
+## Submission state
 
-| Deliverable | Current state |
+| Deliverable | State |
 |---|---|
-| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics); currently private, reviewer access pending. |
-| Deployed app URL | Not deployed. |
-| Credentials | No login planned; record “Not required” when the deployed profile is verified. |
+| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), currently private; reviewer access still to be verified. |
+| Deployed URL | Not deployed. |
+| Credentials | Not required; no authentication in this profile. |
+| Data version | 1.0.0, metric version 2, source SHA-256 `b60f84b1…94bc82`. |
 
-No deadline is supplied. Complete the [submission checklist](docs/submission-checklist.md) after implementation. Planning completion does not mean the coding assignment is ready to submit.
+AI assistance is disclosed in [AI_USAGE.md](AI_USAGE.md). Complete [docs/submission-checklist.md](docs/submission-checklist.md) before submitting.

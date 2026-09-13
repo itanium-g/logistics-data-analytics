@@ -81,6 +81,8 @@ Therefore “delivered late last month” uses the second row and discloses the 
 
 ## Forecast assumptions and worked fixture
 
+The checked-in provenance record is `data/manifest.json`. Its runtime reader is `src/data/manifest.ts`; CSV validation and deterministic seed generation are in `src/data/import.ts` and `src/data/seed-sql.ts`. Analytical query and forecast code consumes these facts through the shared SQL/data contracts, while the Cloudflare-specific adapter remains under `src/worker/`.
+
 The recorded period is assumed to cover all of January–December 2025 for this synthetic demo. The last order on December 30 proves neither completeness nor incompleteness. Record assumed bounds separately from observed bounds and return coverage_unverified. Zero-filled months are conditional on that assumption.
 
 Forecast non-canceled quantity. The 355 SKUs are extremely sparse; category-only support would avoid the assignment's SKU example. Instead support known SKUs with a transparent 12-month moving-average baseline, low-history warning, historical/future chart and an inventory target. Do not claim statistical accuracy.

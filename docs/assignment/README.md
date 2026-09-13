@@ -35,6 +35,8 @@ The source attachments are assignment materials, not a new open-source license g
 
 ## Reading guide
 
+The application built from these sources keeps pure analytical rules in `src/domain/`, shared contracts and the runtime-neutral SQL port in `src/shared/`, data/bootstrap utilities in `src/data/`, and Cloudflare Worker adapters in `src/worker/`. The original files listed above remain supplied inputs and are not modified by that organization.
+
 - [Requirement traceability](../requirements.md): exact source sections, required/optional status and planned evidence.
 - [Data audit](../data-audit.md): verified counts, sparse history and explicit semantic assumptions.
 - [Implementation plan](../../IMPLEMENTATION_PLAN.md): small submission scope and future work.
