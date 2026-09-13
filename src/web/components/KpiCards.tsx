@@ -15,8 +15,11 @@ export function KpiCard({ metric, meta }: KpiCardProps) {
   const undefinedValue = metric.value === null;
 
   return (
-    <article className="kpi-card">
-      <h3 className="kpi-label">{metric.label}</h3>
+    <article className="kpi-card" data-metric={metric.metric}>
+      <div className="kpi-card-header">
+        <span className="kpi-mark" aria-hidden="true" />
+        <h3 className="kpi-label">{metric.label}</h3>
+      </div>
       <p className={undefinedValue ? "kpi-value kpi-value-undefined" : "kpi-value"}>
         {formatMetricValue(metric)}
       </p>

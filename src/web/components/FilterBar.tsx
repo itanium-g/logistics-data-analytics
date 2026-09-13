@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type {
   DateContext,
   DateField,
@@ -6,6 +7,7 @@ import type {
   RelativeRange,
 } from "../../shared/contracts.ts";
 import { DIMENSION_LABELS } from "../../domain/chart.ts";
+import { Icon } from "./Icons.tsx";
 
 /** Dimensions offered as dashboard filters, in display order. */
 export const FILTER_DIMENSIONS = [
@@ -55,6 +57,29 @@ function vocabularyFor(meta: MetaResponse, dimension: FilterDimension): readonly
   }
 }
 
+export function isDefaultScope(scope: DashboardScope): boolean {
+  return (
+    scope.relative_range === DEFAULT_SCOPE.relative_range &&
+    scope.date_context === DEFAULT_SCOPE.date_context &&
+    scope.date_field === DEFAULT_SCOPE.date_field &&
+    Object.keys(scope.selections).length === 0
+  );
+}
+
+export function scopeSummary(scope: DashboardScope, meta: MetaResponse): string {
+  const dateContext =
+    scope.date_context === "dataset"
+      ? `dataset · ref ${meta.dataset_reference_date}`
+      : "current UTC";
+  const dateField = scope.date_field === "order_date" ? "order date" : "delivery date";
+  const filters = Object.entries(scope.selections)
+    .filter((entry): entry is [FilterDimension, string] => typeof entry[1] === "string")
+    .map(([dimension, value]) => `${DIMENSION_LABELS[dimension]} ${value}`)
+    .join(", ");
+
+  return `${RANGE_LABELS[scope.relative_range]} · ${dateContext} · ${dateField}${filters === "" ? "" : ` · ${filters}`}`;
+}
+
 interface FilterBarProps {
   readonly meta: MetaResponse;
   readonly scope: DashboardScope;
@@ -64,38 +89,59 @@ interface FilterBarProps {
 
 /**
  * Every control is a select over vocabulary the server published, so the browser
- * cannot submit a value the server would have to reject.
+ * cannot submit a value the server would have to reject. The DOM contains one
+ * instance of each control; CSS moves primary dimensions between breakpoints.
  */
 export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const activeCount = Object.keys(scope.selections).length;
+  const advancedId = "advanced-filter-fields";
+
   const setSelection = (dimension: FilterDimension, value: string): void => {
     const next = { ...scope.selections };
-    if (value === "") {
-      delete next[dimension];
-    } else {
-      next[dimension] = value;
-    }
+    if (value === "") delete next[dimension];
+    else next[dimension] = value;
     onChange({ ...scope, selections: next });
   };
 
-  const activeCount = Object.keys(scope.selections).length;
-
   return (
-    <section className="panel filters" aria-labelledby="filters-heading">
+    <section
+      className={`panel filters-panel${advancedOpen ? " is-advanced-open" : ""}`}
+      aria-labelledby="filters-heading"
+      data-advanced-open={advancedOpen}
+    >
       <div className="filters-header">
-        <h2 id="filters-heading">Filters and date basis</h2>
-        <button
-          type="button"
-          className="link-button"
-          onClick={() => onChange(DEFAULT_SCOPE)}
-          disabled={disabled || (activeCount === 0 && scope.relative_range === "all_time")}
-        >
-          Reset
-        </button>
+        <div>
+          <p className="eyebrow">Scope</p>
+          <h2 id="filters-heading">Filter results</h2>
+        </div>
+        <div className="filters-actions">
+          <button
+            type="button"
+            className="secondary-button filters-toggle"
+            aria-expanded={advancedOpen}
+            aria-controls={advancedId}
+            onClick={() => setAdvancedOpen((open) => !open)}
+          >
+            <Icon name="filter" size={15} />
+            <span>Filters</span>
+            {activeCount > 0 && <span className="control-count">{activeCount}</span>}
+            <span className="toggle-chevron" aria-hidden="true">{advancedOpen ? "−" : "+"}</span>
+          </button>
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => onChange(DEFAULT_SCOPE)}
+            disabled={disabled || isDefaultScope(scope)}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
-      <div className="filter-grid">
-        <label htmlFor="filter-range">
-          Date range
+      <div className="filter-fields" id={advancedId}>
+        <label className="filter-field filter-field-range" htmlFor="filter-range">
+          <span>Date range</span>
           <select
             id="filter-range"
             value={scope.relative_range}
@@ -112,8 +158,38 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
           </select>
         </label>
 
-        <label htmlFor="filter-context">
-          Date context
+        <label className="filter-field filter-field-primary" htmlFor="filter-carrier">
+          <span>Carrier</span>
+          <select
+            id="filter-carrier"
+            value={scope.selections.carrier ?? ""}
+            disabled={disabled}
+            onChange={(event) => setSelection("carrier", event.target.value)}
+          >
+            <option value="">All carriers</option>
+            {vocabularyFor(meta, "carrier").map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-field filter-field-primary" htmlFor="filter-region">
+          <span>Region</span>
+          <select
+            id="filter-region"
+            value={scope.selections.region ?? ""}
+            disabled={disabled}
+            onChange={(event) => setSelection("region", event.target.value)}
+          >
+            <option value="">All regions</option>
+            {vocabularyFor(meta, "region").map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-field filter-field-advanced" htmlFor="filter-context">
+          <span>Date context</span>
           <select
             id="filter-context"
             value={scope.date_context}
@@ -122,15 +198,13 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
               onChange({ ...scope, date_context: event.target.value as DateContext })
             }
           >
-            <option value="dataset">
-              Dataset mode (reference {meta.dataset_reference_date})
-            </option>
-            <option value="current">Current mode (today, UTC)</option>
+            <option value="dataset">Dataset · ref {meta.dataset_reference_date}</option>
+            <option value="current">Current UTC · today</option>
           </select>
         </label>
 
-        <label htmlFor="filter-datefield">
-          Date field
+        <label className="filter-field filter-field-advanced" htmlFor="filter-datefield">
+          <span>Date basis</span>
           <select
             id="filter-datefield"
             value={scope.date_field}
@@ -139,35 +213,71 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
               onChange({ ...scope, date_field: event.target.value as DateField })
             }
           >
-            <option value="order_date">Order date (order cohorts)</option>
-            <option value="delivery_date">Delivery date (delivery events)</option>
+            <option value="order_date">Order date · cohorts</option>
+            <option value="delivery_date">Delivery date · events</option>
           </select>
         </label>
 
-        {FILTER_DIMENSIONS.map((dimension) => (
-          <label key={dimension} htmlFor={`filter-${dimension}`}>
-            {DIMENSION_LABELS[dimension]}
-            <select
-              id={`filter-${dimension}`}
-              value={scope.selections[dimension] ?? ""}
-              disabled={disabled}
-              onChange={(event) => setSelection(dimension, event.target.value)}
-            >
-              <option value="">All</option>
-              {vocabularyFor(meta, dimension).map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
+        <label className="filter-field filter-field-advanced" htmlFor="filter-product_category">
+          <span>Category</span>
+          <select
+            id="filter-product_category"
+            value={scope.selections.product_category ?? ""}
+            disabled={disabled}
+            onChange={(event) => setSelection("product_category", event.target.value)}
+          >
+            <option value="">All categories</option>
+            {vocabularyFor(meta, "product_category").map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-field filter-field-advanced" htmlFor="filter-warehouse">
+          <span>Warehouse</span>
+          <select
+            id="filter-warehouse"
+            value={scope.selections.warehouse ?? ""}
+            disabled={disabled}
+            onChange={(event) => setSelection("warehouse", event.target.value)}
+          >
+            <option value="">All warehouses</option>
+            {vocabularyFor(meta, "warehouse").map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-field filter-field-advanced" htmlFor="filter-status">
+          <span>Status</span>
+          <select
+            id="filter-status"
+            value={scope.selections.status ?? ""}
+            disabled={disabled}
+            onChange={(event) => setSelection("status", event.target.value)}
+          >
+            <option value="">All statuses</option>
+            {vocabularyFor(meta, "status").map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="active-scope" aria-live="polite">
+        <span className="active-scope-label">Applied</span>
+        <span className="scope-chip">{RANGE_LABELS[scope.relative_range]}</span>
+        <span className="scope-chip">{scope.date_context === "dataset" ? "Dataset dates" : "Current UTC"}</span>
+        <span className="scope-chip">{scope.date_field === "order_date" ? "Order date" : "Delivery date"}</span>
+        {Object.entries(scope.selections).map(([dimension, value]) => (
+          <span className="scope-chip scope-chip-accent" key={dimension}>
+            {DIMENSION_LABELS[dimension as FilterDimension]}: {value}
+          </span>
         ))}
       </div>
 
       <p className="filters-note">
-        Dataset mode anchors relative ranges to {meta.dataset_reference_date}, the day after the
-        assumed coverage window {meta.assumed_coverage.start} to {meta.assumed_coverage.end}.
-        Current mode uses today&apos;s UTC date and can legitimately return no records.
+        Dataset mode anchors relative ranges to {meta.dataset_reference_date}, the day after the assumed coverage window {meta.assumed_coverage.start} to {meta.assumed_coverage.end}. Current mode uses today&apos;s UTC date and can legitimately return no records.
       </p>
     </section>
   );

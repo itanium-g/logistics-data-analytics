@@ -16,10 +16,7 @@ import {
   formatMetricValue,
 } from "../../domain/format.ts";
 import type { QueryResponse } from "../../shared/contracts.ts";
-
-const AXIS_COLOR = "#a7aec0";
-const GRID_COLOR = "#333846";
-const SERIES_COLOR = "#5aa9ff";
+import { useReducedMotion } from "../theme.tsx";
 
 interface ResultChartProps {
   readonly result: QueryResponse;
@@ -55,6 +52,7 @@ export function ResultChart({ result, title }: ResultChartProps) {
   const points = buildPoints(result);
   const unit = result.units[result.chart.value_metric] ?? "orders";
   const suffix = axisSuffix(unit);
+  const reducedMotion = useReducedMotion();
 
   if (result.chart.hint === "scalar") {
     const first = points[0];
@@ -75,10 +73,11 @@ export function ResultChart({ result, title }: ResultChartProps) {
   }
 
   const tooltipStyle = {
-    background: "#21252f",
-    border: `1px solid ${GRID_COLOR}`,
-    borderRadius: "6px",
-    color: "#eef0f5",
+    background: "var(--chart-tooltip-bg)",
+    border: "1px solid var(--chart-tooltip-border)",
+    borderRadius: "8px",
+    color: "var(--chart-tooltip-text)",
+    boxShadow: "var(--shadow-popover)",
   };
 
   // Recharts types the tooltip value loosely, so narrow it here.
@@ -94,11 +93,11 @@ export function ResultChart({ result, title }: ResultChartProps) {
       <ResponsiveContainer width="100%" height={260}>
         {result.chart.hint === "line" ? (
           <LineChart data={[...points]} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-            <CartesianGrid stroke={GRID_COLOR} strokeDasharray="3 3" />
-            <XAxis dataKey="label" stroke={AXIS_COLOR} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+            <XAxis dataKey="label" stroke="var(--chart-axis)" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} interval="preserveStartEnd" />
             <YAxis
-              stroke={AXIS_COLOR}
-              tick={{ fontSize: 11 }}
+              stroke="var(--chart-axis)"
+              tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
               tickFormatter={(value: number) => `${value}${suffix}`}
               allowDecimals={unit !== "orders" && unit !== "units"}
             />
@@ -110,10 +109,11 @@ export function ResultChart({ result, title }: ResultChartProps) {
               type="monotone"
               dataKey="value"
               name={result.chart.y_label}
-              stroke={SERIES_COLOR}
+              stroke="var(--chart-series)"
               strokeWidth={2}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: "var(--chart-series)", stroke: "var(--chart-series)" }}
               connectNulls={false}
+              isAnimationActive={!reducedMotion}
             />
           </LineChart>
         ) : (
@@ -122,26 +122,32 @@ export function ResultChart({ result, title }: ResultChartProps) {
             layout="vertical"
             margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
           >
-            <CartesianGrid stroke={GRID_COLOR} strokeDasharray="3 3" horizontal={false} />
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" horizontal={false} />
             <XAxis
               type="number"
-              stroke={AXIS_COLOR}
-              tick={{ fontSize: 11 }}
+              stroke="var(--chart-axis)"
+              tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
               tickFormatter={(value: number) => `${value}${suffix}`}
               allowDecimals={unit !== "orders" && unit !== "units"}
             />
             <YAxis
               type="category"
               dataKey="label"
-              stroke={AXIS_COLOR}
-              tick={{ fontSize: 11 }}
+              stroke="var(--chart-axis)"
+              tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
               width={130}
             />
             <Tooltip
               contentStyle={tooltipStyle}
               formatter={formatTooltip}
             />
-            <Bar dataKey="value" name={result.chart.y_label} fill={SERIES_COLOR} />
+            <Bar
+              dataKey="value"
+              name={result.chart.y_label}
+              fill="var(--chart-series)"
+              radius={[0, 4, 4, 0]}
+              isAnimationActive={!reducedMotion}
+            />
           </BarChart>
         )}
       </ResponsiveContainer>
