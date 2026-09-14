@@ -165,7 +165,7 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
       <div className="scope-status" role="status" aria-live="polite">
         <span className={`status-dot${loading ? " is-pulsing" : ""}`} aria-hidden="true" />
         <span>
-          {loading && data !== null ? "Updating results · " : "Applied scope · "}
+          {loading && data !== null ? "Updating results · last applied scope · " : "Applied scope · "}
           {appliedScope}
           {data !== null && (
             <>
@@ -186,7 +186,7 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
         </div>
       )}
 
-      <section className="panel analytics-panel" aria-labelledby="kpi-heading" aria-busy={loading}>
+      <section className="metric-section" aria-labelledby="kpi-heading" aria-busy={loading}>
         <div className="section-heading">
           <div>
             <p className="eyebrow">At a glance</p>
@@ -197,26 +197,27 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
         {data === null ? (
           <SkeletonCards />
         ) : (
-          <>
-            <KpiGrid metrics={kpiMetrics} metricMeta={meta.metrics} />
-            <div className="evidence-stack">
-              <EvidencePanel
-                result={data.counts}
-                tableCaption="Order counts over the selected scope"
-                evidenceLabel="Count evidence"
-              />
-              <EvidencePanel
-                result={data.rates}
-                tableCaption="Delivery rate and duration over the selected scope"
-                evidenceLabel="Delivery metric evidence"
-              />
-            </div>
-          </>
+          <KpiGrid metrics={kpiMetrics} metricMeta={meta.metrics} />
         )}
       </section>
 
+      {data !== null && (
+        <div className="evidence-grid" aria-label="Metric evidence disclosures">
+          <EvidencePanel
+            result={data.counts}
+            tableCaption="Order-count groups over the selected analytical scope"
+            evidenceLabel="Count metrics · Data & evidence"
+          />
+          <EvidencePanel
+            result={data.rates}
+            tableCaption="Delivery-rate and duration groups over the selected analytical scope"
+            evidenceLabel="Delivery performance · Data & evidence"
+          />
+        </div>
+      )}
+
       <div className="chart-row">
-        <section className="panel chart-panel" aria-labelledby="monthly-heading" aria-busy={loading}>
+        <section className="panel chart-panel chart-panel-monthly" aria-labelledby="monthly-heading" aria-busy={loading}>
           <div className="section-heading section-heading-compact">
             <div>
               <p className="eyebrow">Volume trend</p>
@@ -224,6 +225,7 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
             </div>
             <span className="chart-legend"><span className="legend-swatch legend-swatch-indigo" />Orders</span>
           </div>
+          <p className="chart-context">Monthly groups · order records · server-selected chart view</p>
           {data === null ? (
             <ChartSkeleton />
           ) : (
@@ -232,13 +234,13 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
               <EvidencePanel
                 result={data.monthly}
                 tableCaption="Orders per calendar month in the selected scope"
-                evidenceLabel="Monthly chart data"
+                evidenceLabel="Monthly volume · Data & evidence"
               />
             </>
           )}
         </section>
 
-        <section className="panel chart-panel" aria-labelledby="status-heading" aria-busy={loading}>
+        <section className="panel chart-panel chart-panel-status" aria-labelledby="status-heading" aria-busy={loading}>
           <div className="section-heading section-heading-compact">
             <div>
               <p className="eyebrow">Order mix</p>
@@ -246,6 +248,7 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
             </div>
             <span className="chart-legend"><span className="legend-swatch legend-swatch-violet" />Records</span>
           </div>
+          <p className="chart-context">Status groups · delivery-status records · server-selected chart view</p>
           {data === null ? (
             <ChartSkeleton />
           ) : (
@@ -257,7 +260,7 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
               <EvidencePanel
                 result={data.statuses}
                 tableCaption="Orders per status in the selected scope"
-                evidenceLabel="Status chart data"
+                evidenceLabel="Status breakdown · Data & evidence"
               />
             </>
           )}
