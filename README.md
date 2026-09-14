@@ -6,13 +6,15 @@ A logistics analytics application over the supplied 400-order synthetic dataset:
 
 | Document | Purpose |
 |---|---|
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Scope, contracts, sequencing and acceptance gates. |
+| [Implementation plan](docs/architecture/implementation-plan.md) | Scope, contracts, sequencing and acceptance gates. |
 | [Requirements matrix](docs/requirements.md) | Source-by-source requirements and the evidence for each. |
 | [Data audit](docs/data-audit.md) | Independently calculated dataset facts and metric definitions. |
 | [Assignment materials](docs/assignment/README.md) | Supplied file names and checksums; the originals are not committed. |
+| [Cloudflare deployment](docs/deployment/cloudflare.md) | Single-worker production deployment on Cloudflare D1 and Workers AI. |
 | [AI_USAGE.md](AI_USAGE.md) | Disclosure of AI assistance. |
 | [Submission checklist](docs/submission-checklist.md) | Handoff state. |
-| [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) | Retained hosting and provider comparison research. |
+| [Architecture research](docs/research/architecture-research.md) | In-depth platform architecture and technology evaluations. |
+| [Historical comparison](docs/research/historical-comparison.md) | Retained hosting and provider comparison research. |
 
 ## Local setup
 
@@ -48,33 +50,37 @@ npm run data:import -- --input /absolute/path/to/mock_logistics_data.csv
 Verification commands, all of which pass on a clean install:
 
 ```sh
-npm run typecheck   # three TypeScript projects: browser, worker, component tests
-npm test            # 222 tests in 17 files
+npm run typecheck   # three TypeScript projects: browser, server, component tests
+npm test            # comprehensive test suite across domain, server, client, and AI
 npm run build       # SPA plus Worker bundle
 npm run smoke       # 13 checks against the built app on workerd
+npm run verify      # run typecheck, test, and build together
 ```
 
 `npm run smoke` builds nothing itself: run `npm run build` first. It starts the Cloudflare preview server, which is workerd plus the static-asset layer, so it exercises the same routing model as a deployment.
 
 ### Environment variables
 
-Non-secret values live in `wrangler.jsonc` under `vars`; the secret lives in `.dev.vars` locally. Copy [.dev.vars.example](.dev.vars.example) to `.dev.vars` (gitignored) if you want to enable natural-language questions.
+Non-secret configuration lives in `wrangler.jsonc` under `vars`. Workers AI uses the native Cloudflare `AI` binding directly without external API keys or secrets.
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `DB` | local D1 | D1 binding for analytics, the provenance manifest and usage counters. |
-| `GROQ_API_KEY` | unset | Server-side provider secret. Never referenced by browser code. |
-| `LLM_ENABLED` | `"false"` | Enables `/api/ask`. Only the exact strings `"true"` and `"false"` are accepted. |
-| `LLM_PROVIDER` / `LLM_MODEL` | `groq` / `openai/gpt-oss-20b` | Single provider adapter and model. |
-| `LLM_BILLING_MODE` | `"free"` | Anything other than `free` is refused. |
-| `LLM_MAX_INPUT_TOKENS` | `4096` | Complete input bound, including the schema. Exceeding it refuses the request. |
-| `LLM_MAX_BILLABLE_OUTPUT_TOKENS` | `512` | Output cap, including reasoning tokens. |
-| `LLM_DAILY_ATTEMPT_LIMIT` / `LLM_MONTHLY_ATTEMPT_LIMIT` | `100` / `1000` | Durable request ceilings. |
-| `LLM_DAILY_TOKEN_LIMIT` | `180000` | Daily token reservation, below the documented free allowance. |
-| `LLM_MIN_INTERVAL_SECONDS` | `60` | Global pacing between generations. |
-| `LLM_TIMEOUT_MS` | `15000` | Provider timeout. There are zero automatic retries. |
+| `AI` | Workers AI binding | Native Cloudflare Workers AI binding. |
+| `AI_ENABLED` | `"false"` | Enables `/api/ask`. Only the exact strings `"true"` and `"false"` are accepted. |
+| `AI_MODEL` | `"@cf/google/gemma-4-26b-a4b-it"` | Cloudflare Workers AI default model identifier (Gemma 4). |
+| `AI_ESCALATION_MODEL` | `"@cf/zai-org/glm-5.3-flash"` | Escalation model for complex reasoning and long context (GLM-5.3 Flash). |
+| `AI_FALLBACK_MODEL` | `"@cf/zai-org/glm-4.7-flash"` | Fallback model if GLM-5.3 Flash billing is not enabled (GLM-4.7 Flash). |
+| `AI_GATEWAY_ID` | `"logistics-analytics-gateway"` | Cloudflare AI Gateway identifier for observability, caching, and routing. |
+| `AI_MAX_INPUT_TOKENS` | `4096` | Complete input bound, including schema and prompt. |
+| `AI_MAX_OUTPUT_TOKENS` | `512` | Output cap, including structured output tokens. |
+| `AI_DAILY_ATTEMPT_LIMIT` / `AI_MONTHLY_ATTEMPT_LIMIT` | `100` / `1000` | Durable request ceilings. |
+| `AI_DAILY_TOKEN_RESERVATION_LIMIT` | `180000` | Daily token reservation. |
+| `AI_MIN_INTERVAL_SECONDS` | `60` | Global pacing between generations. |
+| `AI_TIMEOUT_MS` | `15000` | Workers AI call timeout. |
+| `AI_MAX_RETRIES` | `2` | Maximum retries with exponential backoff on transient errors. |
 
-With the defaults, `/api/ask` returns a `provider_disabled` state that explains itself, and the dashboard, query API and forecast all keep working. To try routing locally, put a real key in `.dev.vars` and set `LLM_ENABLED` to `"true"`.
+With the defaults, `/api/ask` returns a `provider_disabled` state that explains itself, and the dashboard, query API and forecast all keep working. To try routing locally with remote Workers AI, run `npx wrangler dev --remote` or set `AI_ENABLED="true"`.
 
 ## Architecture and data flow
 
@@ -83,10 +89,10 @@ One Worker serves the SPA and the API on a single origin. `wrangler.jsonc` sends
 ```mermaid
 flowchart TD
     CSV["mock_logistics_data.csv (supplied, not committed)"]
-      -->|"scripts/import-data.ts: checksum, validation, integer cents"| SEED[".generated/seed.sql + data/manifest.json"]
+      -->|"scripts/import-data.ts: checksum, validation, integer cents"| SEED[".generated/seed.sql + .generated/manifest.json"]
     SEED --> D1[("D1: orders, data_manifest, llm_usage")]
 
-    subgraph browser["src/web"]
+    subgraph browser["src/client"]
       DASH["Dashboard: 5 KPIs, 2 charts, filters"]
       ASK["Ask panel"]
       FC["Forecast form"]
@@ -98,7 +104,8 @@ flowchart TD
     ASK --> A["POST /api/ask"]
 
     A --> GUARD["atomic D1 quota admission"]
-    GUARD --> MODEL["one generation, strict JSON schema"]
+    GUARD --> ROUTER["Centralized Model Router + AI Gateway"]
+    ROUTER --> MODEL["Workers AI (@cf/google/gemma-4-26b-a4b-it / @cf/zai-org/glm-5.3-flash)"]
     MODEL --> VAL["decision validation: exactly one operation"]
     VAL --> DOMAIN
     Q --> DOMAIN["src/domain: pure analytics and interpretation"]
@@ -114,13 +121,13 @@ flowchart TD
 | `src/shared/` | Contract enums and response types, dataset constants, error taxonomy and the runtime-neutral `SqlDb` port. No request validator is imported into the browser entrypoints. |
 | `src/domain/` | Pure metric registry, date interpretation, bounded query compiler, forecast, chart selection, value formatting, decision validation, prompt construction and answer rendering. |
 | `src/data/` | Persisted manifest reads plus CSV validation and deterministic seed SQL generation. |
-| `src/worker/` | Hono routes, the D1 adapter in `db.ts`, request guards, quota guard and one provider adapter. |
-| `src/web/` | Dashboard, Ask panel, forecast form, charts, tables, shared evidence panel. |
-| `scripts/` | Offline importer and the local smoke harness. |
-| `migrations/`, `data/manifest.json` | Schema and import provenance. |
-| `tests/`, `evals/` | Automated checks and the frozen live-acceptance cases. |
+| `src/server/` | Hono routes, the D1 adapter in `db/d1.ts`, request guards, quota guard and Workers AI client in `ai/client.ts`. |
+| `src/client/` | Modular client application: app shell, features (overview, forecast, assistant, table, evidence), UI components, styles and API client. |
+| `scripts/` | Offline importer, local smoke harness, and live AI evaluation runner. |
+| `migrations/`, `.generated/manifest.json` | Schema and import provenance. |
+| `tests/`, `evals/` | Automated checks (unit, component, server, AI) and the frozen live-acceptance cases. |
 
-The boundary is intentional: domain code depends on the runtime-neutral SQL port and typed manifest model, never on Cloudflare's environment binding. D1-specific adaptation stays in `src/worker/db.ts`; importer and persisted-manifest concerns stay in `src/data/`.
+The boundary is intentional: domain code depends on the runtime-neutral SQL port and typed manifest model, never on Cloudflare's environment binding. D1-specific adaptation stays in `src/server/db/d1.ts`; importer and persisted-manifest concerns stay in `src/data/`.
 
 Design decisions worth naming:
 
