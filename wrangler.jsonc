@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "logistics-analytics-demo",
-  "main": "src/worker/index.ts",
+  "main": "src/server/index.ts",
   "compatibility_date": "2026-09-11",
   "assets": {
     // Non-API navigations are served the SPA shell directly by the asset layer.
@@ -20,20 +20,26 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ai": {
+    "binding": "AI",
+    "remote": true
+  },
   "vars": {
     // Every value is a string and is parsed explicitly at runtime; the string
-    // "false" must never be treated as truthy. See src/worker/env.ts.
-    "LLM_ENABLED": "false",
-    "LLM_PROVIDER": "groq",
-    "LLM_MODEL": "openai/gpt-oss-20b",
-    "LLM_BILLING_MODE": "free",
-    "LLM_MAX_INPUT_TOKENS": "4096",
-    "LLM_MAX_BILLABLE_OUTPUT_TOKENS": "512",
-    "LLM_DAILY_ATTEMPT_LIMIT": "100",
-    "LLM_MONTHLY_ATTEMPT_LIMIT": "1000",
-    "LLM_DAILY_TOKEN_LIMIT": "180000",
-    "LLM_MIN_INTERVAL_SECONDS": "60",
-    "LLM_TIMEOUT_MS": "15000"
+    // "false" must never be treated as truthy.
+    "AI_ENABLED": "false",
+    "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+    "AI_ESCALATION_MODEL": "@cf/zai-org/glm-5.3-flash",
+    "AI_FALLBACK_MODEL": "@cf/zai-org/glm-4.7-flash",
+    "AI_GATEWAY_ID": "logistics-analytics-gateway",
+    "AI_MAX_INPUT_TOKENS": "4096",
+    "AI_MAX_OUTPUT_TOKENS": "512",
+    "AI_DAILY_ATTEMPT_LIMIT": "100",
+    "AI_MONTHLY_ATTEMPT_LIMIT": "1000",
+    "AI_DAILY_TOKEN_RESERVATION_LIMIT": "180000",
+    "AI_MIN_INTERVAL_SECONDS": "60",
+    "AI_TIMEOUT_MS": "15000",
+    "AI_MAX_RETRIES": "2"
   },
   "observability": {
     "enabled": true
