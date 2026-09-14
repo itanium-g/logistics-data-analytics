@@ -1,6 +1,6 @@
 /**
- * Native Cloudflare Workers AI client adapter with AI Gateway routing,
- * tiered model selection, exponential backoff retries, and graceful fallback.
+ * Native Cloudflare Workers AI client adapter with optional AI Gateway routing,
+ * free-tier-first model selection, bounded retries, and graceful fallback.
  *
  * Workers AI is accessed via the native Worker `AI` binding (env.AI.run).
  * Optional Cloudflare AI Gateway routing is enabled when `gatewayId` is present.
@@ -65,9 +65,14 @@ export interface WorkersAiClientOptions {
   readonly defaultModel?: string;
   /** Backward-compatible alias for defaultModel. */
   readonly model?: string;
-  /** Model for complex reasoning and long context. Defaults to GLM-5.3 Flash (@cf/zai-org/glm-5.3-flash). */
+  /**
+   * Explicit opt-in for paid escalation. When absent or false, every request
+   * and retry remains on the free-compatible default model.
+   */
+  readonly allowPaidEscalation?: boolean;
+  /** Paid model for complex reasoning and long context when explicitly enabled. */
   readonly escalationModel?: string;
-  /** Fallback model if billing is disabled on paid escalation. Defaults to GLM-4.7 Flash (@cf/zai-org/glm-4.7-flash). */
+  /** Free-compatible fallback if explicitly enabled paid escalation cannot be billed. */
   readonly fallbackModel?: string;
   /** Optional Cloudflare AI Gateway identifier */
   readonly gatewayId?: string;
@@ -194,10 +199,35 @@ export function normalizeWorkersAiResult(raw: unknown): {
   };
 }
 
+/**
+ * Build the native `env.AI.run()` text-generation input. Cloudflare's native
+ * binding uses the OpenAI-compatible structured-output shape where `schema`
+ * and `strict` live inside `response_format.json_schema`.
+ */
+export function buildWorkersAiInputs(call: AiCall): Record<string, unknown> {
+  return {
+    messages: [
+      { role: "system", content: call.system },
+      { role: "user", content: call.user },
+    ],
+    max_tokens: call.maxOutputTokens,
+    temperature: 0,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "analytics_decision",
+        strict: true,
+        schema: call.schema,
+      },
+    },
+  };
+}
+
 export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisionClient {
   const defaultModel = options.defaultModel ?? options.model ?? DEFAULT_MODEL;
   const escalationModel = options.escalationModel ?? ESCALATION_MODEL;
   const fallbackModel = options.fallbackModel ?? FALLBACK_MODEL;
+  const allowPaidEscalation = options.allowPaidEscalation === true;
   const maxRetries = options.maxRetries ?? 0;
   const baseDelayMs = options.retryDelayMs ?? 100;
 
@@ -211,17 +241,18 @@ export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisi
           ? call.user.split("\n")[0]!.replace("Question: ", "")
           : call.user);
 
-      // 1. Centralized model selection based on complexity and prompt bounds
+      // Centralized selection is free-tier-first unless paid escalation was
+      // explicitly enabled by an operator.
       const initialRoute = routeModel({
         question: questionText,
         estimatedTokens: call.estimatedTokens,
+        allowPaidEscalation,
         defaultModel,
         escalationModel,
         fallbackModel,
       });
 
       let currentModel = initialRoute.model;
-      let billingFallback = false;
       let routeReason = initialRoute.reason;
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -250,22 +281,7 @@ export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisi
 
             const rawResult = await options.ai.run(
               currentModel,
-              {
-                messages: [
-                  { role: "system", content: call.system },
-                  { role: "user", content: call.user },
-                ],
-                max_tokens: call.maxOutputTokens,
-                temperature: 0,
-                response_format: {
-                  type: "json_schema",
-                  json_schema: {
-                    name: "analytics_decision",
-                    strict: true,
-                    schema: call.schema,
-                  },
-                },
-              },
+              buildWorkersAiInputs(call),
               runOptions,
             );
 
@@ -303,9 +319,9 @@ export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisi
               routeReason,
             };
           } catch (error) {
-            // Billing error handling: if GLM-5.3 Flash fails due to billing, fall back to GLM-4.7 Flash
-            if (isBillingError(error) && currentModel === escalationModel && !billingFallback) {
-              billingFallback = true;
+            // Billing fallback is reachable only after the explicit paid
+            // escalation opt-in selected the paid model.
+            if (allowPaidEscalation && isBillingError(error) && currentModel === escalationModel) {
               currentModel = fallbackModel;
               routeReason = "billing_fallback";
               return {
@@ -382,8 +398,12 @@ export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisi
 
         // If retries remain and the error is retryable
         if (attempt < maxRetries) {
-          if (result.message === "non_json_retry_needed" && currentModel === defaultModel) {
-            currentModel = billingFallback ? fallbackModel : escalationModel;
+          if (
+            result.message === "non_json_retry_needed" &&
+            currentModel === defaultModel &&
+            allowPaidEscalation
+          ) {
+            currentModel = escalationModel;
             routeReason = "retry_escalation";
           }
 

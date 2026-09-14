@@ -25,7 +25,7 @@
     "db:seed:local": "wrangler d1 execute DB --local --file .generated/seed.sql",
     "db:seed:remote": "wrangler d1 execute DB --remote --file .generated/seed.sql",
     "eval:ai:live": "node scripts/eval-ai-live.ts",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy --env production"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

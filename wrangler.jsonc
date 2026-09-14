@@ -28,10 +28,13 @@
     // Every value is a string and is parsed explicitly at runtime; the string
     // "false" must never be treated as truthy.
     "AI_ENABLED": "false",
+    // Paid escalation is an explicit operator choice and is disabled by
+    // default. The production environment below enables Workers AI while
+    // retaining the free-compatible routing policy.
+    "AI_ALLOW_PAID_ESCALATION": "false",
     "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
     "AI_ESCALATION_MODEL": "@cf/zai-org/glm-5.3-flash",
     "AI_FALLBACK_MODEL": "@cf/zai-org/glm-4.7-flash",
-    "AI_GATEWAY_ID": "logistics-analytics-gateway",
     "AI_MAX_INPUT_TOKENS": "4096",
     "AI_MAX_OUTPUT_TOKENS": "512",
     "AI_DAILY_ATTEMPT_LIMIT": "100",
@@ -43,5 +46,12 @@
   },
   "observability": {
     "enabled": true
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "AI_ENABLED": "true"
+      }
+    }
   }
 }

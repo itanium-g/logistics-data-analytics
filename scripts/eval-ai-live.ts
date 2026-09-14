@@ -55,7 +55,7 @@ async function runEval(): Promise<void> {
   const { endpoint } = parseArgs();
   console.log("=== Spaceship Logistics: Live Workers AI Evaluation ===");
   console.log(`Endpoint: ${endpoint}`);
-  console.log(`Model:    @cf/google/gemma-4-26b-a4b-it (default) / @cf/zai-org/glm-5.3-flash (escalation)`);
+  console.log(`Model:    @cf/google/gemma-4-26b-a4b-it (default); paid GLM-5.3 escalation is opt-in`);
   console.log("");
 
   const evalPath = path.resolve("evals", "cases.json");

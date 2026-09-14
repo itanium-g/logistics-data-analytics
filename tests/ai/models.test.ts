@@ -84,6 +84,7 @@ describe("Model router policy", () => {
   it("escalates complex reasoning to GLM-5.3 Flash", () => {
     const decision = routeModel({
       question: "Compare carrier performance between DHL and FedEx versus warehouse volume",
+      allowPaidEscalation: true,
     });
     expect(decision.model).toBe("@cf/zai-org/glm-5.3-flash");
     expect(decision.reason).toBe("complex_reasoning");
@@ -93,6 +94,7 @@ describe("Model router policy", () => {
     const decision = routeModel({
       question: "Analyze recent orders",
       estimatedTokens: 3500,
+      allowPaidEscalation: true,
     });
     expect(decision.model).toBe("@cf/zai-org/glm-5.3-flash");
     expect(decision.reason).toBe("long_context");
@@ -102,6 +104,7 @@ describe("Model router policy", () => {
     const decision = routeModel({
       question: "Standard question",
       isRetry: true,
+      allowPaidEscalation: true,
     });
     expect(decision.model).toBe("@cf/zai-org/glm-5.3-flash");
     expect(decision.reason).toBe("retry_escalation");
@@ -114,5 +117,16 @@ describe("Model router policy", () => {
     });
     expect(decision.model).toBe("@cf/zai-org/glm-4.7-flash");
     expect(decision.reason).toBe("billing_fallback");
+  });
+
+  it("keeps complex, long and retry routes on the free default by default", () => {
+    for (const decision of [
+      routeModel({ question: "Compare DHL vs FedEx" }),
+      routeModel({ question: "Analyze recent orders", estimatedTokens: 3500 }),
+      routeModel({ question: "Standard question", isRetry: true }),
+    ]) {
+      expect(decision.model).toBe(DEFAULT_MODEL);
+      expect(decision.reason).toBe("default");
+    }
   });
 });

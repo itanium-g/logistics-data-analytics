@@ -298,6 +298,7 @@ export function resolveAiClient(
     client: createWorkersAiClient({
       ai: env.AI,
       defaultModel: config.model,
+      allowPaidEscalation: config.allowPaidEscalation,
       escalationModel: config.escalationModel,
       fallbackModel: config.fallbackModel,
       gatewayId: config.gatewayId,

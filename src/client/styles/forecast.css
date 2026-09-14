@@ -16,6 +16,15 @@
   gap: 16px;
 }
 
+/* Keep the configuration panel and result column from competing inside the
+ * reduced workspace left by the docked assistant. This rule lives after the
+ * base declaration so it cannot be reset by the feature stylesheet order. */
+@container workspace (max-width: 1099px) {
+  .forecast-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .forecast-config-panel {
   min-width: 0;
 }

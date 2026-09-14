@@ -3,5 +3,7 @@
 > Logistics analytics platform over synthetic order operations data.
 
 ## Workspaces
-- [Overview Workspace](http://localhost:5173/#overview): Operational KPIs, order volume trends, and delivery performance metrics.
-- [Forecasts Workspace](http://localhost:5173/#forecasts): SKU-level linear trend forecasting with adjustable horizon and confidence intervals.
+- [Overview Workspace](/#overview): Operational KPIs, order volume trends, and delivery performance metrics.
+- [Forecasts Workspace](/#forecasts): Known-SKU demand coverage forecasts with an adjustable 1–4 month horizon and visible planning buffer.
+
+The natural-language assistant is optional and routes one validated operation through Workers AI; all returned analytics and forecast values are computed by the application. The forecast is a sparse-history demand-coverage baseline, not a trend model, confidence interval, or purchase order recommendation.

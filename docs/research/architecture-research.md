@@ -1,12 +1,12 @@
 # Spaceship Logistics Analytics Research and Architecture
 
-Research baseline: 2026-09-11 UTC. **Supplied requirements verified; application now implemented and locally verified. Deployment and live-model evaluation remain pending.** Historical research and original analytical findings are retained below; current evidence is linked separately.
+Research baseline: 2026-09-11 UTC. **Supplied requirements verified; application is implemented and the release process is recorded separately.** Historical research and original analytical findings are retained below; current evidence is linked separately.
 
 The supplied assignment supports the existing low-cost TypeScript architecture, but changes the delivery scope. Build one small public demo with five KPIs, two charts, live Query/Forecast routing, a four-month SKU forecast and numerical inventory target. The 6–10 hour expectation takes priority over the former 41–65 hour hardening backlog.
 
-[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns current contracts and sequencing. [Requirements](docs/requirements.md) maps the source brief. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) preserves the provider survey and setup runbook. [Data audit](docs/data-audit.md) owns independently calculated fixture facts.
+[Implementation plan](../architecture/implementation-plan.md) owns current contracts and sequencing. [Requirements](../requirements.md) maps the source brief. [Historical comparison](historical-comparison.md) preserves the provider survey. [Data audit](../data-audit.md) owns independently calculated fixture facts.
 
-Current implementation evidence: [README](README.md#verification-performed), [frontend behavior](docs/frontend-redesign.md) and [current screenshots](docs/screenshots/README.md). The research and original analytical findings below are retained as historical context; current package pins and setup commands come from the implementation. Deployment, live-model evaluation and the browser gaps listed in the screenshot README remain pending. No vendor research was rerun for this documentation refresh.
+Current implementation evidence: [README](../../README.md#verification-performed), [frontend behavior](../frontend-redesign.md) and [current screenshots](../screenshots/README.md). The research and original analytical findings below are retained as historical context; current package pins and setup commands come from the implementation. No vendor research was rerun for this documentation refresh.
 
 ## 1. Evidence and source authority
 
@@ -123,7 +123,7 @@ Measure Worker CPU separately from network latency during the future deployment.
 
 ## 6. Earlier audit findings retained
 
-The [earlier report at da1d4a4](https://github.com/itanium-g/logistics-data-analytics/blob/da1d4a408c80ebcd462acd5c89b17a325a5316af/deep-research-report.md) preserves the full prior reference audit and source links. Its useful principles remain:
+The earlier research revision preserves the prior reference audit and source links. Its useful principles remain:
 
 - Use units rather than order counts for inventory forecasts; allow zero recommendations.
 - Separate mock integration checks from live routing evidence.
@@ -137,7 +137,7 @@ The [earlier report at da1d4a4](https://github.com/itanium-g/logistics-data-anal
 
 The earlier report's unavailable-source statements, category-only scope, exception-inclusive KPI defaults and extended timebox are superseded by this revision. No old audit statement is presented as a fresh run of the reference application's tests.
 
-The implemented source layout now keeps pure analytics in `src/domain/`, runtime-neutral contracts and the SQL port in `src/shared/`, persisted-manifest and import/bootstrap code in `src/data/`, and Cloudflare-specific adaptation in `src/worker/`. The public Worker entrypoint remains `src/worker/index.ts`.
+The implemented source layout now keeps pure analytics in `src/domain/`, runtime-neutral contracts and the SQL port in `src/shared/`, persisted-manifest and import/bootstrap code in `src/data/`, and Cloudflare-specific adaptation in `src/server/`. The public Worker entrypoint is `src/server/index.ts`.
 
 ## 7. Completion status
 

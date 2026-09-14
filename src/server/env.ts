@@ -32,6 +32,7 @@ export interface Env {
   readonly AI?: AiBinding;
 
   readonly AI_ENABLED?: string;
+  readonly AI_ALLOW_PAID_ESCALATION?: string;
   readonly AI_MODEL?: string;
   readonly AI_ESCALATION_MODEL?: string;
   readonly AI_FALLBACK_MODEL?: string;

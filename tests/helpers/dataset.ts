@@ -12,7 +12,6 @@ import { parse } from "csv-parse/sync";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import type { SqlDb } from "../../src/shared/db.ts";
 import {
   computeDatasetStats,
@@ -31,6 +30,36 @@ import {
   METRIC_VERSION,
   SUPPLIED_CSV_SHA256,
 } from "../../src/shared/dataset.ts";
+
+// The jsdom suites are transformed in Vite's client environment. Keep the
+// Node-only SQLite dependency out of that static module graph and resolve it
+// through Node at runtime instead. This preserves the real SQLite-backed
+// fixture without asking Vite to bundle a server-only built-in.
+type SqlInputValue = string | number | bigint | null | Uint8Array;
+type SqliteModule = {
+  DatabaseSync: new (location: string) => DatabaseSyncLike;
+};
+type DatabaseSyncLike = {
+  prepare(sql: string): {
+    all(...params: SqlInputValue[]): unknown[];
+    get(...params: SqlInputValue[]): unknown;
+    run(...params: SqlInputValue[]): unknown;
+  };
+  exec(sql: string): void;
+  close(): void;
+};
+
+const sqlite = (
+  process as unknown as {
+    getBuiltinModule?: (name: string) => unknown;
+  }
+).getBuiltinModule?.("node:sqlite") as SqliteModule | undefined;
+
+if (!sqlite) {
+  throw new Error("Node's node:sqlite built-in is required for the database test fixture.");
+}
+
+const { DatabaseSync } = sqlite;
 
 const ROOT = process.cwd();
 
@@ -90,22 +119,22 @@ export function suppliedStats(): DatasetStats {
   return computeDatasetStats(suppliedRows());
 }
 
-function nodeSqliteDb(database: DatabaseSync): SqlDb {
+function nodeSqliteDb(database: DatabaseSyncLike): SqlDb {
   return {
     all<T>(sql: string, params: readonly unknown[] = []): Promise<T[]> {
       const statement = database.prepare(sql);
-      return Promise.resolve(statement.all(...(params as SQLInputValue[])) as T[]);
+      return Promise.resolve(statement.all(...(params as SqlInputValue[])) as T[]);
     },
     first<T>(sql: string, params: readonly unknown[] = []): Promise<T | null> {
       const statement = database.prepare(sql);
-      const row = statement.get(...(params as SQLInputValue[]));
+      const row = statement.get(...(params as SqlInputValue[]));
       return Promise.resolve((row ?? null) as T | null);
     },
   };
 }
 
 export interface TestDatabase extends SqlDb {
-  readonly raw: DatabaseSync;
+  readonly raw: DatabaseSyncLike;
   close(): void;
 }
 
@@ -127,7 +156,7 @@ export function createTestDatabase(rows: readonly OrderRow[] = suppliedRows()): 
 }
 
 function makeStatement(
-  database: DatabaseSync,
+  database: DatabaseSyncLike,
   sql: string,
   params: readonly unknown[],
 ): D1PreparedStatement {
@@ -135,14 +164,14 @@ function makeStatement(
     bind: (...values: readonly unknown[]) => makeStatement(database, sql, values),
     all: <T>() =>
       Promise.resolve({
-        results: database.prepare(sql).all(...(params as SQLInputValue[])) as T[],
+        results: database.prepare(sql).all(...(params as SqlInputValue[])) as T[],
       }),
     first: <T>() =>
       Promise.resolve(
-        (database.prepare(sql).get(...(params as SQLInputValue[])) ?? null) as T | null,
+        (database.prepare(sql).get(...(params as SqlInputValue[])) ?? null) as T | null,
       ),
     run: () => {
-      database.prepare(sql).run(...(params as SQLInputValue[]));
+      database.prepare(sql).run(...(params as SqlInputValue[]));
       return Promise.resolve({ success: true });
     },
   };
@@ -150,7 +179,7 @@ function makeStatement(
 
 export interface TestBinding {
   readonly DB: D1Database;
-  readonly raw: DatabaseSync;
+  readonly raw: DatabaseSyncLike;
   close(): void;
 }
 

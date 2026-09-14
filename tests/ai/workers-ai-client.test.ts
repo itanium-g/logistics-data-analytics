@@ -103,6 +103,22 @@ describe("Workers AI client wrapper", () => {
     expect(client.name).toBe("workers-ai");
     expect(client.model).toBe(DEFAULT_MODEL);
     expect(capturedModel).toBe(DEFAULT_MODEL);
+    expect(capturedInputs).toEqual({
+      messages: [
+        { role: "system", content: "system prompt here" },
+        { role: "user", content: "What was the total order count?" },
+      ],
+      max_tokens: 512,
+      temperature: 0,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "analytics_decision",
+          strict: true,
+          schema: { type: "object" },
+        },
+      },
+    });
     expect(capturedInputs["messages"]).toEqual([
       { role: "system", content: "system prompt here" },
       { role: "user", content: "What was the total order count?" },
@@ -127,6 +143,7 @@ describe("Workers AI client wrapper", () => {
 
     const client = createWorkersAiClient({
       ai,
+      allowPaidEscalation: true,
       timeoutMs: 5000,
     });
 
@@ -160,6 +177,7 @@ describe("Workers AI client wrapper", () => {
 
     const client = createWorkersAiClient({
       ai,
+      allowPaidEscalation: true,
       timeoutMs: 5000,
     });
 
@@ -175,6 +193,38 @@ describe("Workers AI client wrapper", () => {
     if (result.ok) {
       expect(result.modelUsed).toBe(FALLBACK_MODEL);
       expect(result.routeReason).toBe("billing_fallback");
+    }
+  });
+
+  it("does not escalate paid models by default", async () => {
+    let capturedModel = "";
+    const ai: AiBinding = {
+      run: async (model) => {
+        capturedModel = model;
+        return { response: JSON.stringify(validDecision) };
+      },
+    };
+
+    const client = createWorkersAiClient({
+      ai,
+      timeoutMs: 5000,
+      maxRetries: 1,
+      retryDelayMs: 0,
+    });
+
+    const result = await client.complete({
+      system: "system prompt",
+      user: "Compare carrier performance between DHL and FedEx versus warehouse volume",
+      schema: {},
+      maxOutputTokens: 512,
+      estimatedTokens: 3500,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(capturedModel).toBe(DEFAULT_MODEL);
+    if (result.ok) {
+      expect(result.modelUsed).toBe(DEFAULT_MODEL);
+      expect(result.routeReason).toBe("default");
     }
   });
 

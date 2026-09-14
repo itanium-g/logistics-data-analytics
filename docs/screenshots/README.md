@@ -39,7 +39,7 @@ See the original [data audit](../data-audit.md), [frontend table/CSV contract](.
 
 ## Review limits
 
-- An existing forecast layout issue was observed at 1440 × 1100: the four-column configuration form extends beyond its narrow side panel. The readable 1280px stacked layout is captured above. Application code was not changed; fixing and rechecking that breakpoint remains pending.
+- At 1440 × 1100 with the assistant docked, the forecast configuration and result now stack within the reduced workspace. The container-query fix is checked in `src/client/styles/forecast.css`; no page-level horizontal overflow is expected.
 - Tablet assistant Escape dismissal and focus restoration to the assistant trigger were checked. These captures do not establish an exhaustive keyboard, screen-reader, backdrop-dismissal or focus-transition audit.
 - The enabled DevTools surface exposes color-scheme and viewport emulation but no reduced-motion or browser-zoom control. Reduced-motion media emulation and a full 200% browser-zoom audit remain pending. Reading CSS or shrinking a viewport does not establish either check.
 - System-theme transition review, a complete breakpoint sweep, real-device checks, deployed-browser checks and automated pixel-diff coverage are not claimed by this refresh.

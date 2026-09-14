@@ -57,20 +57,20 @@ The Logistics dashboard is a Pro product. No paid source, TailAdmin stylesheet, 
 
 New frontend boundaries:
 
-- src/web/components/AppHeader.tsx
-- src/web/components/AppSidebar.tsx
-- src/web/components/ModalDialog.tsx
-- src/web/components/Panel.tsx
-- src/web/components/ForecastTable.tsx
-- src/web/components/table/DataTable.tsx
-- src/web/components/table/table-model.ts
-- src/web/components/table/csv.ts
-- src/web/hooks/useMediaQuery.ts
+- src/client/components/AppHeader.tsx
+- src/client/components/AppSidebar.tsx
+- src/client/components/ModalDialog.tsx
+- src/client/components/Panel.tsx
+- src/client/features/forecast/ForecastTable.tsx
+- src/client/features/table/DataTable.tsx
+- src/client/features/table/table-model.ts
+- src/client/features/table/csv.ts
+- src/client/hooks/useMediaQuery.ts
 
 Updated presentation/shell files:
 
-- src/web/App.tsx, src/web/Dashboard.tsx, src/web/styles.css
-- src/web/components/AskPanel.tsx, EvidencePanel.tsx, FilterBar.tsx, ForecastPanel.tsx, ForecastResult.tsx, Icons.tsx, KpiCards.tsx, ResultChart.tsx, ResultTable.tsx
+- src/client/app/App.tsx, src/client/app/Dashboard.tsx, src/client/styles/*.css
+- src/client/features/assistant/AskPanel.tsx, features/evidence/*, features/overview/*, features/forecast/*
 
 Verification coverage:
 
@@ -88,7 +88,7 @@ Commands run against the completed local implementation:
 | Check | Result |
 |---|---|
 | npm run typecheck | Passed: browser, Worker and test TypeScript projects |
-| npm test | Passed: 222 tests in 17 files |
+| npm test | Passed: 253 tests in 23 files |
 | npm run build | Passed: client bundle, 728.94 kB raw / 210.41 kB gzip |
 | npm run smoke | Passed: 13/13 checks against local workerd at http://127.0.0.1:4173 |
 
@@ -98,7 +98,7 @@ The smoke command starts the local workerd/static preview and checks HTTP, runti
 
 The current Chrome DevTools 153.0 review used device scale 1 and the 12 states listed in the [screenshot README](screenshots/README.md). Review included light/dark themes, mobile navigation, modal/docked assistant, filter disclosure, real GLS and forecast responses, evidence search/sort, loaded fonts, stable chart frames and page-level overflow. Tablet assistant Escape dismissal and focus return were verified. Data version is 1.0.0 and metric version is 2.
 
-Reviewed captures live directly in [docs/screenshots](screenshots/README.md), with stable filenames overwritten on refresh. There is no historical gallery or automated pixel-diff suite. Reduced-motion media emulation and a full 200% browser-zoom audit remain follow-up manual checks. The current DevTools surface does not expose those controls; CSS zoom or a smaller viewport is not equivalent. The review also found forecast configuration clipping at 1440px; the desktop forecast capture uses the readable 1280px layout. See [review limits](screenshots/README.md#review-limits).
+Reviewed captures live directly in [docs/screenshots](screenshots/README.md), with stable filenames overwritten on refresh. There is no historical gallery or automated pixel-diff suite. See [review limits](screenshots/README.md#review-limits) for the remaining browser-tool limitations.
 
 ## Remaining limitations
 

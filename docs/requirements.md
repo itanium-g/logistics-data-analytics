@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-Reviewed: 2026-09-14 UTC. **Source review complete; core application implemented and locally verified.** Deployment, live model evaluation, reviewer access and remaining browser checks are pending; see [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
+Reviewed: 2026-09-14 UTC. **Source review complete; core application implemented and locally verified.** Deployment and live model evaluation are release-stage checks; see [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -76,13 +76,13 @@ These are deterministic acceptance expectations under the plan's declared assump
 | What is the exact on-time SLA rate? | Explain missing promised dates and offer the labeled status proxy | Exact SLA measurement unavailable. |
 | Last month; current mode in September 2026 | August 2026, without silently shifting to the dataset | Empty scope, with dates shown. |
 
-Status labels, dataset date anchoring, exception exclusion, coverage completeness, sparse-forecast method and buffer percentage are **project choices**, not employer-defined facts. The [data audit](data-audit.md) and [plan](../IMPLEMENTATION_PLAN.md) own their definitions.
+Status labels, dataset date anchoring, exception exclusion, coverage completeness, sparse-forecast method and buffer percentage are **project choices**, not employer-defined facts. The [data audit](data-audit.md) and [implementation plan](architecture/implementation-plan.md) own their definitions.
 
 ## Current status
 
 Requirement outcomes as executed on this machine. The reproduction commands are in [README.md](../README.md#local-setup).
 
-The source layout was also checked against the adopted architecture: pure analytics remains under `src/domain/`, shared contracts and the SQL port under `src/shared/`, data/bootstrap code under `src/data/`, and platform adapters under `src/worker/`. This is a maintainability refactor; it does not change the API contract or analytical results.
+The source layout was also checked against the adopted architecture: pure analytics remains under `src/domain/`, shared contracts and the SQL port under `src/shared/`, data/bootstrap code under `src/data/`, and platform adapters under `src/server/`. This is a maintainability refactor; it does not change the API contract or analytical results.
 
 | Requirement | Status |
 |---|---|
@@ -106,4 +106,4 @@ The principal submission gaps are **deployment**, **live model evaluation** and 
 
 The incremental Spaceship logistics-dashboard redesign is implemented within the existing React 19, TypeScript, Vite and ordinary-CSS application. It retains the current Overview and Forecasts controllers, analytical contracts, Recharts views, AI Analyst behavior, themes and hash navigation. It does not add maps, tracking, authentication, a Tailwind migration, or backend/data changes.
 
-The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 222 tests in 17 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Deployment and live-model evaluation remain outstanding.
+The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 253 tests in 23 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Deployment and live-model evaluation remain outstanding.

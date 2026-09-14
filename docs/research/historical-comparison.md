@@ -2,9 +2,9 @@
 
 Updated: **2026-09-11 UTC**. Project: [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics).
 
-**Recommended starting point: React + Hono on Cloudflare Workers with Static Assets and D1; evaluate Groq `openai/gpt-oss-20b` on its free tier.** For the 6–10 hour submission, use one adapter. DeepInfra `google/gemma-4-E4B-it` is an optional P2 comparison. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
+**Historical recommendation only:** the final application uses React + Hono on Cloudflare Workers with Static Assets, D1, and the native Workers AI binding. The earlier Groq and DeepInfra alternatives below were rejected for the final implementation and must not be added as external provider dependencies. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
 
-This retains the earlier setup design, provider matrices, price assumptions and selection policy. [The report](deep-research-report.md) owns historical audit evidence and analytical meaning; [the implementation plan](IMPLEMENTATION_PLAN.md) owns contracts and release gates. **The application is now implemented and locally verified.** Use [README local setup](README.md#local-setup), [package.json](package.json) and [wrangler.jsonc](wrangler.jsonc) for the current checkout. The scaffold recipes and comparisons below are historical design material, not instructions to recreate or overwrite the existing app. Deployment, account eligibility and live model evaluation remain pending; this refresh did not recheck vendor prices or terms.
+This retains the earlier setup design, provider matrices, price assumptions and selection policy. [The implementation plan](../architecture/implementation-plan.md) owns current contracts and release gates. **The application is now implemented and locally verified.** Use [README local setup](../../README.md#local-setup), [package.json](../../package.json) and [wrangler.jsonc](../../wrangler.jsonc) for the current checkout. The scaffold recipes and comparisons below are historical design material, not instructions to recreate or overwrite the existing app. Current Cloudflare model eligibility and the production procedure are documented in [the deployment guide](../deployment/cloudflare.md).
 
 **Assignment reconciliation:** the [supplied originals](docs/assignment/README.md) and [requirements matrix](docs/requirements.md) now govern scope. P0 is a public synthetic-data demo with no login, one free model adapter, known-SKU forecasts for 1–4 months and a 20-case live acceptance set. The former custom sessions, paid ledger, second adapter and 180-call experiment are optional P2 work. The plan's metric v2 and explicit order-date/delivery-date rules apply to every profile.
 
@@ -83,11 +83,11 @@ Choose TypeScript and decline immediate deployment in the scaffolder. Resolve th
 
 | Path to create | Responsibility |
 |---|---|
-| `src/web/` | Dashboard, Ask, forecast form, tables/charts and accessible states. |
+| `src/client/` | Dashboard, Ask, forecast form, tables/charts and accessible states. |
 | `src/shared/` | Strict API contracts, canonical enums, dataset constants, errors and the runtime-neutral SQL port. |
 | `src/domain/` | Pure registry, date interpretation, query compilation, forecasts and deterministic answers. |
 | `src/data/` | Manifest repository, CSV validation and deterministic seed SQL generation. |
-| `src/worker/` | Hono routes, the D1 adapter, one model adapter and free quota guard; sessions are optional P2. |
+| `src/server/` | Hono routes, the D1 adapter, Workers AI adapter and free quota guard. |
 | `migrations/` | Analytics schema and durable usage-state schema. |
 | `scripts/import-data.ts` | Offline authorized CSV validation and seed generation. |
 | `data/manifest.json` | Provenance, checksum, coverage, dimensions and schema/data version. |
@@ -103,7 +103,7 @@ Use the Cloudflare Vite plugin after the React plugin. Keep the template's compa
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "logistics-analytics-demo",
-  "main": "src/worker/index.ts",
+  "main": "src/server/index.ts",
   "compatibility_date": "2026-09-11",
   "assets": {
     "not_found_handling": "single-page-application",
@@ -116,9 +116,9 @@ Use the Cloudflare Vite plugin after the React plugin. Keep the template's compa
     "migrations_dir": "migrations"
   }],
   "vars": {
-    "LLM_ENABLED": "false",
-    "LLM_PROVIDER": "groq",
-    "LLM_MODEL": "openai/gpt-oss-20b",
+    "AI_ENABLED": "false",
+    "AI_ALLOW_PAID_ESCALATION": "false",
+    "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
     "LLM_BILLING_MODE": "free",
     "LLM_MAX_INPUT_TOKENS": "4096",
     "LLM_MAX_BILLABLE_OUTPUT_TOKENS": "512",
@@ -236,7 +236,7 @@ Copy the returned real ID into the reviewed D1 binding; confirm the selected acc
 ```sh
 npx wrangler d1 migrations apply DB --remote
 npx wrangler d1 execute DB --remote --file .generated/seed.sql
-npx wrangler secret put GROQ_API_KEY
+# The historical external-provider secret step is intentionally omitted.
 npm run build
 npx wrangler deploy
 ```

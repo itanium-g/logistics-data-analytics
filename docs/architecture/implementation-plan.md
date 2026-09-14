@@ -1,10 +1,10 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-Updated: 2026-09-14 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not. Current local verification: 222 tests in 17 files, three TypeScript projects, production build and 13/13 workerd smoke checks.
+Updated: 2026-09-14 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not. Current local verification: 253 tests in 23 files, three TypeScript projects, production build and 13/13 workerd smoke checks.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
-[Requirements](docs/requirements.md) maps the brief to acceptance evidence. The [source catalog](docs/assignment/README.md) records the supplied files and Notion/reference links. [Data audit](docs/data-audit.md) records facts and assumptions. [Setup and comparison](SETUP_AND_COMPARISON.md) owns provider research and the future setup runbook. [Submission checklist](docs/submission-checklist.md) tracks the handoff.
+[Requirements](../requirements.md) maps the brief to acceptance evidence. The [source catalog](../assignment/README.md) records the supplied files and Notion/reference links. [Data audit](../data-audit.md) records facts and assumptions. [Historical comparison](../research/historical-comparison.md) owns retained provider research. [Submission checklist](../submission-checklist.md) tracks the handoff.
 
 ## 1. Decisions and scope
 
@@ -74,16 +74,16 @@ These paths now exist and hold the implementation:
 
 | Path | Responsibility |
 |---|---|
-| src/web/ | Dashboard, Ask, forecast, charts/tables and shared evidence view. |
+| src/client/ | Dashboard, Ask, forecast, charts/tables and shared evidence view. |
 | src/shared/ | Strict request/response contracts, dataset constants, errors and the runtime-neutral `SqlDb` port. |
 | src/domain/ | Pure metrics, safe query compilation, date interpretation, forecast and deterministic answers. |
 | src/data/ | Persisted manifest access, CSV validation and deterministic seed generation. |
-| src/worker/ | Routes, D1 adapter (`db.ts`), one provider adapter and quota admission. |
+| src/server/ | Routes, D1 adapter (`db/d1.ts`), Workers AI adapter and quota admission. |
 | scripts/import-data.ts | Quoted-field CSV validation and deterministic seed generation. |
 | migrations/ and data/manifest.json | Analytics/usage schema and provenance. |
 | tests/ and evals/ | Automated checks and frozen live cases; no live evaluation results yet. |
 
-The implementation follows this layout: `src/domain/` has no dependency on the Worker environment, `src/shared/db.ts` defines the SQL port, and `src/worker/db.ts` supplies the D1 adapter. The data/bootstrap modules live under `src/data/` so scripts, tests and Worker routes share them without presenting persistence code as domain logic.
+The implementation follows this layout: `src/domain/` has no dependency on the Worker environment, `src/shared/db.ts` defines the SQL port, and `src/server/db/d1.ts` supplies the D1 adapter. The data/bootstrap modules live under `src/data/` so scripts, tests and Worker routes share them without presenting persistence code as domain logic.
 
 Import the user-supplied mock_logistics_data.csv from an explicit local input path and verify its checksum. Original source files are not committed in this update. Keep generated seeds, local database state, secrets and compiled output out of Git. Do not create a second competing source dataset.
 
@@ -196,7 +196,7 @@ Use a confirmed free model route. Paid generation is disabled; no automatic top-
 | Free pacing | One generation per 60 seconds globally; show retry-after. |
 | Request caps | 100 attempts/day and 1,000/month; token guard can admit fewer. |
 | Free tokens | 180,000 input-plus-maximum-output tokens/day. |
-| Activation | LLM_ENABLED=false until free-route checks and live acceptance pass. |
+| Activation | `AI_ENABLED=false` by default locally; the production Wrangler environment enables Workers AI with free-tier-first routing. |
 
 One atomic conditional D1 admission update advances counts, token reservations and pacing. Do not use separate read/check/write or instance-local counters. Uncertain/failed admission means no generation; retain reservations after failures. Check concurrent requests for the final slot and UTC rollover. Coordinate reviewer/evaluation calls against account-wide quota.
 
@@ -225,11 +225,11 @@ Use 12 supported, 4 missing/ambiguous-input and 4 unsupported/adversarial live c
 
 If tuning is needed, keep failures as regressions and confirm with fresh equivalent cases within quota. Record added time. Mock-only evaluation does not pass G05. Two-provider 60-case holdouts remain P2.
 
-Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`; `npm run db:seed`; `npm run typecheck`; `npm test`; `npm run build`; `npm run smoke`. Ordinary tests never call a model: the routing tests substitute the HTTP transport. A live evaluation runner is not implemented, so `npm run eval:live` does not exist; the frozen cases would be executed manually against an enabled provider. Lint and CI were not added.
+Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`; `npm run db:seed`; `npm run typecheck`; `npm test`; `npm run build`; `npm run smoke`. Ordinary tests never call a model: the routing tests substitute the HTTP transport. `npm run eval:ai:live` is available for an explicitly enabled provider, but the frozen cases remain unexecuted until a real provider run is authorized and recorded. Lint and CI were not added.
 
 ## Local browser verification update
 
-The current local Chrome DevTools capture review covers Overview and Forecasts, light/dark themes, docked/modal assistant, mobile navigation, expanded filters, GLS results and evidence search/sort. The [screenshot README](docs/screenshots/README.md) records all 12 states, exact viewports, checks and limitations. Tablet assistant Escape dismissal and focus return were verified. Reduced-motion media emulation, a full 200% browser-zoom audit, real-device checks and deployed-browser verification remain pending. A 1440px forecast configuration clipping issue is recorded there for follow-up; application behavior is unchanged by this documentation refresh.
+The local Chrome DevTools capture review covers Overview and Forecasts, light/dark themes, docked/modal assistant, mobile navigation, expanded filters, GLS results and evidence search/sort. The [screenshot README](../screenshots/README.md) records all 12 states, exact viewports, checks and limitations. The 1440px docked forecast layout now uses a container-query stack so its configuration and result remain within the available workspace.
 
 ## 10. Release and handoff
 

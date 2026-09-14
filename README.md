@@ -2,6 +2,28 @@
 
 A logistics analytics application over the supplied 400-order synthetic dataset: a React dashboard with five KPIs and two charts, a bounded query API, a known-SKU demand forecast with an inventory coverage target, and a natural-language routing boundary in which a model selects one operation and the application computes every number.
 
+## Live Application
+
+**Cloudflare deployment:** Pending final `main` deployment.
+
+## Product Preview
+
+### Operations Overview
+
+![Operations overview](docs/screenshots/overview-light-desktop.png)
+
+### AI-assisted Analytics
+
+![AI-assisted logistics analytics](docs/screenshots/overview-dark-docked.png)
+
+### SKU Forecasting
+
+![Forecast workspace](docs/screenshots/forecast-light-desktop.png)
+
+### Mobile Experience
+
+![Mobile dashboard](docs/screenshots/overview-light-mobile.png)
+
 **Status: implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Local test and capture evidence is recorded below; deployment, live evaluation, reviewer access and remaining browser checks are explicitly pending.
 
 | Document | Purpose |
@@ -68,10 +90,11 @@ Non-secret configuration lives in `wrangler.jsonc` under `vars`. Workers AI uses
 | `DB` | local D1 | D1 binding for analytics, the provenance manifest and usage counters. |
 | `AI` | Workers AI binding | Native Cloudflare Workers AI binding. |
 | `AI_ENABLED` | `"false"` | Enables `/api/ask`. Only the exact strings `"true"` and `"false"` are accepted. |
+| `AI_ALLOW_PAID_ESCALATION` | `"false"` | Explicit opt-in for paid-model escalation; long prompts, complex questions and retries stay on the free-compatible default when false. |
 | `AI_MODEL` | `"@cf/google/gemma-4-26b-a4b-it"` | Cloudflare Workers AI default model identifier (Gemma 4). |
-| `AI_ESCALATION_MODEL` | `"@cf/zai-org/glm-5.3-flash"` | Escalation model for complex reasoning and long context (GLM-5.3 Flash). |
-| `AI_FALLBACK_MODEL` | `"@cf/zai-org/glm-4.7-flash"` | Fallback model if GLM-5.3 Flash billing is not enabled (GLM-4.7 Flash). |
-| `AI_GATEWAY_ID` | `"logistics-analytics-gateway"` | Cloudflare AI Gateway identifier for observability, caching, and routing. |
+| `AI_ESCALATION_MODEL` | `"@cf/zai-org/glm-5.3-flash"` | Paid escalation model, used only when `AI_ALLOW_PAID_ESCALATION` is true. |
+| `AI_FALLBACK_MODEL` | `"@cf/zai-org/glm-4.7-flash"` | Free-compatible fallback if explicitly enabled paid escalation cannot be billed. |
+| `AI_GATEWAY_ID` | unset | Optional existing AI Gateway id; no Gateway is provisioned or used by default. |
 | `AI_MAX_INPUT_TOKENS` | `4096` | Complete input bound, including schema and prompt. |
 | `AI_MAX_OUTPUT_TOKENS` | `512` | Output cap, including structured output tokens. |
 | `AI_DAILY_ATTEMPT_LIMIT` / `AI_MONTHLY_ATTEMPT_LIMIT` | `100` / `1000` | Durable request ceilings. |
@@ -105,7 +128,7 @@ flowchart TD
 
     A --> GUARD["atomic D1 quota admission"]
     GUARD --> ROUTER["Centralized Model Router + AI Gateway"]
-    ROUTER --> MODEL["Workers AI (@cf/google/gemma-4-26b-a4b-it / @cf/zai-org/glm-5.3-flash)"]
+    ROUTER --> MODEL["Workers AI (Gemma 4 default; GLM-5.3 paid escalation opt-in; GLM-4.7 free fallback)"]
     MODEL --> VAL["decision validation: exactly one operation"]
     VAL --> DOMAIN
     Q --> DOMAIN["src/domain: pure analytics and interpretation"]
@@ -208,17 +231,17 @@ These fail honestly rather than approximating:
 
 ## Verification performed
 
-The original implementation checks below were run on this machine after a clean `npm ci`. The documentation refresh reran typecheck, all 222 tests in 17 files, the production build and 13/13 workerd smoke checks against the current working tree. After the edits, all nine documentation tests, local Markdown links/anchors, screenshot references and `git diff --check` passed. The refresh did not reinstall dependencies or reimport the data. External URL syntax was checked; historical vendor destinations and terms were not revalidated.
+The original implementation checks below were run on this machine after a clean `npm ci`. The documentation refresh reran typecheck, all 253 tests in 23 files, the production build and 13/13 workerd smoke checks against the current working tree. After the edits, all nine documentation tests, local Markdown links/anchors, screenshot references and `git diff --check` passed. The refresh did not reinstall dependencies or reimport the data. External URL syntax was checked; historical vendor destinations and terms were not revalidated.
 
 - **Import:** every control total in [docs/data-audit.md](docs/data-audit.md) reproduced independently — 400 rows and 400 unique ids, order dates 2025-01-01 to 2025-12-30, latest delivery date 2025-12-31, 304/55/11/27/3 by status, 370 dated and 30 missing delivery dates, 1310 total and 1303 non-canceled units, USD 13,695.87 raw value, USD 2,386.10 on delayed or exception records, 355 SKUs, 8 categories, 9 carriers, 30 clients, 5 regions, 9 warehouses, 22 promotion rows, zero value mismatches, the twelve monthly controls, and the 313/39/3 SKU frequency profile. The importer refuses to emit output if any control disagrees.
-- **222 automated tests in 17 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. Documentation tests check script names, environment variables and exact dependency pins; shell, table and CSV tests cover the frontend additions.
+- **253 automated tests in 23 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. Documentation tests check script names, environment variables and exact dependency pins; shell, table and CSV tests cover the frontend additions.
 - **Analytics:** the five KPIs to full precision, null-denominator cases, the delivered-only mean of 3.25 days kept as a separately labelled fact, a proof that a mean of per-carrier rates is not the aggregate ratio, all three brief examples, chart and table parity, truncation after full-scope ranking, and undefined rates ordered last.
 - **Query safety:** injected SQL in filter values and in metric, dimension and grain positions is rejected with the dataset intact; oversized, empty and non-JSON bodies, cross-origin POSTs, inverted and impossible date ranges, and conflicting date inputs are all refused.
 - **Forecast:** the CRAYON-0008 example exactly — monthly series `[6,0,0,1,0,0,0,0,0,0,0,0]`, sparse method, 7/12 units for each of January to April 2026, a 7/3 base and a coverage target of exactly 3 units, as of 2025-12-31. Rounding once is proved distinct from rounding per month; unknown SKUs, canceled-only SKUs, and horizon and buffer bounds are all covered.
 - **Routing boundary:** tests stub the HTTP transport, not the adapter, so the real provider code runs — request body, status handling, usage, finish reason and error mapping — with no network. Proven: all four operations route correctly; prose, an unknown tool, a `raw_sql` key, an injected metric name and two populated branches all execute nothing; timeout, 429 with `Retry-After`, 500 and truncation map to distinct codes; a timeout makes exactly one call.
 - **Quota:** five concurrent requests competing for a single remaining slot admit exactly one and refuse four; daily attempt, monthly attempt and token limits bind; a reservation is retained after a provider failure; a UTC day rollover starts a fresh allowance; a disabled provider consumes nothing.
 - **Runtime:** 13 smoke checks against the built app on workerd, covering the API and SPA routing split, the metric contract from local D1, both query examples, the forecast target, the disabled-provider state and SPA deep links. This checks HTTP/runtime and static-serving behavior; it does not assert rendered chart SVG geometry.
-- **Secrets:** the built client bundle contains no key value, no provider endpoint and no `Authorization` header. The only occurrence of `GROQ_API_KEY` is the variable *name* in help text explaining how to enable the feature.
+- **Secrets:** the built client bundle contains no key value, no provider endpoint and no `Authorization` header. No provider API keys are present in source or built assets; Workers AI uses the native binding and production enablement is configuration-only.
 
 Two things the automated checks do not cover, and where they are covered instead: Recharts measures its container, which jsdom reports as zero-sized, so chart SVG dimensions and stable geometry are checked during the Chrome DevTools browser review rather than in jsdom; and the model's actual routing quality is not measured at all, because no live provider call has been made.
 
@@ -228,7 +251,7 @@ The current 12 captures were refreshed from the local application in Chrome DevT
 
 ## What is not done
 
-- **Not deployed.** There is no public URL. Deployment needs a Cloudflare account, a real D1 database id in place of the all-zero local placeholder, remote migrations and seeding, and `wrangler secret put GROQ_API_KEY`.
+- **Deployment:** The feature branch is being verified before its authorized merge into `main`; production requires a real D1 database id in place of the all-zero local placeholder, remote migrations and seeding. No external provider secret is required.
 - **The live model route has not been evaluated.** [evals/cases.json](evals/cases.json) freezes 20 cases — 12 supported, 4 ambiguous, 4 adversarial — with expected plans and facts defined before any run. They have not been executed against a provider. Passing them against a stubbed transport does not establish live routing accuracy.
 - Cloudflare's free tier allows 10 ms CPU per invocation. Local timings say nothing about that; it needs measuring on a deployment.
 

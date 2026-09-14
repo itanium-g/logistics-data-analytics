@@ -13,6 +13,7 @@ import type { QuotaLimits } from "./quota.ts";
 
 export interface RuntimeAiConfig {
   readonly enabled: boolean;
+  readonly allowPaidEscalation: boolean;
   readonly model: string;
   readonly escalationModel: string;
   readonly fallbackModel: string;
@@ -38,6 +39,11 @@ export function readAiConfig(env: Env): RuntimeAiConfig {
 
   return {
     enabled: parseBooleanVar("AI_ENABLED", env.AI_ENABLED, false),
+    allowPaidEscalation: parseBooleanVar(
+      "AI_ALLOW_PAID_ESCALATION",
+      env.AI_ALLOW_PAID_ESCALATION,
+      false,
+    ),
     model: (env.AI_MODEL ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL,
     escalationModel: (env.AI_ESCALATION_MODEL ?? ESCALATION_MODEL).trim() || ESCALATION_MODEL,
     fallbackModel: (env.AI_FALLBACK_MODEL ?? FALLBACK_MODEL).trim() || FALLBACK_MODEL,

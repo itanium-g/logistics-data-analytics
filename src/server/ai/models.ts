@@ -1,13 +1,13 @@
 /**
  * Centralized Workers AI model registry, escalation, and routing policies.
  *
- * Tiered Architecture:
+ * Free-tier-first architecture:
  * 1. Default: @cf/google/gemma-4-26b-a4b-it
- *    Used for normal analytics, summaries, structured output, explanations, and tool calls.
- * 2. Escalation: @cf/zai-org/glm-5.3-flash
- *    Used for complex reasoning, multi-clause/comparative queries, or long-context requests.
- * 3. Fallback: @cf/zai-org/glm-4.7-flash
- *    Graceful fallback if GLM-5.3 Flash billing is not enabled or returns payment errors.
+ *    Used for every request by default, including long and comparative questions.
+ * 2. Optional paid escalation: @cf/zai-org/glm-5.3-flash
+ *    Available only when an operator explicitly enables paid escalation.
+ * 3. Free fallback: @cf/zai-org/glm-4.7-flash
+ *    Used when an explicitly enabled paid route cannot be billed.
  */
 
 export const DEFAULT_MODEL = "@cf/google/gemma-4-26b-a4b-it";
@@ -31,12 +31,14 @@ export interface RouteOptions {
   readonly estimatedTokens?: number;
   readonly isRetry?: boolean;
   readonly billingDisabled?: boolean;
+  /** Paid escalation is opt-in. The absent value is intentionally false. */
+  readonly allowPaidEscalation?: boolean;
   readonly defaultModel?: string;
   readonly escalationModel?: string;
   readonly fallbackModel?: string;
 }
 
-/** Thresholds for triggering long-context escalation */
+/** Thresholds considered by the optional paid-escalation policy. */
 export const LONG_CONTEXT_TOKEN_THRESHOLD = 3000;
 export const LONG_CONTEXT_CHAR_THRESHOLD = 500;
 
@@ -56,7 +58,8 @@ export function isComplexReasoning(question: string): boolean {
 }
 
 /**
- * Determine if a request exceeds standard prompt bounds and requires a long-context model.
+ * Determine if a request exceeds the default prompt bounds. This signal is
+ * only used for paid escalation when that policy is explicitly enabled.
  */
 export function isLongContext(question: string, estimatedTokens?: number): boolean {
   if (estimatedTokens !== undefined && estimatedTokens > LONG_CONTEXT_TOKEN_THRESHOLD) {
@@ -87,13 +90,15 @@ export function isBillingError(error: unknown): boolean {
 }
 
 /**
- * Route a question to the optimal model according to context length, complexity,
- * and retry/billing status.
+ * Route a question according to the configured cost policy. The default policy
+ * deliberately keeps every route on the free-compatible default model; prompt
+ * length, complexity, and retries must never silently select a paid model.
  */
 export function routeModel(options: RouteOptions): ModelRouteDecision {
   const defaultM = options.defaultModel ?? DEFAULT_MODEL;
   const escalationM = options.escalationModel ?? ESCALATION_MODEL;
   const fallbackM = options.fallbackModel ?? FALLBACK_MODEL;
+  const allowPaidEscalation = options.allowPaidEscalation === true;
 
   const targetEscalation = options.billingDisabled ? fallbackM : escalationM;
 
@@ -101,15 +106,15 @@ export function routeModel(options: RouteOptions): ModelRouteDecision {
     return { model: fallbackM, reason: "billing_fallback" };
   }
 
-  if (options.isRetry) {
+  if (allowPaidEscalation && options.isRetry) {
     return { model: targetEscalation, reason: "retry_escalation" };
   }
 
-  if (isLongContext(options.question, options.estimatedTokens)) {
+  if (allowPaidEscalation && isLongContext(options.question, options.estimatedTokens)) {
     return { model: targetEscalation, reason: "long_context" };
   }
 
-  if (isComplexReasoning(options.question)) {
+  if (allowPaidEscalation && isComplexReasoning(options.question)) {
     return { model: targetEscalation, reason: "complex_reasoning" };
   }
 

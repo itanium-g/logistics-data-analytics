@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "frozen_at": "2026-09-13",
   "executed": false,
-  "note": "Frozen acceptance set for live provider routing (gate G05). These cases have NOT been executed against a model: this build ships with LLM_ENABLED=false and no provider key. Expected plans and facts were defined by hand before any live run, from the deterministic API and docs/data-audit.md. Passing these against a mocked transport does not satisfy G05; only a live provider run does. Record actual counts, failures, tokens and latency when run, and do not claim general accuracy from twenty cases.",
+  "note": "Frozen acceptance set for live provider routing (gate G05). These cases have NOT been executed against a model: the local/default configuration ships with AI_ENABLED=false and no provider credentials. Expected plans and facts were defined by hand before any live run, from the deterministic API and docs/data-audit.md. Passing these against a mocked transport does not satisfy G05; only a live provider run does. Record actual counts, failures, tokens and latency when run, and do not claim general accuracy from twenty cases.",
   "composition": {
     "supported": 12,
     "ambiguous_or_missing_input": 4,
