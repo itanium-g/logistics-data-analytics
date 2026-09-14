@@ -1,0 +1,7 @@
+# Spaceship Logistics Analytics
+
+> Logistics analytics platform over synthetic order operations data.
+
+## Workspaces
+- [Overview Workspace](http://localhost:5173/#overview): Operational KPIs, order volume trends, and delivery performance metrics.
+- [Forecasts Workspace](http://localhost:5173/#forecasts): SKU-level linear trend forecasting with adjustable horizon and confidence intervals.

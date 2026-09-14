@@ -359,3 +359,23 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
+.app-footer {
+  padding: 20px 24px;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.5;
+  background: var(--surface);
+}
+
+.app-footer p {
+  max-width: 900px;
+  margin: 0;
+}
+
+.app-footer .footer-meta {
+  margin-top: 4px;
+  color: var(--text-muted);
+}

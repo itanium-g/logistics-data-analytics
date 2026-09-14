@@ -181,11 +181,17 @@ function AppShell() {
                     : "Plan demand coverage from the recorded order history without shifting the dataset timeline."}
                 </p>
               </div>
-              {meta !== null && (
+              {meta !== null ? (
                 <div className="workspace-context">
                   <span className="workspace-context-label">Observed window</span>
                   <strong>{meta.observed.order_date_min} — {meta.observed.order_date_max}</strong>
                   <span>{meta.observed.row_count} imported orders · data {meta.data_version}</span>
+                </div>
+              ) : (
+                <div className="workspace-context" aria-hidden="true">
+                  <span className="skeleton-line" style={{ width: "90px", height: "10px" }} />
+                  <span className="skeleton-line" style={{ width: "160px", height: "16px", margin: "4px 0" }} />
+                  <span className="skeleton-line" style={{ width: "130px", height: "11px" }} />
                 </div>
               )}
             </div>

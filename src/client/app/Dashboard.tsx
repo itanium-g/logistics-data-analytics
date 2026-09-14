@@ -90,10 +90,13 @@ function SkeletonCards() {
 
 function ChartSkeleton() {
   return (
-    <div className="chart-skeleton" role="status" aria-label="Loading chart">
-      <span className="skeleton-line" />
-      <span className="skeleton-line" />
-      <span className="skeleton-line" />
+    <div className="chart-skeleton-container" role="status" aria-label="Loading chart">
+      <div className="chart-skeleton">
+        <span className="skeleton-line" />
+        <span className="skeleton-line" />
+        <span className="skeleton-line" />
+      </div>
+      <div className="evidence-skeleton chart-evidence-skeleton" aria-hidden="true" />
     </div>
   );
 }
@@ -201,20 +204,27 @@ export function Dashboard({ meta, active = true }: DashboardProps) {
         )}
       </section>
 
-      {data !== null && (
-        <div className="evidence-grid" aria-label="Metric evidence disclosures">
-          <EvidencePanel
-            result={data.counts}
-            tableCaption="Order-count groups over the selected analytical scope"
-            evidenceLabel="Count metrics · Data & evidence"
-          />
-          <EvidencePanel
-            result={data.rates}
-            tableCaption="Delivery-rate and duration groups over the selected analytical scope"
-            evidenceLabel="Delivery performance · Data & evidence"
-          />
-        </div>
-      )}
+      <div className="evidence-grid" aria-label={data !== null ? "Metric evidence disclosures" : undefined}>
+        {data !== null ? (
+          <>
+            <EvidencePanel
+              result={data.counts}
+              tableCaption="Order-count groups over the selected analytical scope"
+              evidenceLabel="Count metrics · Data & evidence"
+            />
+            <EvidencePanel
+              result={data.rates}
+              tableCaption="Delivery-rate and duration groups over the selected analytical scope"
+              evidenceLabel="Delivery performance · Data & evidence"
+            />
+          </>
+        ) : (
+          <>
+            <div className="evidence-skeleton" aria-hidden="true" />
+            <div className="evidence-skeleton" aria-hidden="true" />
+          </>
+        )}
+      </div>
 
       <div className="chart-row">
         <section className="panel chart-panel chart-panel-monthly" aria-labelledby="monthly-heading" aria-busy={loading}>

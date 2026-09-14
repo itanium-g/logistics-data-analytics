@@ -33,7 +33,11 @@ function SidebarContents({
       aria-label="Primary navigation"
     >
       <div className="sidebar-brand-block">
-        <a className="sidebar-brand" href="#overview" aria-label="Spaceship Logistics Analytics overview">
+        <a
+          className="sidebar-brand"
+          href="#overview"
+          aria-label={collapsed || forcedRail ? "Spaceship Logistics Analytics Operations workspace" : undefined}
+        >
           <span className="brand-mark" aria-hidden="true">
             <Icon name="activity" size={18} />
           </span>
@@ -67,6 +71,8 @@ function SidebarContents({
           href="#overview"
           className={view === "overview" ? "is-active" : ""}
           aria-current={view === "overview" ? "page" : undefined}
+          aria-label="Overview"
+          title={collapsed || forcedRail ? "Overview" : undefined}
           onClick={() => onNavigate("overview")}
         >
           <Icon name="grid" size={17} />
@@ -76,6 +82,8 @@ function SidebarContents({
           href="#forecasts"
           className={view === "forecasts" ? "is-active" : ""}
           aria-current={view === "forecasts" ? "page" : undefined}
+          aria-label="Forecasts"
+          title={collapsed || forcedRail ? "Forecasts" : undefined}
           onClick={() => onNavigate("forecasts")}
         >
           <Icon name="chart" size={17} />
@@ -85,7 +93,7 @@ function SidebarContents({
 
       <div className="sidebar-spacer" />
 
-      <div className="sidebar-dataset" aria-label="Imported dataset metadata">
+      <section className="sidebar-dataset" aria-label="Imported dataset metadata">
         <p className="sidebar-section-label">Imported dataset</p>
         {meta === null ? (
           <span>Loading metadata…</span>
@@ -96,7 +104,7 @@ function SidebarContents({
             <span>{meta.observed.order_date_min} — {meta.observed.order_date_max}</span>
           </>
         )}
-      </div>
+      </section>
     </aside>
   );
 }

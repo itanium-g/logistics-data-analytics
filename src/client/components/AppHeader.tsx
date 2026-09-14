@@ -44,7 +44,7 @@ export function AppHeader({
       </div>
 
       <div className="header-actions">
-        {meta !== null && (
+        {meta !== null ? (
           <span
             className="dataset-badge"
             title={`Imported ${meta.imported_at}; coverage ${meta.assumed_coverage.start} to ${meta.assumed_coverage.end}`}
@@ -53,6 +53,10 @@ export function AppHeader({
             <span>Data {meta.data_version}</span>
             <span aria-hidden="true">·</span>
             <span>{meta.observed.row_count} records</span>
+          </span>
+        ) : (
+          <span className="dataset-badge dataset-badge-skeleton" aria-hidden="true">
+            <span className="skeleton-line" style={{ width: "130px", height: "14px" }} />
           </span>
         )}
 
