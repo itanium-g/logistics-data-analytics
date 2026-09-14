@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-Updated: 2026-09-13 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not.
+Updated: 2026-09-14 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not. Current local verification: 222 tests in 17 files, three TypeScript projects, production build and 13/13 workerd smoke checks.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
@@ -25,7 +25,7 @@ Use one React SPA and Hono API on Cloudflare Workers Static Assets, one D1 datab
 |---|---|---|
 | P0 | Five KPIs, two charts, filters, dynamic chart selection, evidence table, live Query/Forecast routing, SKU four-month forecast, inventory target, README, disclosure and public URL | Required submission scope. |
 | P0 engineering support | Strict validation, safe SQL compilation, free quota guard, useful errors, basic responsive/keyboard usability, focused tests and live smoke evaluation | Chosen means of delivering the required behavior, not additional employer requirements. |
-| P1 | Category forecast selector, extra KPIs/charts, browser query history, export, richer ambiguity UX and expanded tests | Only after P0 works; cut first when time is short. |
+| P1 | Category forecast selector, extra KPIs/charts, browser query history, complete evidence-report export, richer ambiguity UX and expanded tests | Returned-row CSV export and expanded table/shell tests are implemented; the other items remain future work. |
 | P2 | Second provider and 180-call comparison, paid ledger, reviewer sessions, extensive backtests, calibrated intervals, Docker, automated browser suite and production identity | Separate estimates after submission. |
 
 The brief explicitly lists history, caching, tests, Docker, advanced explainability and ambiguity handling as optional bonuses. Basic evidence remains mandatory. Do not add SSR, RAG, vector search, multi-agent frameworks, queues, Redis, Kubernetes, multi-tenancy, uploads or purchasing automation.
@@ -81,7 +81,7 @@ These paths now exist and hold the implementation:
 | src/worker/ | Routes, D1 adapter (`db.ts`), one provider adapter and quota admission. |
 | scripts/import-data.ts | Quoted-field CSV validation and deterministic seed generation. |
 | migrations/ and data/manifest.json | Analytics/usage schema and provenance. |
-| tests/ and evals/ | Focused checks, frozen live cases and actual results. |
+| tests/ and evals/ | Automated checks and frozen live cases; no live evaluation results yet. |
 
 The implementation follows this layout: `src/domain/` has no dependency on the Worker environment, `src/shared/db.ts` defines the SQL port, and `src/worker/db.ts` supplies the D1 adapter. The data/bootstrap modules live under `src/data/` so scripts, tests and Worker routes share them without presenting persistence code as domain logic.
 
@@ -229,7 +229,7 @@ Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`;
 
 ## Local browser verification update
 
-The redesign was reviewed locally in Chrome DevTools at 360, 390, 768, 1280 and 1920px. The review covered the Overview and Forecasts workspaces, light/dark themes, assistant open/closed states, expanded filters, evidence, charts, tables, keyboard focus, Escape dismissal, focus restoration, reduced motion and page-level overflow. Tracked captures are listed in docs/screenshots/README.md. Deployment and deployed-browser verification remain outstanding.
+The current local Chrome DevTools capture review covers Overview and Forecasts, light/dark themes, docked/modal assistant, mobile navigation, expanded filters, GLS results and evidence search/sort. The [screenshot README](docs/screenshots/README.md) records all 12 states, exact viewports, checks and limitations. Tablet assistant Escape dismissal and focus return were verified. Reduced-motion media emulation, a full 200% browser-zoom audit, real-device checks and deployed-browser verification remain pending. A 1440px forecast configuration clipping issue is recorded there for follow-up; application behavior is unchanged by this documentation refresh.
 
 ## 10. Release and handoff
 
@@ -244,3 +244,5 @@ Rollback: disable Ask for quota/provider incidents, restore the previous working
 Complete docs/submission-checklist.md with repository, deployed URL, access, revision and checks. The repository is private; verify reviewer access at handoff without silently changing visibility.
 
 **Done means:** required features work on the deployed revision with acceptance evidence. The application is implemented and locally verified against gates G01 to G04, with G06 and G07 partially met. Deployment, live model evaluation and employer submission remain pending, so this is not yet done by that definition.
+
+Frontend redesign follow-up: see [docs/frontend-redesign.md](docs/frontend-redesign.md) for the incremental shell, responsive presentation, TanStack Table/CSV semantics, browser captures and measured verification. The historical hosting and provider plan above remains unchanged.

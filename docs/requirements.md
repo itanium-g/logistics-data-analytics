@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-Reviewed: 2026-09-13 UTC. **Source review complete. All requirements except deployment and live model evaluation are implemented and verified locally**; see [Current status](#current-status) for the exceptions and [README.md](../README.md#verification-performed) for the evidence.
+Reviewed: 2026-09-14 UTC. **Source review complete; core application implemented and locally verified.** Deployment, live model evaluation, reviewer access and remaining browser checks are pending; see [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -92,11 +92,18 @@ The source layout was also checked against the adopted architecture: pure analyt
 | R14 | **Not met.** The application is not deployed, so there is no publicly accessible URL. |
 | R15 | **Not applicable, recorded.** No authentication in this profile, so credentials are "Not required". |
 | R16 | **Met and verified.** No secrets in the repository or the built bundle; the environment example uses placeholders. |
-| R17, R18, R23 | **Met.** TypeScript on Workers and D1 with a structured contract, an allowlisted compiler, bound values and separated domain functions, built within the timebox. |
+| R17, R18 | **Met locally.** TypeScript on Workers and D1 with a structured contract, an allowlisted compiler, bound values and separated domain functions. |
+| R23 | **Scope documented; elapsed effort unverified.** The brief's 6–10 hour expectation is retained, but no complete time log establishes that implementation and follow-ups fit it. |
 | R19, R20, R21, R22 | **Met.** The README records commands that were actually executed, the architecture and data flow, tool routing with worked examples, and the assumptions, unsupported queries and future work. |
 | R24 | **Met.** [AI_USAGE.md](../AI_USAGE.md) records the actual implementation assistance and the defects the checks caught. |
 | R25 | **Not met.** No deployed URL, and reviewer access to the private repository is unverified. |
 
 Optional bonuses: B03 (tests) is included well beyond the minimum. B01, B02, B04 and B05 were not implemented. B06 is partially implemented: safe clarification exists, elaborate conversational follow-ups do not.
 
-Two gaps are therefore outstanding for submission: **deployment** and **live model evaluation**. There is no supplied deadline; do not invent one.
+The principal submission gaps are **deployment**, **live model evaluation** and **reviewer repository access**. Remaining browser checks and the observed forecast layout issue are recorded in the [screenshot README](screenshots/README.md#review-limits). There is no supplied deadline; do not invent one.
+
+## Frontend redesign handoff
+
+The incremental Spaceship logistics-dashboard redesign is implemented within the existing React 19, TypeScript, Vite and ordinary-CSS application. It retains the current Overview and Forecasts controllers, analytical contracts, Recharts views, AI Analyst behavior, themes and hash navigation. It does not add maps, tracking, authentication, a Tailwind migration, or backend/data changes.
+
+The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 222 tests in 17 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Deployment and live-model evaluation remain outstanding.

@@ -2,7 +2,7 @@
 
 A logistics analytics application over the supplied 400-order synthetic dataset: a React dashboard with five KPIs and two charts, a bounded query API, a known-SKU demand forecast with an inventory coverage target, and a natural-language routing boundary in which a model selects one operation and the application computes every number.
 
-**Status: implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Everything below was executed on this machine; the two gaps are stated plainly in [What is not done](#what-is-not-done).
+**Status: implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Local test and capture evidence is recorded below; deployment, live evaluation, reviewer access and remaining browser checks are explicitly pending.
 
 | Document | Purpose |
 |---|---|
@@ -33,7 +33,11 @@ npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:5173/#overview`. Use the header to switch between the Overview and Forecasts workspaces, choose System/Light/Dark appearance, and open the AI Analyst. Overview filters and forecast inputs stay in place while moving between workspaces; the assistant uses its own date-context selector.
+Open `http://localhost:5173/#overview`. Switch between Overview and Forecasts using the desktop sidebar or mobile navigation drawer. The header offers System/Light/Dark appearance and the AI Analyst. At 1280px and wider the assistant docks beside the workspace; at narrower widths it opens as a modal. Overview scope, forecast inputs/results and the assistant draft/submitted interaction remain in their mounted controllers when changing workspaces; result-table controls can reset when their table unmounts.
+
+Overview filters apply immediately to all five KPIs and both charts: date range, carrier, region, category, warehouse, status, dataset/current date context and order/delivery date basis. More filters reveals secondary controls; mobile Filters reveals the fields. Removable scope chips and Reset restore the selected scope. The assistant has its own date context; dashboard filters do not scope its question. Suggested questions fill the draft without submitting, and retries use the submitted question and context.
+
+Grouped and temporal query tables and the forecast table support local search, raw-value sorting, facets where available, column visibility and pagination (25 rows by default; 10/25/50/100 options). These controls affect returned rows only, leaving charts and whole-scope evidence unchanged. Scalar query results use a simple table. Export CSV includes all locally filtered/sorted rows before pagination, visible columns with mandatory identifiers and metric basis companions, raw values and JSON `export_context`. It is a returned-data extract, not a complete evidence report. See [table and CSV details](docs/frontend-redesign.md#tables-and-csv).
 
 `npm run data:import` verifies the input SHA-256 against the catalogued value, validates all 17 columns of every row, and refuses to write anything if a field is invalid or if a control total does not reproduce. Use `--input` for a different path and `--allow-checksum-mismatch` only when deliberately importing another dataset:
 
@@ -45,7 +49,7 @@ Verification commands, all of which pass on a clean install:
 
 ```sh
 npm run typecheck   # three TypeScript projects: browser, worker, component tests
-npm test            # 206 tests in 13 files
+npm test            # 222 tests in 17 files
 npm run build       # SPA plus Worker bundle
 npm run smoke       # 13 checks against the built app on workerd
 ```
@@ -197,23 +201,23 @@ These fail honestly rather than approximating:
 
 ## Verification performed
 
-All on this machine, on a clean `npm ci`:
+The original implementation checks below were run on this machine after a clean `npm ci`. The documentation refresh reran typecheck, all 222 tests in 17 files, the production build and 13/13 workerd smoke checks against the current working tree. After the edits, all nine documentation tests, local Markdown links/anchors, screenshot references and `git diff --check` passed. The refresh did not reinstall dependencies or reimport the data. External URL syntax was checked; historical vendor destinations and terms were not revalidated.
 
 - **Import:** every control total in [docs/data-audit.md](docs/data-audit.md) reproduced independently — 400 rows and 400 unique ids, order dates 2025-01-01 to 2025-12-30, latest delivery date 2025-12-31, 304/55/11/27/3 by status, 370 dated and 30 missing delivery dates, 1310 total and 1303 non-canceled units, USD 13,695.87 raw value, USD 2,386.10 on delayed or exception records, 355 SKUs, 8 categories, 9 carriers, 30 clients, 5 regions, 9 warehouses, 22 promotion rows, zero value mismatches, the twelve monthly controls, and the 313/39/3 SKU frequency profile. The importer refuses to emit output if any control disagrees.
-- **206 automated tests in 13 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. A documentation test fails if the README names a script that does not exist, omits an environment variable the Worker reads, or if a dependency stops being pinned exactly.
+- **222 automated tests in 17 files.** Domain and route tests execute real SQL against Node's built-in `node:sqlite` through the same interface D1 satisfies, so the statements under test are the ones the Worker runs. Component tests render the real components against real API responses. A jsdom test mounts the whole application and serves its fetch calls from the real Worker over the seeded dataset. Documentation tests check script names, environment variables and exact dependency pins; shell, table and CSV tests cover the frontend additions.
 - **Analytics:** the five KPIs to full precision, null-denominator cases, the delivered-only mean of 3.25 days kept as a separately labelled fact, a proof that a mean of per-carrier rates is not the aggregate ratio, all three brief examples, chart and table parity, truncation after full-scope ranking, and undefined rates ordered last.
 - **Query safety:** injected SQL in filter values and in metric, dimension and grain positions is rejected with the dataset intact; oversized, empty and non-JSON bodies, cross-origin POSTs, inverted and impossible date ranges, and conflicting date inputs are all refused.
 - **Forecast:** the CRAYON-0008 example exactly — monthly series `[6,0,0,1,0,0,0,0,0,0,0,0]`, sparse method, 7/12 units for each of January to April 2026, a 7/3 base and a coverage target of exactly 3 units, as of 2025-12-31. Rounding once is proved distinct from rounding per month; unknown SKUs, canceled-only SKUs, and horizon and buffer bounds are all covered.
 - **Routing boundary:** tests stub the HTTP transport, not the adapter, so the real provider code runs — request body, status handling, usage, finish reason and error mapping — with no network. Proven: all four operations route correctly; prose, an unknown tool, a `raw_sql` key, an injected metric name and two populated branches all execute nothing; timeout, 429 with `Retry-After`, 500 and truncation map to distinct codes; a timeout makes exactly one call.
 - **Quota:** five concurrent requests competing for a single remaining slot admit exactly one and refuse four; daily attempt, monthly attempt and token limits bind; a reservation is retained after a provider failure; a UTC day rollover starts a fresh allowance; a disabled provider consumes nothing.
-- **Runtime:** 13 smoke checks against the built app on workerd, covering the API and SPA routing split, the metric contract from local D1, both query examples, the forecast target, the disabled-provider state and SPA deep links.
+- **Runtime:** 13 smoke checks against the built app on workerd, covering the API and SPA routing split, the metric contract from local D1, both query examples, the forecast target, the disabled-provider state and SPA deep links. This checks HTTP/runtime and static-serving behavior; it does not assert rendered chart SVG geometry.
 - **Secrets:** the built client bundle contains no key value, no provider endpoint and no `Authorization` header. The only occurrence of `GROQ_API_KEY` is the variable *name* in help text explaining how to enable the feature.
 
-Two things the automated checks do not cover, and where they are covered instead: Recharts measures its container, which jsdom reports as zero-sized, so chart SVGs are asserted in the browser smoke rather than in jsdom; and the model's actual routing quality is not measured at all, because no live provider call has been made.
+Two things the automated checks do not cover, and where they are covered instead: Recharts measures its container, which jsdom reports as zero-sized, so chart SVG dimensions and stable geometry are checked during the Chrome DevTools browser review rather than in jsdom; and the model's actual routing quality is not measured at all, because no live provider call has been made.
 
 ## Browser verification
 
-The local application was inspected in Chrome DevTools at 360, 390, 768, 1280 and 1920px. Review covered Overview, Forecasts, light/dark themes, assistant closed/open states, expanded filters, evidence, chart/table rendering, keyboard focus, Escape dismissal, focus restoration, reduced motion and page-level overflow. The captured reference images are checked in under [docs/screenshots](docs/screenshots/README.md).
+The current 12 captures were refreshed from the local application in Chrome DevTools 153.0 at device scale 1. They cover light/dark Overview, docked/modal assistant, mobile navigation and filters, direct forecast results, GLS scope and searched/sorted evidence. Fonts were loaded and chart frames stable before capture; each image was visually inspected. Exact viewports, analytical values and review limits are in the [screenshot README](docs/screenshots/README.md). These are local responsive emulations, not real-device or deployed-browser checks. Reduced-motion media emulation and a full 200% browser-zoom audit remain pending.
 
 ## What is not done
 
@@ -223,13 +227,15 @@ The local application was inspected in Chrome DevTools at 360, 390, 768, 1280 an
 
 ## Known characteristics
 
-The client bundle is about 626 kB (185 kB gzipped), mostly Recharts, which trips Vite's 500 kB chunk warning. It is a warning, not an error, and code splitting was left out of this scope.
+The client bundle is 728.94 kB (210.41 kB gzipped), mostly Recharts and TanStack Table, which trips Vite's large-chunk warning. The recorded baseline was 650.27 kB (190.07 kB gzipped), so the redesign delta is approximately +78.67 kB raw / +20.34 kB gzip. This remains below the 40 KiB gzip investigation threshold; the warning is not silenced and code splitting remains outside this scope.
 
 Resolved dependency versions, pinned exactly: React 19.3.0, Vite 8.3.0, TypeScript 7.0.2, Hono 4.13.7, Zod 4.6.4, Recharts 3.10.1, Wrangler 4.131.1, Vitest 4.1.11, csv-parse 7.0.2, jsdom 30.0.1. Two deviations from the plan's targets: Vite resolved to 8.3.0 rather than 8.1, and Vitest is pinned to 4.1.11 because `@cloudflare/vitest-pool-workers` still requires the 4.x line. That pool is not installed — tests run in plain Node against `node:sqlite` instead, which keeps the SQL real without a second runtime in the test loop.
 
 ## Future improvements
 
-Category-level forecasts, query history, export, code splitting for the chart bundle, time-ordered forecast evaluation with a naive baseline comparison, a second provider comparison, an automated browser suite, and access controls if the dataset ever stops being synthetic. Production identity, calibrated inventory policies and larger datasets are separate scope.
+Category-level forecasts, query history, complete evidence-report export, code splitting for the chart bundle, time-ordered forecast evaluation with a naive baseline comparison, a second provider comparison, an automated browser suite, and access controls if the dataset ever stops being synthetic. Returned-row CSV export is implemented. Production identity, calibrated inventory policies and larger datasets are separate scope.
+
+Implementation details, preservation boundaries, table/CSV semantics, dependency rationale and verification limits are recorded in [docs/frontend-redesign.md](docs/frontend-redesign.md).
 
 ## Submission state
 

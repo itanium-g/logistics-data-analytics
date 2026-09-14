@@ -1,6 +1,6 @@
 # Assignment source materials
 
-Reviewed: 2026-09-11 UTC. These are the four files supplied by the user for the Spaceship Senior Engineer Code Test. They were read without modification for planning. The original binaries and CSV are not committed to this repository; this catalog identifies the user-supplied inputs for later implementation.
+Source review: 2026-09-11 UTC. These are the four files supplied by the user for the Spaceship Senior Engineer Code Test. They were read without modification for planning and implementation. The original binaries and CSV are not committed to this repository; this catalog identifies the supplied inputs used by the [current application](../../README.md). This refresh does not alter the assignment assets or their recorded hashes.
 
 ## Source hierarchy
 
@@ -20,7 +20,7 @@ The user also supplied the Notion landing-page text listing the coding assignmen
 | logistics-spec.pdf | Four-page specification | 66091 | 2a67159a914feb3c81ae0b6d123c5a3193007e450b64242866439121a8f5c638 |
 | mock_logistics_data.csv | Assigned read-only dataset | 57475 | b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82 |
 
-The CSV has Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, matching the earlier audited reference fixture byte-for-byte. Future import code should use the user-supplied file from an explicit input path and verify this checksum.
+The CSV has Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, matching the earlier audited reference fixture byte-for-byte. The implemented importer verifies this checksum and accepts an explicit input path; see [local setup](../../README.md#local-setup).
 
 ## External links
 

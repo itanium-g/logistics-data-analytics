@@ -1,6 +1,6 @@
 # Supplied dataset audit and analytical assumptions
 
-Reviewed: 2026-09-11 UTC. Source: [mock_logistics_data.csv](assignment/README.md#original-files). These results were independently calculated from all rows using CSV parsing, exact decimal arithmetic and calendar dates. They are data observations and future acceptance fixtures, not tests of an implemented application.
+Source audit: 2026-09-11 UTC. Source: [mock_logistics_data.csv](assignment/README.md#original-files). These original results were independently calculated from all rows using CSV parsing, exact decimal arithmetic and calendar dates. They remain data observations and acceptance fixtures. Current implementation checks are recorded separately in [README verification](../README.md#verification-performed), and the [current screenshots](screenshots/README.md) show selected real API results. This documentation refresh preserves the original analytical findings.
 
 SHA-256: b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82. Git blob: dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, identical to the earlier pinned reference fixture.
 
