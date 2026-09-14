@@ -1,0 +1,196 @@
+@media (max-width: 1023px) {
+  .app-shell,
+  .app-shell.sidebar-is-collapsed {
+    display: block;
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+  }
+
+  .mobile-nav-trigger {
+    display: inline-flex;
+  }
+
+  .mobile-nav-trigger.icon-button {
+    display: inline-flex;
+  }
+
+  .app-body,
+  .app-body.assistant-closed {
+    display: block;
+  }
+
+  .app-main {
+    max-width: 1440px;
+  }
+
+  .assistant-panel-docked {
+    position: static;
+  }
+}
+
+@media (max-width: 639px) {
+  .app-header {
+    height: 56px;
+    min-height: 56px;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .header-primary,
+  .header-actions {
+    gap: 5px;
+  }
+
+  .header-kicker,
+  .dataset-badge,
+  .trigger-state,
+  .assistant-trigger-label,
+  .theme-control-label {
+    display: none;
+  }
+
+  .header-context strong {
+    font-size: 13px;
+  }
+
+  .theme-control select {
+    width: 64px;
+    min-height: 40px;
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+
+  .assistant-trigger {
+    min-width: 44px;
+    padding: 0 9px;
+  }
+
+  .assistant-trigger-short {
+    display: inline;
+    font-size: 11px;
+  }
+
+  .app-main {
+    padding: 16px;
+  }
+
+  .workspace-heading {
+    display: block;
+    margin-bottom: 18px;
+  }
+
+  .workspace-heading h1 {
+    font-size: 27px;
+  }
+
+  .workspace-context {
+    margin-top: 14px;
+  }
+
+  .filters-header {
+    align-items: center;
+  }
+
+  .filters-toggle-full {
+    display: none;
+  }
+
+  .filters-toggle-mobile {
+    display: inline;
+  }
+
+  .filter-fields {
+    display: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter-toolbar[data-filter-open="true"] .filter-fields {
+    display: grid;
+  }
+
+  .filter-toolbar[data-filter-open="true"] .filter-field-advanced {
+    display: grid;
+  }
+
+  .filter-field-primary,
+  .filter-field-range {
+    display: grid;
+  }
+
+  .evidence-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .forecast-target-meta,
+  .forecast-numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .forecast-chart-header {
+    display: block;
+  }
+
+  .forecast-legend {
+    margin-top: 9px;
+  }
+
+  .modal-dialog,
+  .assistant-dialog {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .assistant-panel-modal {
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-body.assistant-closed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Keep scope and identity copy readable when compact controls wrap. */
+.scope-status {
+  align-items: flex-start;
+}
+
+.scope-status > span:last-child {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+@media (max-width: 520px) {
+  .brand-name {
+    max-width: 210px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    line-height: 1.15;
+  }
+}
