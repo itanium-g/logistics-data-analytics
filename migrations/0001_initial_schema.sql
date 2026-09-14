@@ -57,7 +57,6 @@ CREATE TABLE llm_usage (
   day_tokens_reserved    INTEGER NOT NULL DEFAULT 0,
   month_key              TEXT NOT NULL,
   month_attempts         INTEGER NOT NULL DEFAULT 0,
-  month_microusd_reserved INTEGER NOT NULL DEFAULT 0,
   next_allowed_at_ms     INTEGER NOT NULL DEFAULT 0,
   updated_at             TEXT NOT NULL
 );
