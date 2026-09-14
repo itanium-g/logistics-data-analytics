@@ -22,7 +22,15 @@ import {
   type OrderRow,
 } from "../../src/data/import.ts";
 import { buildSeedSql } from "../../src/data/seed-sql.ts";
-import type { D1Database, D1PreparedStatement } from "../../src/worker/env.ts";
+import type { D1Database, D1PreparedStatement } from "../../src/server/env.ts";
+import {
+  ASSUMED_COVERAGE_END,
+  ASSUMED_COVERAGE_START,
+  DATASET_REFERENCE_DATE,
+  DATA_VERSION,
+  METRIC_VERSION,
+  SUPPLIED_CSV_SHA256,
+} from "../../src/shared/dataset.ts";
 
 const ROOT = process.cwd();
 
@@ -35,7 +43,7 @@ export const SUPPLIED_CSV_PATH = path.join(
 
 export const MIGRATION_PATH = path.join(ROOT, "migrations", "0001_initial_schema.sql");
 
-export const MANIFEST_PATH = path.join(ROOT, "data", "manifest.json");
+export const MANIFEST_PATH = path.join(ROOT, ".generated", "manifest.json");
 
 /** False on a clean checkout that has not been given the user-supplied CSV. */
 export const hasSuppliedCsv = existsSync(SUPPLIED_CSV_PATH);
@@ -156,7 +164,40 @@ export function createTestBinding(
 ): TestBinding {
   const database = new DatabaseSync(":memory:");
   database.exec(readFileSync(MIGRATION_PATH, "utf8"));
-  const manifestJson = options.manifestJson ?? readFileSync(MANIFEST_PATH, "utf8");
+  let manifestJson = options.manifestJson;
+  if (!manifestJson) {
+    if (existsSync(MANIFEST_PATH)) {
+      manifestJson = readFileSync(MANIFEST_PATH, "utf8");
+    } else {
+      const stats = computeDatasetStats(rows);
+      manifestJson = JSON.stringify({
+        data_version: DATA_VERSION,
+        metric_version: METRIC_VERSION,
+        imported_at: "2026-01-01T00:00:00.000Z",
+        source: {
+          file: "mock_logistics_data.csv",
+          sha256: SUPPLIED_CSV_SHA256,
+          bytes: 0,
+          checksum_matches_supplied_fixture: true,
+        },
+        observed: {
+          row_count: stats.rowCount,
+          order_date_min: stats.observedOrderDateMin,
+          order_date_max: stats.observedOrderDateMax,
+          delivery_date_max: stats.observedDeliveryDateMax,
+        },
+        assumed_coverage: {
+          start: ASSUMED_COVERAGE_START,
+          end: ASSUMED_COVERAGE_END,
+          status: "coverage_unverified",
+          basis: "Test synthetic observation window.",
+        },
+        dataset_reference_date: DATASET_REFERENCE_DATE,
+        vocabulary: stats.vocabulary,
+        assumptions: [],
+      });
+    }
+  }
   database.exec(buildSeedSql(rows, manifestJson, "2026-01-01T00:00:00.000Z"));
 
   const DB: D1Database = {

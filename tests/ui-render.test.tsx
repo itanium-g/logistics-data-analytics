@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { selectChart } from "../src/domain/chart.ts";
 import { formatGroupLabel, formatMetricValue } from "../src/domain/format.ts";
 import type { QueryResponse } from "../src/shared/contracts.ts";
-import app from "../src/worker/index.ts";
-import { EvidencePanel } from "../src/web/components/EvidencePanel.tsx";
-import { KpiGrid } from "../src/web/components/KpiCards.tsx";
-import { ResultTable } from "../src/web/components/ResultTable.tsx";
+import app from "../src/server/index.ts";
+import { EvidencePanel } from "../src/client/features/evidence/EvidencePanel.tsx";
+import { KpiGrid } from "../src/client/features/overview/KpiCards.tsx";
+import { ResultTable } from "../src/client/features/evidence/ResultTable.tsx";
 import { createTestBinding, hasSuppliedCsv, type TestBinding } from "./helpers/dataset.ts";
 
 /**

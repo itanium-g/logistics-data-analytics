@@ -8,7 +8,7 @@ import {
   readThemePreference,
   resolveTheme,
   useTheme,
-} from "../src/web/theme.tsx";
+} from "../src/client/app/theme.tsx";
 
 type MediaState = {
   matches: boolean;

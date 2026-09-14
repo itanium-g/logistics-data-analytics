@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DataTable, type DataTableColumn } from "../src/web/components/table/DataTable.tsx";
+import { DataTable, type DataTableColumn } from "../src/client/features/table/DataTable.tsx";
 
 declare global {
   // eslint-disable-next-line no-var

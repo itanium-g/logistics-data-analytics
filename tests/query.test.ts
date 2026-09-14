@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { selectChart } from "../src/domain/chart.ts";
 import { parseQueryRequest, type QueryRequestInput } from "../src/domain/query-schema.ts";
 import type { QueryResponse } from "../src/shared/contracts.ts";
-import app from "../src/worker/index.ts";
+import app from "../src/server/index.ts";
 import { createTestBinding, hasSuppliedCsv, type TestBinding } from "./helpers/dataset.ts";
 
 async function postQuery(

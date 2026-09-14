@@ -18,5 +18,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["src/web", "src/shared", "src/domain"]
+  "include": ["src/client", "src/shared", "src/domain"]
 }

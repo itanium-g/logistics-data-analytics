@@ -12,7 +12,7 @@ import {
   resolveDateScope,
   utcToday,
 } from "../src/domain/date-context.ts";
-import app from "../src/worker/index.ts";
+import app from "../src/server/index.ts";
 import type { MetaResponse } from "../src/shared/contracts.ts";
 import { createTestBinding, hasSuppliedCsv } from "./helpers/dataset.ts";
 
