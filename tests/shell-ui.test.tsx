@@ -2,8 +2,8 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import app from "../src/worker/index.ts";
-import { App } from "../src/web/App.tsx";
+import app from "../src/server/index.ts";
+import { App } from "../src/client/app/App.tsx";
 import { createTestBinding, hasSuppliedCsv, type TestBinding } from "./helpers/dataset.ts";
 
 declare global {

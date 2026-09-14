@@ -3,13 +3,13 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AskResponse, MetaResponse } from "../src/shared/contracts.ts";
-import { ApiError } from "../src/web/api.ts";
-import { AskPanel } from "../src/web/components/AskPanel.tsx";
+import { ApiError } from "../src/client/lib/api.ts";
+import { AskPanel } from "../src/client/features/assistant/AskPanel.tsx";
 
 const { postAskMock } = vi.hoisted(() => ({ postAskMock: vi.fn() }));
 
-vi.mock("../src/web/api.ts", async () => {
-  const actual = await vi.importActual<typeof import("../src/web/api.ts")>("../src/web/api.ts");
+vi.mock("../src/client/lib/api.ts", async () => {
+  const actual = await vi.importActual<typeof import("../src/client/lib/api.ts")>("../src/client/lib/api.ts");
   return { ...actual, postAsk: postAskMock };
 });
 

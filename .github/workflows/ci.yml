@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, "refactor/**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Import data (if dataset present)
+        run: |
+          if [ -f docs/assignment/mock_logistics_data.csv ]; then
+            npm run data:import
+          fi
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run unit & component tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Deterministic runtime smoke checks
+        run: npm run smoke

@@ -1,0 +1,276 @@
+/* Table foundation */
+
+.data-table-shell {
+  container: table / inline-size;
+  min-width: 0;
+}
+
+.table-toolbar,
+.table-pagination,
+.table-toolbar-primary,
+.table-page-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.table-toolbar {
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.table-toolbar-primary {
+  min-width: 0;
+}
+
+.table-search {
+  width: min(300px, 100%);
+}
+
+.table-search input {
+  width: 100%;
+}
+
+.table-export {
+  white-space: nowrap;
+}
+
+.table-export-note {
+  margin: 0;
+}
+
+.table-toolbar-simple {
+  justify-content: space-between;
+}
+
+.table-options {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.table-options summary {
+  width: fit-content;
+  color: var(--accent-hover);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-options-content {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0 2px;
+}
+
+.table-facets h4,
+.column-visibility legend {
+  padding: 0;
+  margin: 0 0 8px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.facet-grid,
+.column-visibility-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.facet,
+.column-visibility {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.facet legend {
+  padding: 0;
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.facet-values {
+  display: grid;
+  gap: 6px;
+  max-height: 180px;
+  padding-right: 8px;
+  overflow: auto;
+}
+
+.facet-values label,
+.column-visibility-grid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.facet-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-result-summary {
+  min-height: 33px;
+  padding: 10px 0 8px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.table-region {
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+
+.data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.data-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 11px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent-soft) 46%, var(--surface));
+}
+
+.data-table tbody th[scope="row"] {
+  min-width: 145px;
+  color: var(--text);
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.data-table tfoot th,
+.data-table tfoot td {
+  color: var(--text);
+  background: var(--surface-2);
+  border-bottom: 0;
+  font-weight: 650;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.cell-basis {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 450;
+  white-space: normal;
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+}
+
+.sort-indicator {
+  color: var(--accent-hover);
+  font-size: 13px;
+}
+
+.table-pagination {
+  justify-content: space-between;
+  padding-top: 12px;
+}
+
+.table-pagination label {
+  display: inline-flex;
+  align-items: center;
+  grid-template-columns: none;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.table-pagination select {
+  min-height: 36px;
+  padding-inline: 8px;
+}
+
+.table-page-controls {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.table-page-controls .secondary-button {
+  min-height: 36px;
+  padding-inline: 10px;
+  font-size: 11px;
+}
+
+
+@container table (max-width: 600px) {
+  .table-toolbar {
+    align-items: stretch;
+  }
+
+  .table-toolbar-primary {
+    width: 100%;
+  }
+
+  .table-search {
+    flex: 1 1 180px;
+  }
+
+  .table-options {
+    margin-top: 2px;
+  }
+}

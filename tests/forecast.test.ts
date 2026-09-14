@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseForecastRequest } from "../src/domain/forecast-schema.ts";
 import type { ForecastResponse } from "../src/shared/contracts.ts";
-import app from "../src/worker/index.ts";
+import app from "../src/server/index.ts";
 import { createTestBinding, hasSuppliedCsv, type TestBinding } from "./helpers/dataset.ts";
 
 async function postForecast(binding: TestBinding, body: unknown): Promise<Response> {

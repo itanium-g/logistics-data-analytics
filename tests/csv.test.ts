@@ -4,7 +4,7 @@ import {
   sanitizeCsvFilename,
   serializeCsv,
   type CsvDownloadEnvironment,
-} from "../src/web/components/table/csv.ts";
+} from "../src/client/features/table/csv.ts";
 
 describe("table CSV export", () => {
   it("serializes raw values, escaping CSV syntax and guarding string formulas", () => {

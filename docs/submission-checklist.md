@@ -1,71 +1,83 @@
 # Submission checklist
 
-Status: **Application implemented and verified locally. Not ready to submit: no deployed URL and no live model evaluation.** The brief requires a repository link, a deployed app URL and credentials if authentication is used. No deadline was supplied.
-
-Ticked boxes record local checks from implementation and this refresh; they do not establish deployment or live-model readiness. The current rerun passed 222 tests in 17 files, typecheck, build and 13/13 smoke checks. Unticked boxes remain outstanding.
+Status: **The application is implemented and the release is being verified from `main`.** This checklist distinguishes deterministic local evidence from live Cloudflare evidence. No authentication credentials are required for the synthetic-data demo.
 
 ## Handoff fields
 
 | Item | Current value | Release action |
 |---|---|---|
-| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics) | Verify reviewer access. It is currently private; a link alone may not grant access. |
-| Deployed app URL | Not deployed | Add the actual stable HTTPS URL after deploying and smoke-verifying it. |
-| Credentials | Not created; no login in this profile | At release write "Not required", or provide tested credentials privately if access is later gated. |
-| Deployed commit | Not available | Record the commit actually served by the deployment. |
-| Data source | [Supplied CSV](assignment/README.md#original-files), SHA-256 verified at import | Confirm the deployed database holds data version 1.0.0, metric version 2. |
+| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics) | Verify reviewer access using the intended handoff method. |
+| Deployed app URL | Pending final `main` deployment | Record the stable HTTPS URL after production validation. |
+| Credentials | Not required; no login in this profile | Do not add credentials to the repository. |
+| Deployed commit | Pending | Record the exact `main` SHA served by the Worker. |
+| Data source | [Supplied CSV](../assignment/README.md#original-files), SHA-256 verified at import | Confirm production D1 contains data version `1.0.0`, metric version `2`, and 400 orders. |
 | Deadline | Not specified | Record only if later supplied. |
 
 ## Required product checks
 
-- [x] Five required KPI cards show computed values and honest definitions. 400 / 304 / 55 / 84.68% / 3.69 days, with denominators and eligible counts shown.
-- [x] At least two dashboard charts render and match the underlying tables. Monthly order volume and all five status counts; a test asserts the table carries every row the chart is given.
-- [x] Dashboard and Ask use the same data and metric contracts. Both call the same domain functions; neither holds its own SQL or arithmetic.
-- [x] AI routes both Query and Forecast and does not invent answers. Verified against a stubbed transport with the real adapter running; **not** verified against a live provider.
-- [x] All three analytical examples work with visible date context. Weekly delayed orders summing to 10, GLS at 2/7, and 4 late deliveries on the delivery-date basis.
-- [x] A known SKU returns four months of quantity forecasts. CRAYON-0008 returns January to April 2026.
-- [x] Forecast includes history/future chart, numerical inventory target and methodology. Target 3 units, with the method, sample size and limitations shown.
-- [x] Every answer and chart provides filters, metrics/dimensions and underlying data. Shared evidence panel plus the row table.
-- [x] Exceptions, missing SLA dates, sparse SKUs and assumed coverage are disclosed.
-- [x] Invalid, unsupported, empty, throttled and provider-error cases behave clearly. Distinct taxonomy codes with useful messages.
+- [x] Five KPI cards show computed values with honest definitions: 400 / 304 / 55 / 84.68% / 3.69 days.
+- [x] At least two dashboard charts render from the same deterministic query results as their evidence tables.
+- [x] The carrier delay-rate example places GLS first at 2/7 (28.57%).
+- [x] The CRAYON-0008 forecast returns January–April 2026 and a 3-unit coverage target.
+- [x] Every analytical answer exposes its scope, assumptions, metrics, and supporting rows.
+- [x] Exceptions, missing SLA dates, sparse SKU history, and unverified coverage are disclosed.
+- [x] Invalid, unsupported, empty, throttled, timeout, and provider-error states return clear typed errors.
 
 ## Engineering and deployment checks
 
-- [x] Focused numerical, date and forecast tests pass against the supplied dataset. 222 tests in 17 files, including the redesign table/CSV/shell coverage.
-- [x] Model outputs are validated; raw model SQL cannot execute. Prose, unknown tools, a `raw_sql` key, injected identifiers and two populated branches all execute nothing.
-- [x] Supplied analytical data remains read-only through request paths. No route writes to `orders`; only the usage table is written.
-- [ ] Twenty-case live acceptance results and limitations recorded. Cases are frozen in `evals/cases.json` but **have not been executed**.
-- [x] Provider keys are server-side; no secrets in Git or built assets. The built bundle contains no key value, no provider endpoint and no `Authorization` header.
-- [x] Free quota and timeout controls work, including concurrent admission. Five concurrent requests for one slot admit exactly one.
-- [x] Clean-checkout setup commands have actually been executed successfully. `npm ci`, import, migrate, seed, typecheck, test, build, smoke.
-- [x] Source layout and ignore rules have been reviewed. Runtime-neutral SQL contracts are separated from the Worker D1 adapter; data/bootstrap modules are isolated under `src/data/`; secrets, generated output, local state, caches and supplied assignment originals are gitignored.
-- [ ] Public app is usable from a fresh browser without local setup. Requires deployment.
-- [x] Data table, API 404 behaviour and keyboard reachability checked. JSON 404 for unknown API paths including navigations; controls are focusable with no negative tab index.
-- [ ] Desktop and mobile checked on the real deployment. Current local emulated viewports and captures are recorded in the [screenshot README](screenshots/README.md).
-- [ ] Actual hosting limits and deployed data/revision match documentation. Free-tier CPU fit is unmeasured.
-- [ ] Repository access for reviewers verified using the intended handoff method.
-- [x] If authentication is used, credentials work. Not applicable: no authentication in this profile.
-- [x] Rollback and provider-disable instructions recorded. Setting `LLM_ENABLED` to `"false"` disables questions while leaving analytics working; restoring data never restores usage counters.
+- [x] Node 24 is the declared local and CI toolchain; CI runs `npm ci`, typecheck, tests, build, and deterministic smoke checks.
+- [x] Model outputs are bounded and validated; the model cannot execute SQL or provide analytical numbers.
+- [x] Supplied analytical data is read-only through request paths; only quota usage is written.
+- [ ] Twenty frozen live evaluation cases have recorded results. The cases are in [evals/cases.json](../../evals/cases.json); a provider run is required before claiming routing quality.
+- [x] No provider keys or credentials are committed or shipped in the browser bundle.
+- [x] Quota admission, pacing, timeout, retry bounds, and concurrent reservation behavior are covered by tests.
+- [x] The forecast container-query fix is checked at the 1440 × 1100 docked-assistant breakpoint.
+- [x] The 12 screenshot filenames are retained and the gallery paths are repository-relative.
+- [ ] Production D1 id, remote migrations, seed row count, Worker URL, revision, and browser validation are recorded below after deployment.
 
-- [x] Current 12 local Chrome DevTools captures visually reviewed in both themes; viewports, analytical scope, font/chart stabilization and limitations are recorded in the [screenshot README](screenshots/README.md).
-- [ ] Complete reduced-motion media emulation and a full 200% browser-zoom audit.
-- [ ] Resolve and recheck forecast configuration clipping observed at 1440px.
+## Workers AI policy
 
-## README and disclosure checks
+- Default: `@cf/google/gemma-4-26b-a4b-it`, listed by Cloudflare as Workers Free-compatible.
+- Free fallback: `@cf/zai-org/glm-4.7-flash`.
+- Paid model: `@cf/zai-org/glm-5.3-flash`, reachable only when `AI_ALLOW_PAID_ESCALATION="true"` is explicitly configured.
+- Production default: `AI_ENABLED="true"`, `AI_ALLOW_PAID_ESCALATION="false"`, no AI Gateway id.
+- If free-tier access is unavailable, leave deterministic analytics enabled and record the exact provider limitation; do not enable paid billing to manufacture a passing result.
 
-- [x] Local setup and exact environment variables, as actually executed.
-- [x] Architecture, key decisions and data flow.
-- [x] Question interpretation and selection of the two tools.
-- [x] Assumptions, simplifications and unsupported queries.
-- [x] Limitations and concrete future improvements.
-- [ ] Actual deployed URL and access instructions. Pending deployment.
-- [x] [AI_USAGE.md](../AI_USAGE.md) updated for the actual implementation assistance, including the defects the checks caught.
-- [x] [frontend-redesign.md](frontend-redesign.md) records the incremental design decisions, TanStack/CSV semantics, references, bundle delta and verification limits.
-- [x] Original assignment and reference links preserved.
+## Local evidence
 
-## Remaining work before submission
+Run from `refactor/cloudflare-native` before merge and again from `main` after merge:
 
-1. Deploy: create a real D1 database, replace the all-zero placeholder id, apply migrations and seed remotely, set the provider secret, deploy, and record the served commit.
-2. Execute the 20 frozen evaluation cases against the live provider and record actual counts, failures, tokens and latency.
-3. Verify the public URL from a fresh browser and on a mobile viewport.
-4. Verify reviewer access to the private repository.
-5. Resolve the recorded 1440px forecast configuration clipping and complete the pending browser checks in the screenshot README.
+```sh
+npm ci
+npm run data:import
+npm run db:migrate
+npm run db:seed
+npm run typecheck
+npm test
+npm run build
+npm run smoke
+git diff --check
+```
+
+The test report must record exact counts from the current run. The smoke harness is deterministic and does not contact Workers AI.
+
+## Production evidence
+
+| Check | Result |
+|---|---|
+| `GET /api/health` | Pending deployment |
+| `GET /api/meta` | Pending deployment |
+| Analytics and GLS ranking | Pending deployment |
+| CRAYON-0008 forecast | Pending deployment |
+| SPA deep links and unknown API JSON 404 | Pending deployment |
+| Chrome responsive/theme/assistant review | Pending deployment |
+| Live Workers AI | Pending free-tier access check; never infer from mocks |
+
+## Final handoff actions
+
+1. Push the verified feature branch, fetch the newest `origin/main`, merge without rewriting history, and push `main`.
+2. Rerun the complete verification suite on `main`.
+3. Create or reuse only the required D1 database, apply remote migrations, seed the checked CSV, and verify 400 rows.
+4. Deploy with `npm run deploy` from `main` and record the Worker URL and revision.
+5. Validate production in the API and Chrome DevTools, then update this checklist, `README.md`, `AI_USAGE.md`, the deployment guide, screenshot catalog, and `public/llms.txt` with actual evidence.
+6. Commit and push the final documentation on `main`; redeploy if a runtime-served file changed.

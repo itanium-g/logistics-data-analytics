@@ -45,7 +45,7 @@ function parseArgs(argv: readonly string[]): Options {
   const defaults: Options = {
     input: path.join("docs", "assignment", "mock_logistics_data.csv"),
     seedOut: path.join(".generated", "seed.sql"),
-    manifestOut: path.join("data", "manifest.json"),
+    manifestOut: path.join(".generated", "manifest.json"),
     importedAt: new Date().toISOString(),
     allowChecksumMismatch: false,
   };

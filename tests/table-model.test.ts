@@ -15,7 +15,7 @@ import {
   sortRowsByMonth,
   sortRowsByNumeric,
   stableResponseRowId,
-} from "../src/web/components/table/table-model.ts";
+} from "../src/client/features/table/table-model.ts";
 
 describe("table response model", () => {
   it("derives stable IDs and search fields without changing server rows", () => {

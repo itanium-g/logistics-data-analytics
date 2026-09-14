@@ -312,7 +312,11 @@ async function main(): Promise<void> {
   const server = spawn(
     process.execPath,
     [viteCli, "preview", "--port", String(PORT), "--strictPort", "--host", "127.0.0.1"],
-    { cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"] },
+    {
+      cwd: process.cwd(),
+      env: { ...process.env, CLOUDFLARE_VITE_FORCE_LOCAL: "true" },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
   );
 
   let serverLog = "";
