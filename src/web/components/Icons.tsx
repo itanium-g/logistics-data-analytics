@@ -2,8 +2,13 @@ interface IconProps {
   readonly name:
     | "activity"
     | "arrow"
+    | "chart"
+    | "chevron-left"
+    | "chevron-right"
     | "close"
     | "filter"
+    | "grid"
+    | "menu"
     | "moon"
     | "spark"
     | "sun"
@@ -39,6 +44,25 @@ export function Icon({ name, size = 16 }: IconProps) {
           <path d="m13 6 6 6-6 6" />
         </svg>
       );
+    case "chart":
+      return (
+        <svg {...common}>
+          <path d="M4 19V5M4 19h16" />
+          <path d="m7 15 3-4 3 2 5-6" />
+        </svg>
+      );
+    case "chevron-left":
+      return (
+        <svg {...common}>
+          <path d="m14.5 5-7 7 7 7" />
+        </svg>
+      );
+    case "chevron-right":
+      return (
+        <svg {...common}>
+          <path d="m9.5 5 7 7-7 7" />
+        </svg>
+      );
     case "close":
       return (
         <svg {...common}>
@@ -49,6 +73,21 @@ export function Icon({ name, size = 16 }: IconProps) {
       return (
         <svg {...common}>
           <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+      );
+    case "grid":
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="6" height="6" rx="1" />
+          <rect x="14" y="4" width="6" height="6" rx="1" />
+          <rect x="4" y="14" width="6" height="6" rx="1" />
+          <rect x="14" y="14" width="6" height="6" rx="1" />
+        </svg>
+      );
+    case "menu":
+      return (
+        <svg {...common}>
+          <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
       );
     case "moon":

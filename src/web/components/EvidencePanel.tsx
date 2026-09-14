@@ -9,26 +9,15 @@ interface EvidencePanelProps {
   readonly tableCaption: string;
   /** Collapsed by default on the dashboard, open for a question answer. */
   readonly defaultOpen?: boolean;
-  /** Meaningful label differentiating count, metric, and chart disclosures. */
   readonly evidenceLabel?: string;
 }
 
 function describeFilters(result: QueryResponse): string {
-  if (result.plan.filters.length === 0) return "None";
-  return result.plan.filters
-    .map(
-      (filter) =>
-        `${DIMENSION_LABELS[filter.field]} ${filter.op === "eq" ? "is" : "in"} ${filter.values.join(", ")}`,
-    )
-    .join("; ");
+  if (result.plan.filters.length === 0) return "No categorical filters";
+  return result.plan.filters.map((filter) => `${DIMENSION_LABELS[filter.field]} is ${filter.values.join(", ")}`).join(" · ");
 }
 
-/**
- * Filters, metrics, dimensions, date basis, assumptions, warnings, versions and
- * the underlying rows. Every answer carries this, which is what makes a number
- * checkable rather than merely displayed. It exposes the validated plan, not any
- * model reasoning.
- */
+/** Shared query evidence surface; it exposes provenance before definitions and rows. */
 export function EvidencePanel({
   result,
   tableCaption,
@@ -47,69 +36,58 @@ export function EvidencePanel({
         : "Single value over the whole scope";
 
   return (
-    <details className="evidence" open={defaultOpen} aria-labelledby={summaryId}>
-      <summary id={summaryId}>
-        <span className="evidence-label">{evidenceLabel}</span>
-        <span>Evidence: filters, definitions and underlying data</span>
-      </summary>
-
-      <dl className="evidence-list">
-        <dt>Date basis</dt>
-        <dd>{describeScope(result.scope)}</dd>
-
-        <dt>How the range was chosen</dt>
-        <dd>{result.scope.basis}</dd>
-
-        <dt>Metrics</dt>
-        <dd>{result.plan.metrics.join(", ")}</dd>
-
-        <dt>Grouping</dt>
-        <dd>{grouping}</dd>
-
-        <dt>Filters</dt>
-        <dd>{describeFilters(result)}</dd>
-
-        <dt>Records in scope</dt>
-        <dd>
-          {result.scope_row_count} record{result.scope_row_count === 1 ? "" : "s"}
-          {result.total_groups > 1 && (
-            <>
-              {" "}
-              across {result.total_groups} group{result.total_groups === 1 ? "" : "s"}
-              {result.truncated && `, showing ${result.returned_groups} after ranking`}
-            </>
-          )}
-        </dd>
-
-        <dt>Versions</dt>
-        <dd>
-          data {result.data_version}, metric {result.metric_version}
-        </dd>
-      </dl>
-
-      {result.warnings.length > 0 && (
-        <section aria-labelledby={warningsId}>
-          <h4 id={warningsId}>Caveats for this result</h4>
-          <ul className="evidence-warnings">
-            {result.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        </section>
+    <div className="evidence-panel-container">
+      {result.truncated && (
+        <p className="truncation-notice" role="status">
+          Showing {result.returned_groups} of {result.total_groups} analytical groups returned after server ranking. The source scope contains {result.scope_row_count} records.
+        </p>
       )}
+      <details className="evidence" open={defaultOpen} aria-labelledby={summaryId}>
+        <summary id={summaryId}>
+          <span className="evidence-label">{evidenceLabel}</span>
+          <span>Data &amp; evidence</span>
+          <span className="sr-only">Evidence: filters, definitions and underlying data</span>
+        </summary>
 
-      {result.assumptions.length > 0 && (
-        <section aria-labelledby={assumptionsId}>
-          <h4 id={assumptionsId}>Assumptions behind these metrics</h4>
-          <ul className="evidence-assumptions">
-            {result.assumptions.map((assumption) => (
-              <li key={assumption}>{assumption}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+        <dl className="evidence-list">
+          <dt>Scope</dt>
+          <dd>{describeScope(result.scope)}</dd>
+          <dt>How the range was chosen</dt>
+          <dd>{result.scope.basis}</dd>
+          <dt>Metrics</dt>
+          <dd>{result.plan.metrics.join(", ")}</dd>
+          <dt>Grouping</dt>
+          <dd>{grouping}</dd>
+          <dt>Filters</dt>
+          <dd>{describeFilters(result)}</dd>
+          <dt>Source records</dt>
+          <dd>{result.scope_row_count} record{result.scope_row_count === 1 ? "" : "s"} in the analytical scope</dd>
+          <dt>Returned analytical groups</dt>
+          <dd>{result.returned_groups} of {result.total_groups} groups returned by the API</dd>
+          <dt>Versions</dt>
+          <dd>data {result.data_version}, metric {result.metric_version}</dd>
+        </dl>
 
-      <ResultTable result={result} caption={tableCaption} />
-    </details>
+        {result.warnings.length > 0 && (
+          <section aria-labelledby={warningsId}>
+            <h4 id={warningsId}>Caveats for this result</h4>
+            <ul className="evidence-warnings">
+              {result.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+            </ul>
+          </section>
+        )}
+
+        {result.assumptions.length > 0 && (
+          <section aria-labelledby={assumptionsId}>
+            <h4 id={assumptionsId}>Assumptions behind these metrics</h4>
+            <ul className="evidence-assumptions">
+              {result.assumptions.map((assumption) => <li key={assumption}>{assumption}</li>)}
+            </ul>
+          </section>
+        )}
+
+        <ResultTable result={result} caption={tableCaption} />
+      </details>
+    </div>
   );
 }

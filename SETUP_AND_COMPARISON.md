@@ -4,7 +4,7 @@ Updated: **2026-09-11 UTC**. Project: [itanium-g/logistics-data-analytics](https
 
 **Recommended starting point: React + Hono on Cloudflare Workers with Static Assets and D1; evaluate Groq `openai/gpt-oss-20b` on its free tier.** For the 6–10 hour submission, use one adapter. DeepInfra `google/gemma-4-E4B-it` is an optional P2 comparison. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
 
-This is the complete replacement for the earlier separate setup and provider comparisons. It owns the setup, provider matrices, price assumptions, and selection policy. [The report](deep-research-report.md) owns audit evidence and analytical meaning; [the implementation plan](IMPLEMENTATION_PLAN.md) owns contracts, tasks, and release gates. The repository remains **documentation only**: the commands and configuration below describe the application to build, and have not been executed as an application setup.
+This retains the earlier setup design, provider matrices, price assumptions and selection policy. [The report](deep-research-report.md) owns historical audit evidence and analytical meaning; [the implementation plan](IMPLEMENTATION_PLAN.md) owns contracts and release gates. **The application is now implemented and locally verified.** Use [README local setup](README.md#local-setup), [package.json](package.json) and [wrangler.jsonc](wrangler.jsonc) for the current checkout. The scaffold recipes and comparisons below are historical design material, not instructions to recreate or overwrite the existing app. Deployment, account eligibility and live model evaluation remain pending; this refresh did not recheck vendor prices or terms.
 
 **Assignment reconciliation:** the [supplied originals](docs/assignment/README.md) and [requirements matrix](docs/requirements.md) now govern scope. P0 is a public synthetic-data demo with no login, one free model adapter, known-SKU forecasts for 1–4 months and a 20-case live acceptance set. The former custom sessions, paid ledger, second adapter and 180-call experiment are optional P2 work. The plan's metric v2 and explicit order-date/delivery-date rules apply to every profile.
 
@@ -124,7 +124,9 @@ Use the Cloudflare Vite plugin after the React plugin. Keep the template's compa
     "LLM_MAX_BILLABLE_OUTPUT_TOKENS": "512",
     "LLM_DAILY_ATTEMPT_LIMIT": "100",
     "LLM_MONTHLY_ATTEMPT_LIMIT": "1000",
-    "LLM_MONTHLY_BUDGET_MICROUSD": "0"
+    "LLM_DAILY_TOKEN_LIMIT": "180000",
+    "LLM_MIN_INTERVAL_SECONDS": "60",
+    "LLM_TIMEOUT_MS": "15000"
   }
 }
 ```
@@ -148,11 +150,12 @@ The schema needs orders, a data-version/manifest record, and durable usage state
 
 ### 3.3 Import authorized data and build deterministic features
 
-Implement the importer before running the following proposed script contract:
+The importer is implemented. Its current script contract is:
 
 ```sh
-npm run data:import -- --input /absolute/path/to/authorized.csv --seed-out .generated/seed.sql
-npx wrangler d1 execute DB --local --file .generated/seed.sql
+npm run data:import -- --input /absolute/path/to/mock_logistics_data.csv
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
@@ -204,15 +207,14 @@ Before P0 provider access, one atomic conditional D1 update checks and advances 
 
 Use a dedicated provider project/key, versioned prices, and independently enforced model controls. The app budget covers this app's admitted calls at configured prices; provider-wide spend, leaked credentials, deposits and future pricing changes are outside that arithmetic.
 
-The planned command contract after implementation is:
+The implemented local verification commands are:
 
 ```sh
 npm ci
 npm run typecheck
 npm test
 npm run build
-# Separate, manually initiated live acceptance after credentials and guards are ready:
-npm run eval:live
+npm run smoke
 ```
 
 Ordinary tests have model networking disabled. P0 evaluates one provider on 20 frozen cases: 12 supported, 4 ambiguous/missing-input and 4 unsupported/adversarial. Include the brief's analytics examples and known-SKU four-month forecasts. Require every expected outcome in this declared subset and no forbidden execution. Report actual counts, failures, tokens and latency; do not claim general 100% accuracy. If tuning is needed, keep regression cases and use fresh equivalent confirmation cases within quota. Lint/CI and an automated browser suite may follow after core verification.
@@ -427,4 +429,4 @@ For the optional P2 comparison of two 60-case candidates and a 60-case confirmat
 | Domain | Provider hostname | Only if a custom domain is later requested; the brief accepts a public provider URL. |
 | Other services | None initially | A concrete requirement for files, named-user auth, email, jobs or observability appears. |
 
-The practical target remains **$0 for a quota-limited reviewer demo**, with a measured upgrade path around **$5/month hosting plus cents of ordinary model usage**. Application implementation, live routing evaluation, production performance and account eligibility remain unverified. Refresh the chosen prices and terms before activation, keep deterministic analytics available, and record the actual deployed model/configuration rather than declaring an untested provider the winner.
+The practical target remains **$0 for a quota-limited reviewer demo**, with an estimated upgrade path around **$5/month hosting plus cents of ordinary model usage**. Application implementation is locally verified; live routing evaluation, production performance and account eligibility remain unverified. Refresh the chosen prices and terms before activation, keep deterministic analytics available, and record the actual deployed model/configuration rather than declaring an untested provider the winner.

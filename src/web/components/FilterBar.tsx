@@ -9,7 +9,7 @@ import type {
 import { DIMENSION_LABELS } from "../../domain/chart.ts";
 import { Icon } from "./Icons.tsx";
 
-/** Dimensions offered as dashboard filters, in display order. */
+/** Dimensions offered by dashboard filters, in display order. */
 export const FILTER_DIMENSIONS = [
   "carrier",
   "region",
@@ -34,7 +34,7 @@ export const DEFAULT_SCOPE: DashboardScope = {
   selections: {},
 };
 
-const RANGE_LABELS: Readonly<Record<RelativeRange, string>> = {
+export const RANGE_LABELS: Readonly<Record<RelativeRange, string>> = {
   all_time: "All available dates",
   last_month: "Last complete month",
   last_3_months: "Last 3 complete months",
@@ -76,8 +76,9 @@ export function scopeSummary(scope: DashboardScope, meta: MetaResponse): string 
     .filter((entry): entry is [FilterDimension, string] => typeof entry[1] === "string")
     .map(([dimension, value]) => `${DIMENSION_LABELS[dimension]} ${value}`)
     .join(", ");
-
-  return `${RANGE_LABELS[scope.relative_range]} · ${dateContext} · ${dateField}${filters === "" ? "" : ` · ${filters}`}`;
+  return `${RANGE_LABELS[scope.relative_range]} · ${dateContext} · ${dateField}${
+    filters === "" ? "" : ` · ${filters}`
+  }`;
 }
 
 interface FilterBarProps {
@@ -87,14 +88,19 @@ interface FilterBarProps {
   readonly disabled: boolean;
 }
 
+type RemovableField = "relative_range" | "date_context" | "date_field" | FilterDimension;
+
 /**
- * Every control is a select over vocabulary the server published, so the browser
- * cannot submit a value the server would have to reject. The DOM contains one
- * instance of each control; CSS moves primary dimensions between breakpoints.
+ * Compact, immediate-apply scope controls. The DOM contains one instance of
+ * every input; CSS changes which controls are visible at narrow widths.
  */
 export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const activeCount = Object.keys(scope.selections).length;
+  const activeCount =
+    (scope.relative_range !== DEFAULT_SCOPE.relative_range ? 1 : 0) +
+    (scope.date_context !== DEFAULT_SCOPE.date_context ? 1 : 0) +
+    (scope.date_field !== DEFAULT_SCOPE.date_field ? 1 : 0) +
+    Object.keys(scope.selections).length;
   const advancedId = "advanced-filter-fields";
 
   const setSelection = (dimension: FilterDimension, value: string): void => {
@@ -104,16 +110,54 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
     onChange({ ...scope, selections: next });
   };
 
+  const removeField = (field: RemovableField): void => {
+    if (field === "relative_range") {
+      onChange({ ...scope, relative_range: DEFAULT_SCOPE.relative_range });
+    } else if (field === "date_context") {
+      onChange({ ...scope, date_context: DEFAULT_SCOPE.date_context });
+    } else if (field === "date_field") {
+      onChange({ ...scope, date_field: DEFAULT_SCOPE.date_field });
+    } else {
+      const next = { ...scope.selections };
+      delete next[field];
+      onChange({ ...scope, selections: next });
+    }
+  };
+
+  const scopeChip = (
+    label: string,
+    field: RemovableField,
+    removable: boolean,
+    ariaLabel: string,
+  ) =>
+    removable ? (
+      <button
+        type="button"
+        className="scope-chip scope-chip-button"
+        onClick={() => removeField(field)}
+        disabled={disabled}
+        aria-label={ariaLabel}
+      >
+        <span>{label}</span>
+        <span aria-hidden="true">×</span>
+      </button>
+    ) : (
+      <span className="scope-chip" key={String(field)}>{label}</span>
+    );
+
   return (
     <section
-      className={`panel filters-panel${advancedOpen ? " is-advanced-open" : ""}`}
+      className={`filter-toolbar${advancedOpen ? " is-advanced-open" : ""}`}
       aria-labelledby="filters-heading"
-      data-advanced-open={advancedOpen}
+      data-filter-open={advancedOpen}
     >
       <div className="filters-header">
         <div>
-          <p className="eyebrow">Scope</p>
+          <p className="eyebrow">Scope controls</p>
           <h2 id="filters-heading">Filter results</h2>
+          <p className="filters-context-line">
+            Dataset dates · relative ranges anchor to {meta.dataset_reference_date}
+          </p>
         </div>
         <div className="filters-actions">
           <button
@@ -124,7 +168,8 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onClick={() => setAdvancedOpen((open) => !open)}
           >
             <Icon name="filter" size={15} />
-            <span>Filters</span>
+            <span className="filters-toggle-full">More filters</span>
+            <span className="filters-toggle-mobile">Filters</span>
             {activeCount > 0 && <span className="control-count">{activeCount}</span>}
             <span className="toggle-chevron" aria-hidden="true">{advancedOpen ? "−" : "+"}</span>
           </button>
@@ -150,10 +195,8 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
               onChange({ ...scope, relative_range: event.target.value as RelativeRange })
             }
           >
-            {meta.relative_ranges.map((range) => (
-              <option key={range} value={range}>
-                {RANGE_LABELS[range]}
-              </option>
+            {Object.entries(RANGE_LABELS).map(([range, label]) => (
+              <option key={range} value={range}>{label}</option>
             ))}
           </select>
         </label>
@@ -167,9 +210,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onChange={(event) => setSelection("carrier", event.target.value)}
           >
             <option value="">All carriers</option>
-            {vocabularyFor(meta, "carrier").map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+            {vocabularyFor(meta, "carrier").map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         </label>
 
@@ -182,9 +223,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onChange={(event) => setSelection("region", event.target.value)}
           >
             <option value="">All regions</option>
-            {vocabularyFor(meta, "region").map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+            {vocabularyFor(meta, "region").map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         </label>
 
@@ -194,9 +233,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             id="filter-context"
             value={scope.date_context}
             disabled={disabled}
-            onChange={(event) =>
-              onChange({ ...scope, date_context: event.target.value as DateContext })
-            }
+            onChange={(event) => onChange({ ...scope, date_context: event.target.value as DateContext })}
           >
             <option value="dataset">Dataset · ref {meta.dataset_reference_date}</option>
             <option value="current">Current UTC · today</option>
@@ -209,9 +246,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             id="filter-datefield"
             value={scope.date_field}
             disabled={disabled}
-            onChange={(event) =>
-              onChange({ ...scope, date_field: event.target.value as DateField })
-            }
+            onChange={(event) => onChange({ ...scope, date_field: event.target.value as DateField })}
           >
             <option value="order_date">Order date · cohorts</option>
             <option value="delivery_date">Delivery date · events</option>
@@ -227,9 +262,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onChange={(event) => setSelection("product_category", event.target.value)}
           >
             <option value="">All categories</option>
-            {vocabularyFor(meta, "product_category").map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+            {vocabularyFor(meta, "product_category").map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         </label>
 
@@ -242,9 +275,7 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onChange={(event) => setSelection("warehouse", event.target.value)}
           >
             <option value="">All warehouses</option>
-            {vocabularyFor(meta, "warehouse").map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+            {vocabularyFor(meta, "warehouse").map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         </label>
 
@@ -257,28 +288,49 @@ export function FilterBar({ meta, scope, onChange, disabled }: FilterBarProps) {
             onChange={(event) => setSelection("status", event.target.value)}
           >
             <option value="">All statuses</option>
-            {vocabularyFor(meta, "status").map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+            {vocabularyFor(meta, "status").map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         </label>
       </div>
 
       <div className="active-scope" aria-live="polite">
-        <span className="active-scope-label">Applied</span>
-        <span className="scope-chip">{RANGE_LABELS[scope.relative_range]}</span>
-        <span className="scope-chip">{scope.date_context === "dataset" ? "Dataset dates" : "Current UTC"}</span>
-        <span className="scope-chip">{scope.date_field === "order_date" ? "Order date" : "Delivery date"}</span>
+        <span className="active-scope-label">Selected scope</span>
+        {scopeChip(
+          RANGE_LABELS[scope.relative_range],
+          "relative_range",
+          scope.relative_range !== DEFAULT_SCOPE.relative_range,
+          `Remove ${RANGE_LABELS[scope.relative_range].toLowerCase()} filter`,
+        )}
+        {scopeChip(
+          scope.date_context === "dataset" ? "Dataset dates" : "Current UTC",
+          "date_context",
+          scope.date_context !== DEFAULT_SCOPE.date_context,
+          "Remove date context filter",
+        )}
+        {scopeChip(
+          scope.date_field === "order_date" ? "Order date" : "Delivery date",
+          "date_field",
+          scope.date_field !== DEFAULT_SCOPE.date_field,
+          "Remove date basis filter",
+        )}
         {Object.entries(scope.selections).map(([dimension, value]) => (
-          <span className="scope-chip scope-chip-accent" key={dimension}>
-            {DIMENSION_LABELS[dimension as FilterDimension]}: {value}
+          <span className="scope-chip-wrap" key={dimension}>
+            {scopeChip(
+              `${DIMENSION_LABELS[dimension as FilterDimension]}: ${value}`,
+              dimension as FilterDimension,
+              true,
+              `Remove ${DIMENSION_LABELS[dimension as FilterDimension].toLowerCase()} ${value} filter`,
+            )}
           </span>
         ))}
       </div>
 
-      <p className="filters-note">
-        Dataset mode anchors relative ranges to {meta.dataset_reference_date}, the day after the assumed coverage window {meta.assumed_coverage.start} to {meta.assumed_coverage.end}. Current mode uses today&apos;s UTC date and can legitimately return no records.
-      </p>
+      <details className="filters-explanation">
+        <summary>How dates are interpreted</summary>
+        <p>
+          Dataset mode anchors relative ranges to {meta.dataset_reference_date}, the day after the assumed coverage window {meta.assumed_coverage.start} to {meta.assumed_coverage.end}. Current mode uses today&apos;s UTC date and can legitimately return no records. Order date groups cohorts; delivery date measures delivery events.
+        </p>
+      </details>
     </section>
   );
 }

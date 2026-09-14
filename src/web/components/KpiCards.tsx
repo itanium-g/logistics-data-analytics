@@ -6,35 +6,41 @@ interface KpiCardProps {
   readonly meta: MetricMeta | undefined;
 }
 
-/**
- * One KPI. The definition and the supporting counts are always visible, so a
- * proxy metric or a small denominator is never presented as a bare percentage.
- */
+/** One KPI with its honest basis and metric-specific definition disclosure. */
 export function KpiCard({ metric, meta }: KpiCardProps) {
   const basis = describeMetricBasis(metric);
-  const undefinedValue = metric.value === null;
+  const unavailable = metric.value === null;
+  const detailsId = `kpi-definition-${metric.metric}`;
 
   return (
-    <article className="kpi-card" data-metric={metric.metric}>
+    <article className={`kpi-card${unavailable ? " kpi-card-unavailable" : ""}`} data-metric={metric.metric}>
       <div className="kpi-card-header">
         <span className="kpi-mark" aria-hidden="true" />
         <h3 className="kpi-label">{metric.label}</h3>
       </div>
-      <p className={undefinedValue ? "kpi-value kpi-value-undefined" : "kpi-value"}>
+      <p className={`kpi-value${unavailable ? " kpi-value-undefined" : ""}`}>
         {formatMetricValue(metric)}
       </p>
-      {basis !== "" && <p className="kpi-basis">{basis}</p>}
+      {basis !== "" ? (
+        <p className="kpi-basis">
+          <span className="kpi-basis-label">Basis</span> {basis}
+        </p>
+      ) : (
+        <p className="kpi-basis kpi-basis-empty">Whole analytical scope</p>
+      )}
       {meta !== undefined && (
         <details className="kpi-details">
-          <summary>How this is calculated</summary>
-          <p>{meta.definition}</p>
-          {meta.assumptions.length > 0 && (
-            <ul>
-              {meta.assumptions.map((assumption) => (
-                <li key={assumption}>{assumption}</li>
-              ))}
-            </ul>
-          )}
+          <summary aria-controls={detailsId}>
+            <span>Definition &amp; assumptions</span>
+          </summary>
+          <div id={detailsId}>
+            <p>{meta.definition}</p>
+            {meta.assumptions.length > 0 && (
+              <ul>
+                {meta.assumptions.map((assumption) => <li key={assumption}>{assumption}</li>)}
+              </ul>
+            )}
+          </div>
         </details>
       )}
     </article>
@@ -48,7 +54,7 @@ interface KpiGridProps {
 
 export function KpiGrid({ metrics, metricMeta }: KpiGridProps) {
   return (
-    <div className="kpi-grid">
+    <div className="kpi-grid" aria-label="Five tracked metrics">
       {metrics.map((metric) => (
         <KpiCard
           key={metric.metric}

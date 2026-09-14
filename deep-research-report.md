@@ -1,10 +1,12 @@
 # Spaceship Logistics Analytics Research and Architecture
 
-Updated: 2026-09-11 UTC. **Supplied requirements verified; application not implemented or benchmarked.**
+Research baseline: 2026-09-11 UTC. **Supplied requirements verified; application now implemented and locally verified. Deployment and live-model evaluation remain pending.** Historical research and original analytical findings are retained below; current evidence is linked separately.
 
 The supplied assignment supports the existing low-cost TypeScript architecture, but changes the delivery scope. Build one small public demo with five KPIs, two charts, live Query/Forecast routing, a four-month SKU forecast and numerical inventory target. The 6–10 hour expectation takes priority over the former 41–65 hour hardening backlog.
 
 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) owns current contracts and sequencing. [Requirements](docs/requirements.md) maps the source brief. [SETUP_AND_COMPARISON.md](SETUP_AND_COMPARISON.md) preserves the provider survey and setup runbook. [Data audit](docs/data-audit.md) owns independently calculated fixture facts.
+
+Current implementation evidence: [README](README.md#verification-performed), [frontend behavior](docs/frontend-redesign.md) and [current screenshots](docs/screenshots/README.md). The research and original analytical findings below are retained as historical context; current package pins and setup commands come from the implementation. Deployment, live-model evaluation and the browser gaps listed in the screenshot README remain pending. No vendor research was rerun for this documentation refresh.
 
 ## 1. Evidence and source authority
 

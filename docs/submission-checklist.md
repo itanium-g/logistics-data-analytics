@@ -2,7 +2,7 @@
 
 Status: **Application implemented and verified locally. Not ready to submit: no deployed URL and no live model evaluation.** The brief requires a repository link, a deployed app URL and credentials if authentication is used. No deadline was supplied.
 
-A ticked box below means it was executed on this machine and the result observed. Unticked boxes are genuinely outstanding.
+Ticked boxes record local checks from implementation and this refresh; they do not establish deployment or live-model readiness. The current rerun passed 222 tests in 17 files, typecheck, build and 13/13 smoke checks. Unticked boxes remain outstanding.
 
 ## Handoff fields
 
@@ -30,7 +30,7 @@ A ticked box below means it was executed on this machine and the result observed
 
 ## Engineering and deployment checks
 
-- [x] Focused numerical, date and forecast tests pass against the supplied dataset. 206 tests in 13 files.
+- [x] Focused numerical, date and forecast tests pass against the supplied dataset. 222 tests in 17 files, including the redesign table/CSV/shell coverage.
 - [x] Model outputs are validated; raw model SQL cannot execute. Prose, unknown tools, a `raw_sql` key, injected identifiers and two populated branches all execute nothing.
 - [x] Supplied analytical data remains read-only through request paths. No route writes to `orders`; only the usage table is written.
 - [ ] Twenty-case live acceptance results and limitations recorded. Cases are frozen in `evals/cases.json` but **have not been executed**.
@@ -40,13 +40,15 @@ A ticked box below means it was executed on this machine and the result observed
 - [x] Source layout and ignore rules have been reviewed. Runtime-neutral SQL contracts are separated from the Worker D1 adapter; data/bootstrap modules are isolated under `src/data/`; secrets, generated output, local state, caches and supplied assignment originals are gitignored.
 - [ ] Public app is usable from a fresh browser without local setup. Requires deployment.
 - [x] Data table, API 404 behaviour and keyboard reachability checked. JSON 404 for unknown API paths including navigations; controls are focusable with no negative tab index.
-- [ ] Desktop and mobile checked on a real deployment. Local Chrome DevTools inspection covered the responsive app at 360, 390, 768, 1280 and 1920px; deployed-browser verification remains pending.
+- [ ] Desktop and mobile checked on the real deployment. Current local emulated viewports and captures are recorded in the [screenshot README](screenshots/README.md).
 - [ ] Actual hosting limits and deployed data/revision match documentation. Free-tier CPU fit is unmeasured.
 - [ ] Repository access for reviewers verified using the intended handoff method.
 - [x] If authentication is used, credentials work. Not applicable: no authentication in this profile.
 - [x] Rollback and provider-disable instructions recorded. Setting `LLM_ENABLED` to `"false"` disables questions while leaving analytics working; restoring data never restores usage counters.
 
-- [x] Local Chrome DevTools visual review completed at 360, 390, 768, 1280 and 1920px for both themes, Overview, Forecasts and assistant states. Captures are listed in [the screenshot review](screenshots/README.md).
+- [x] Current 12 local Chrome DevTools captures visually reviewed in both themes; viewports, analytical scope, font/chart stabilization and limitations are recorded in the [screenshot README](screenshots/README.md).
+- [ ] Complete reduced-motion media emulation and a full 200% browser-zoom audit.
+- [ ] Resolve and recheck forecast configuration clipping observed at 1440px.
 
 ## README and disclosure checks
 
@@ -57,6 +59,7 @@ A ticked box below means it was executed on this machine and the result observed
 - [x] Limitations and concrete future improvements.
 - [ ] Actual deployed URL and access instructions. Pending deployment.
 - [x] [AI_USAGE.md](../AI_USAGE.md) updated for the actual implementation assistance, including the defects the checks caught.
+- [x] [frontend-redesign.md](frontend-redesign.md) records the incremental design decisions, TanStack/CSV semantics, references, bundle delta and verification limits.
 - [x] Original assignment and reference links preserved.
 
 ## Remaining work before submission
@@ -65,3 +68,4 @@ A ticked box below means it was executed on this machine and the result observed
 2. Execute the 20 frozen evaluation cases against the live provider and record actual counts, failures, tokens and latency.
 3. Verify the public URL from a fresh browser and on a mobile viewport.
 4. Verify reviewer access to the private repository.
+5. Resolve the recorded 1440px forecast configuration clipping and complete the pending browser checks in the screenshot README.

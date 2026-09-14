@@ -5,6 +5,7 @@ import { ApiError, postAsk } from "../api.ts";
 import { EvidencePanel } from "./EvidencePanel.tsx";
 import { ForecastResult } from "./ForecastResult.tsx";
 import { Icon } from "./Icons.tsx";
+import { ModalDialog } from "./ModalDialog.tsx";
 import { ResultChart } from "./ResultChart.tsx";
 
 const EXAMPLES = [
@@ -80,16 +81,21 @@ export function AskPanel({ meta, open, modal, onClose, triggerRef }: AskPanelPro
   const [interaction, setInteraction] = useState<AskInteraction | null>(null);
 
   useEffect(() => {
+    let frame: number | undefined;
     if (open && !wasOpen.current) {
       const focus = (): void => closeRef.current?.focus();
       if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-        const frame = window.requestAnimationFrame(focus);
-        return () => window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(focus);
+      } else {
+        focus();
       }
-      focus();
     }
     if (!open && wasOpen.current) triggerRef?.current?.focus();
     wasOpen.current = open;
+
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+    };
   }, [open, triggerRef]);
 
   const submitQuestion = (submittedQuestion: string, submittedContext: DateContext): void => {
@@ -133,7 +139,7 @@ export function AskPanel({ meta, open, modal, onClose, triggerRef }: AskPanelPro
   };
 
   const onPanelKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && !modal) {
       event.preventDefault();
       onClose();
       return;
@@ -153,23 +159,18 @@ export function AskPanel({ meta, open, modal, onClose, triggerRef }: AskPanelPro
     }
   };
 
-  if (!open) return null;
-
   const busy = interaction?.kind === "loading";
   const hasDraft = draft.trim().length > 0;
 
-  return (
-    <>
-      {modal && <div className="assistant-backdrop" aria-hidden="true" onClick={onClose} />}
-      <aside
-        ref={panelRef}
-        id="ai-analyst-panel"
-        className={`assistant-panel${modal ? " assistant-panel-modal" : " assistant-panel-docked"}`}
-        role="dialog"
-        aria-modal={modal || undefined}
-        aria-labelledby="assistant-heading"
-        onKeyDown={onPanelKeyDown}
-      >
+  const panel = (
+    <aside
+      ref={panelRef}
+      id="ai-analyst-panel"
+      className={`assistant-panel${modal ? " assistant-panel-modal" : " assistant-panel-docked"}`}
+      role={modal ? undefined : "complementary"}
+      aria-label={modal ? undefined : "AI Analyst"}
+      onKeyDown={onPanelKeyDown}
+    >
         <div className="assistant-header">
           <div className="assistant-title-row">
             <span className="assistant-mark" aria-hidden="true"><Icon name="spark" size={16} /></span>
@@ -301,8 +302,23 @@ export function AskPanel({ meta, open, modal, onClose, triggerRef }: AskPanelPro
             </div>
           )}
         </div>
-      </aside>
-    </>
+    </aside>
+  );
+
+  if (!modal && !open) return null;
+  if (!modal) return panel;
+
+  return (
+    <ModalDialog
+      open={open}
+      headingId="assistant-heading"
+      initialFocusRef={closeRef}
+      returnFocusRef={triggerRef}
+      onDismiss={onClose}
+      className="assistant-dialog"
+    >
+      {panel}
+    </ModalDialog>
   );
 }
 

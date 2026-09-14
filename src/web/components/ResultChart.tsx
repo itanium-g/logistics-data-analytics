@@ -90,7 +90,7 @@ export function ResultChart({ result, title }: ResultChartProps) {
       role="img"
       aria-label={`${title}. ${result.chart.hint === "line" ? "Line" : "Bar"} chart of ${result.chart.y_label} by ${result.chart.x_label}. The same values are listed in the table below.`}
     >
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height="100%">
         {result.chart.hint === "line" ? (
           <LineChart data={[...points]} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
             <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
