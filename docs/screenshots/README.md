@@ -1,6 +1,6 @@
 # Current UI screenshots
 
-These 12 captures are the current local application, taken with Chrome DevTools MCP from http://localhost:5173/ using real analytical responses. They are not mockups. This directory is the single location for current UI captures; future refreshes overwrite these filenames. Superseded images and historical galleries are removed.
+These 12 captures are the current local application, taken with Chrome DevTools MCP from http://localhost:5173/ using real analytical responses. They are not mockups. This directory is the single location for the checked-in UI captures; future refreshes overwrite these filenames. Superseded images and historical galleries are removed. The production UI was separately reviewed at the required widths and states, but the screenshot MCP file-save whitelist rejected repository paths, so these stable PNGs remain the local capture set.
 
 ## Capture conditions
 
@@ -8,7 +8,7 @@ Chrome 153.0 on Windows, device scale factor 1, browser zoom 100%, explicit Ligh
 
 Before each capture the expected response was present, loading indicators were clear, document.fonts.ready had resolved, and chart container dimensions were unchanged across consecutive animation frames. Each resulting image was visually inspected for theme, readable labels, layout, expected values and clipping. Page-level horizontal overflow was absent in these captured states. Some pages and modal/table regions scroll vertically; a viewport capture intentionally does not show all content below the fold. Chart axis ticks are responsive and may omit intermediate labels; equivalent data remains in the tables.
 
-Direct Overview and Forecasts responses came from the analytical API. Assistant captures show the ready state with no submitted question; no model result is fabricated and no provider call was made. No deployment, commit or push was performed.
+Direct Overview and Forecasts responses came from the analytical API. Assistant captures show the ready state with no submitted question; no model result is fabricated and no provider call was made for the checked-in captures. Deployment and production browser validation were performed separately; the full live-model evaluation remains unrun.
 
 ## Captures
 
@@ -43,4 +43,4 @@ See the original [data audit](../data-audit.md), [frontend table/CSV contract](.
 - Tablet assistant Escape dismissal and focus restoration to the assistant trigger were checked. These captures do not establish an exhaustive keyboard, screen-reader, backdrop-dismissal or focus-transition audit.
 - The enabled DevTools surface exposes color-scheme and viewport emulation but no reduced-motion or browser-zoom control. Reduced-motion media emulation and a full 200% browser-zoom audit remain pending. Reading CSS or shrinking a viewport does not establish either check.
 - System-theme transition review, a complete breakpoint sweep, real-device checks, deployed-browser checks and automated pixel-diff coverage are not claimed by this refresh.
-- Deployment, live-model evaluation, reviewer access and production performance remain pending. Local workerd smoke tests verify HTTP/runtime behavior, not rendered chart geometry or live routing quality.
+- Production API and browser validation is complete: the public Worker served the expected data and layouts at 390, 768, 1280, 1440 and 1920px, with no page-level horizontal overflow or console errors observed. The screenshot files themselves remain local because repository-path capture writes were blocked. The full live-model evaluation and external reviewer/employer handoff remain outside this catalog.

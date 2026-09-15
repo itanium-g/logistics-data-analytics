@@ -2,8 +2,10 @@
 
 > Logistics analytics platform over synthetic order operations data.
 
-## Workspaces
-- [Overview Workspace](/#overview): Operational KPIs, order volume trends, and delivery performance metrics.
-- [Forecasts Workspace](/#forecasts): Known-SKU demand coverage forecasts with an adjustable 1–4 month horizon and visible planning buffer.
+Live demo: https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev
 
-The natural-language assistant is optional and routes one validated operation through Workers AI; all returned analytics and forecast values are computed by the application. The forecast is a sparse-history demand-coverage baseline, not a trend model, confidence interval, or purchase order recommendation.
+## Workspaces
+- [Overview Workspace](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev/#overview): Operational KPIs, order volume trends, and delivery performance metrics.
+- [Forecasts Workspace](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev/#forecasts): Known-SKU demand coverage forecasts with an adjustable 1–4 month horizon and visible planning buffer.
+
+The natural-language assistant routes one validated operation through Workers AI when enabled; all returned analytics and forecast values are computed by the application. The forecast is a sparse-history demand-coverage baseline with a visible planning buffer. It does not estimate trend or uncertainty and is not a net purchase quantity.

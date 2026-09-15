@@ -1,6 +1,6 @@
 # AI assistance disclosure
 
-Updated: 2026-09-14 UTC. This repository now contains a working application in addition to the earlier planning and research documents.
+Updated: 2026-09-15 UTC. This repository now contains a working application in addition to the earlier planning and research documents, and the verified `main` branch is deployed publicly.
 
 ## Work recorded so far
 
@@ -16,6 +16,7 @@ Updated: 2026-09-14 UTC. This repository now contains a working application in a
 | **Cloudflare-Native Architecture Refactor** | **Antigravity CLI (Google DeepMind) with codebase-memory MCP** | Migrated external LLM to Cloudflare Workers AI via native `AI` binding; consolidated architecture into single unified Workers deployment; modularized CSS (9 stylesheets in `src/client/styles/`); split large components and monolithic test suite (`tests/ai/`, `tests/server/`); updated directory layout (`src/client/`, `src/server/`); rationalized generated files; added CI workflow and live evaluation script; verified zero regressions with 100% passing tests. |
 | **Free-tier-first LLM policy** | **Codex assistance with Cloudflare documentation MCP** | Kept Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) as the default and GLM-4.7 Flash (`@cf/zai-org/glm-4.7-flash`) as the free-compatible fallback. GLM-5.3 Flash (`@cf/zai-org/glm-5.3-flash`) remains available only behind explicit `AI_ALLOW_PAID_ESCALATION=true`; retries and long prompts cannot select it by default. Verified the native `env.AI.run()` structured-output shape against current Cloudflare model documentation and added exact request/routing regression tests. |
 
+| **Merge, deployment and production validation** | **Codex assistance with Cloudflare MCP and Chrome DevTools MCP** | Pushed `refactor/cloudflare-native`, merged it into `main`, deployed Worker `logistics-analytics-demo`, seeded production D1 and validated the public API/UI. The minimal live AI probe returned `422 unsupported` for `How many orders are there?`; an immediate retry returned the expected `429` pacing response. No paid escalation or AI Gateway was used. |
 | UI redesign follow-up | OpenDesign reference generation and Codex assistance | Applied the responsive Overview and Forecasts workspaces, theme selector, AI Analyst states, accessible evidence surfaces and chart styling while preserving the existing API contracts. Verified with the focused UI tests, the full suite, production checks and local Chrome DevTools review; representative captures are checked in under docs/screenshots/. |
 
 ### What the assistant did in the implementation session
@@ -31,7 +32,7 @@ The redesign work was reviewed against the implementation handoff and current so
 
 ### Documentation and screenshot refresh
 
-Codex reviewed all 11 project Markdown files against current source and local results, corrected stale status and browser claims, and refreshed the 12 UI captures through Chrome DevTools MCP using real analytical responses. Superseded captures were replaced by stable filenames in [docs/screenshots](docs/screenshots/README.md). Typecheck, all 253 tests in 23 files, build and 13/13 local smoke checks passed. The screenshot README records exact capture conditions, an existing forecast layout issue and remaining reduced-motion/200% zoom checks. Application code, assignment assets and analytical data were not changed by this refresh. No provider call, deployment, commit or push was performed.
+Codex reviewed all project Markdown files against current source and verification results, corrected stale status and browser claims, and refreshed the 12 checked-in UI captures through Chrome DevTools MCP using real analytical responses. Superseded captures were replaced by stable filenames in [docs/screenshots](docs/screenshots/README.md). Typecheck, all 253 tests in 23 files, build and 13/13 local smoke checks passed. The production API and browser review also passed for the deterministic paths. The screenshot README records exact local capture conditions and the remaining reduced-motion/200% zoom and screenshot-writer limitations. Application code, assignment assets and analytical data were not changed by the documentation refresh.
 
 ### Defects the checks caught, and what changed
 
@@ -44,7 +45,7 @@ These are recorded because they show what the verification actually did, rather 
 
 ## What has not been done
 
-No deployment, no infrastructure provisioning, no live model call and no employer submission occurred. `/api/ask` ships disabled: there is no provider key in this repository, and the routing tests substitute the HTTP transport rather than contacting a provider. The 20 frozen cases in `evals/cases.json` have not been executed, so no claim is made about live routing accuracy.
+No employer submission occurred. Production infrastructure is provisioned and the deterministic application is deployed. `/api/ask` is enabled in production without a provider key in the repository; the native Workers AI route was probed once, returned `422 unsupported`, and was then paced with `429` on the immediate retry. The 20 frozen cases in `evals/cases.json` have not been executed, so no claim is made about live routing accuracy. The checked-in screenshots remain local captures because the browser tool rejected repository file paths even though production states were visually reviewed.
 
 The supplied files were read without modification and are not committed. No reference implementation code was copied. The runtime model that the application would call is a separate matter from the assistant used to write the code.
 

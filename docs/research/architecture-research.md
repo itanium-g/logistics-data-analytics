@@ -12,15 +12,15 @@ Current implementation evidence: [README](../../README.md#verification-performed
 
 | Evidence | Establishes | Limitation |
 |---|---|---|
-| [Supplied coding assignment](docs/assignment/README.md#original-files) | Numbered requirements, bonuses, rubric, 6–10 hour expectation and submission items. | No deadline or prescribed KPI formulas. |
-| [PDF](docs/assignment/README.md#original-files) and [Word specification](docs/assignment/README.md#original-files) | Corroborating core requirements; four-page PDF. | Shorter specification does not repeat the bonus list. |
-| [Supplied CSV](docs/assignment/README.md#original-files) | Observable data facts and exact bytes. | No SLA dates, stock, lead times or coverage guarantee. |
+| [Supplied coding assignment](../assignment/README.md#original-files) | Numbered requirements, bonuses, rubric, 6–10 hour expectation and submission items. | No deadline or prescribed KPI formulas. |
+| [PDF](../assignment/README.md#original-files) and [Word specification](../assignment/README.md#original-files) | Corroborating core requirements; four-page PDF. | Shorter specification does not repeat the bonus list. |
+| [Supplied CSV](../assignment/README.md#original-files) | Observable data facts and exact bytes. | No SLA dates, stock, lead times or coverage guarantee. |
 | [Notion source](https://spaceshiphk.notion.site/Spaceship-Senior-Engineer-Code-Test-339ea40ff0c980789e69dfa21d3f6b24) | User supplied the landing-page text and linked files. | No fresh Notion retrieval is claimed in this update. |
 | [Reference revision](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3) | Earlier audit's independent code/architecture comparison. | Not the assignment authority or permission to reuse application code. |
 | [Target baseline da1d4a4](https://github.com/itanium-g/logistics-data-analytics/tree/da1d4a408c80ebcd462acd5c89b17a325a5316af) | Four Markdown documents, no app source. | No working app, test run or deployment. |
 | Vendor documentation in the setup guide | Earlier provider research and selected current stack/Workers/Groq checks. | Not a fresh exhaustive provider sweep, tested lockfile or account-readiness result. |
 
-All four user-supplied files were read, and the coding brief and specification PDF were visually inspected. Source filenames and hashes are recorded in the [source catalog](docs/assignment/README.md). The supplied CSV has SHA-256 b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82 and Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, identical to the earlier reference fixture.
+All four user-supplied files were read, and the coding brief and specification PDF were visually inspected. Source filenames and hashes are recorded in the [source catalog](../assignment/README.md). The supplied CSV has SHA-256 b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82 and Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, identical to the earlier reference fixture.
 
 Source review is resolved; original files remain user-supplied inputs rather than repository content. Coverage/status semantics and provider readiness remain explicit assumptions or future checks. No reference code is copied; no open-source license for supplied assignment materials is inferred.
 
@@ -34,8 +34,8 @@ Source review is resolved; original files remain user-supplied inputs rather tha
 | Exceptions counted as lateness | Data does not establish late delivery for exceptions. | Metric v2 separates exceptions and exposes all denominators. |
 | Relative questions against old data lacked a reviewer-friendly resolution | Silent re-anchoring would be misleading; current dates often return empty results. | Explicit dataset/current date context, shown before asking and in evidence. |
 | Inventory output risked becoming only a disclaimer | The brief requires an inventory recommendation. | Return a numerical demand coverage target, method and unavailable-stock limitations. |
-| Original source access was still marked unresolved | Planning unnecessarily depended on an obsolete retrieval gate. | G00 source review complete; functional gates remain pending. |
-| Deployment/handoff was not concretely tracked | A repository alone does not satisfy the submission. | Checklist for public URL, private-repo access, credentials if needed and deployed revision. |
+| Original source access was still marked unresolved | Planning unnecessarily depended on an obsolete retrieval gate. | G00 source review complete; functional gates are recorded in the final checklist. |
+| Deployment/handoff was not concretely tracked | A repository alone does not satisfy the submission. | Checklist records the public URL, public-repository state, credentials status, D1 and deployed revision. |
 
 The brief permits any stack. PostgreSQL, Python and Docker are not mandatory. Query history, caching, tests, Docker, advanced explainability and ambiguity handling are optional bonuses. Basic filters/metrics/data evidence is required. The rubric is 15% Product & UX, 15% Frontend, 20% Backend & Architecture, 20% Data Correctness, 15% AI Orchestration, 10% Forecasting and 5% Deployment.
 
@@ -117,7 +117,7 @@ Groq documents strict structured-output support for GPT-OSS 20B and free limits 
 
 The plan bounds complete input to 4,096 tokens and total output to 512, reserves free quota atomically, admits at most one generation/minute globally and uses no hidden retry or paid fallback. At maximum size the 180K daily application reservation permits 39 calls. Public Ask can exhaust free quota; the dashboard and direct forecast remain available.
 
-P0 uses a 20-case live acceptance check, roughly 20 minutes under pacing, rather than a 180-call multi-provider experiment. No model has been evaluated yet. Keep paid models, the former $2/month ledger and custom reviewer sessions in an optional profile. The setup guide preserves their comparison arithmetic and limitations.
+P0 uses a 20-case live acceptance check, roughly 20 minutes under pacing, rather than a 180-call multi-provider experiment. The production probe returned `422 unsupported` and its immediate retry returned the expected pacing `429`; the 20-case evaluation is therefore still unrun. Keep paid models, the former $2/month ledger and custom reviewer sessions in an optional profile. The setup guide preserves their comparison arithmetic and limitations.
 
 Measure Worker CPU separately from network latency during the future deployment. Keep secrets server-side, report failures clearly, and use scoped provider/deployment credentials. No public write/upload/admin endpoints, arbitrary model SQL, model-written numerical summaries or unrestricted provider tools are planned.
 
@@ -141,6 +141,6 @@ The implemented source layout now keeps pure analytics in `src/domain/`, runtime
 
 ## 7. Completion status
 
-Completed: review of all supplied files, data/hash checks, requirement mapping, revised scope, metric/date/forecast decisions, source provenance, application implementation, local typecheck/tests/build/smoke, source-layout refactor and documentation alignment.
+Completed: review of all supplied files, data/hash checks, requirement mapping, revised scope, metric/date/forecast decisions, source provenance, application implementation, local typecheck/tests/build/smoke, source-layout refactor, merge into `main`, Cloudflare deployment and documentation alignment.
 
-Pending: live model evaluation, infrastructure setup, deployment, reviewer-access check and employer submission. Use the [submission checklist](docs/submission-checklist.md) and [AI disclosure](AI_USAGE.md). No deployment or paid action was performed.
+Remaining: the 20-case live model evaluation, checked-in production screenshot refresh and employer submission. Use the [submission checklist](../submission-checklist.md) and [AI disclosure](../../AI_USAGE.md) for current evidence. No paid action was performed.

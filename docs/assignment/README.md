@@ -31,7 +31,7 @@ The CSV has Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, matching the earl
 | [Pinned reference snapshot](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/tree/1c1ee718dc2ece3e9ad2296060721c7f948001e3) | Revision used by the earlier audit. |
 | [Reference AI disclosure](https://github.com/KhresnaPanduI/spaceship-logistics-analytics/blob/1c1ee718dc2ece3e9ad2296060721c7f948001e3/AI_USAGE.md) | Reference author's disclosure, not a substitute for this project's own record. |
 
-The source attachments are assignment materials, not a new open-source license grant. Preserve their provenance and do not apply a future application-code license to them by default. No reference implementation code is copied by this update. The existing repository visibility is unchanged.
+The source attachments are assignment materials, not a new open-source license grant. Preserve their provenance and do not apply a future application-code license to them by default. No reference implementation code is copied by this update. The repository is now public; the supplied originals remain excluded from Git.
 
 ## Reading guide
 

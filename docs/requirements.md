@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-Reviewed: 2026-09-14 UTC. **Source review complete; core application implemented and locally verified.** Deployment and live model evaluation are release-stage checks; see [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
+Reviewed: 2026-09-15 UTC. **Source review complete; application implemented, merged into `main`, deployed and production-validated.** The deterministic paths are operational; the limited live Workers AI result and screenshot-capture limitation are recorded in [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -87,23 +87,23 @@ The source layout was also checked against the adopted architecture: pure analyt
 | Requirement | Status |
 |---|---|
 | R01, R02, R03, R05, R06, R07, R08, R10 | **Met and verified locally.** Five KPIs at 400 / 304 / 55 / 84.68% / 3.69 days, two charts with matching tables, deterministic chart selection, a shared evidence panel on every result, a validated plan panel, and one shared metric registry and query executor used by both the dashboard and the question path. |
-| R04, R09 | **Implemented; verified against a stubbed transport only.** All four operations route correctly and every number is rendered from a computed field, but no live provider call has been made. |
+| R04, R09 | **Implemented; verified against a stubbed transport and a limited production probe.** All four operations route correctly in tests and every number is rendered from a computed field. The production probe returned `422 unsupported`, so live routing accuracy is not claimed. |
 | R11, R12, R13 | **Met and verified locally.** A known SKU returns four monthly values with exact dates, a history and future chart, a numerical coverage target of 3 units for CRAYON-0008, the methodology, and the stock and lead-time limitations. |
-| R14 | **Not met.** The application is not deployed, so there is no publicly accessible URL. |
+| R14 | **Met.** The application is publicly deployed at https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev and the deterministic API/UI passed production validation. |
 | R15 | **Not applicable, recorded.** No authentication in this profile, so credentials are "Not required". |
 | R16 | **Met and verified.** No secrets in the repository or the built bundle; the environment example uses placeholders. |
 | R17, R18 | **Met locally.** TypeScript on Workers and D1 with a structured contract, an allowlisted compiler, bound values and separated domain functions. |
 | R23 | **Scope documented; elapsed effort unverified.** The brief's 6–10 hour expectation is retained, but no complete time log establishes that implementation and follow-ups fit it. |
 | R19, R20, R21, R22 | **Met.** The README records commands that were actually executed, the architecture and data flow, tool routing with worked examples, and the assumptions, unsupported queries and future work. |
 | R24 | **Met.** [AI_USAGE.md](../AI_USAGE.md) records the actual implementation assistance and the defects the checks caught. |
-| R25 | **Not met.** No deployed URL, and reviewer access to the private repository is unverified. |
+| R25 | **Met for the engineering handoff.** The public repository, deployed URL, production revision, D1 state and credentials status are recorded in [docs/submission-checklist.md](submission-checklist.md). External reviewer/employer submission remains an owner action. |
 
 Optional bonuses: B03 (tests) is included well beyond the minimum. B01, B02, B04 and B05 were not implemented. B06 is partially implemented: safe clarification exists, elaborate conversational follow-ups do not.
 
-The principal submission gaps are **deployment**, **live model evaluation** and **reviewer repository access**. Remaining browser checks and the observed forecast layout issue are recorded in the [screenshot README](screenshots/README.md#review-limits). There is no supplied deadline; do not invent one.
+The remaining release limitations are the **20-case live model evaluation**, checked-in production screenshot refresh and **external reviewer/employer handoff**. Production deployment, deterministic API/UI behavior and the forecast layout fix are complete; the [screenshot README](screenshots/README.md#review-limits) records the browser-tool file-write limitation. There is no supplied deadline; do not invent one.
 
 ## Frontend redesign handoff
 
 The incremental Spaceship logistics-dashboard redesign is implemented within the existing React 19, TypeScript, Vite and ordinary-CSS application. It retains the current Overview and Forecasts controllers, analytical contracts, Recharts views, AI Analyst behavior, themes and hash navigation. It does not add maps, tracking, authentication, a Tailwind migration, or backend/data changes.
 
-The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 253 tests in 23 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Deployment and live-model evaluation remain outstanding.
+The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 253 tests in 23 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Production deployment is validated; the limited live-model result and remaining external handoff are recorded above.

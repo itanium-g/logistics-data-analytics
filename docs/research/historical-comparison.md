@@ -4,9 +4,9 @@ Updated: **2026-09-11 UTC**. Project: [itanium-g/logistics-data-analytics](https
 
 **Historical recommendation only:** the final application uses React + Hono on Cloudflare Workers with Static Assets, D1, and the native Workers AI binding. The earlier Groq and DeepInfra alternatives below were rejected for the final implementation and must not be added as external provider dependencies. Keep dashboard queries, forecasts, arithmetic, and answer rendering deterministic.
 
-This retains the earlier setup design, provider matrices, price assumptions and selection policy. [The implementation plan](../architecture/implementation-plan.md) owns current contracts and release gates. **The application is now implemented and locally verified.** Use [README local setup](../../README.md#local-setup), [package.json](../../package.json) and [wrangler.jsonc](../../wrangler.jsonc) for the current checkout. The scaffold recipes and comparisons below are historical design material, not instructions to recreate or overwrite the existing app. Current Cloudflare model eligibility and the production procedure are documented in [the deployment guide](../deployment/cloudflare.md).
+This retains the earlier setup design, provider matrices, price assumptions and selection policy. [The implementation plan](../architecture/implementation-plan.md) owns current contracts and release gates. **The application is implemented, merged into `main`, deployed and locally/production verified.** Use [README local setup](../../README.md#local-setup), [package.json](../../package.json) and [wrangler.jsonc](../../wrangler.jsonc) for the current checkout. The scaffold recipes and comparisons below are historical design material, not instructions to recreate or overwrite the existing app. The current Cloudflare model policy and production procedure are documented in [the deployment guide](../deployment/cloudflare.md); no external provider key is part of the final runtime.
 
-**Assignment reconciliation:** the [supplied originals](docs/assignment/README.md) and [requirements matrix](docs/requirements.md) now govern scope. P0 is a public synthetic-data demo with no login, one free model adapter, known-SKU forecasts for 1–4 months and a 20-case live acceptance set. The former custom sessions, paid ledger, second adapter and 180-call experiment are optional P2 work. The plan's metric v2 and explicit order-date/delivery-date rules apply to every profile.
+**Assignment reconciliation:** the [supplied originals](../assignment/README.md) and [requirements matrix](../requirements.md) now govern scope. P0 is a public synthetic-data demo with no login, one free model adapter, known-SKU forecasts for 1–4 months and a 20-case live acceptance set. The former custom sessions, paid ledger, second adapter and 180-call experiment are optional P2 work. The plan's metric v2 and explicit order-date/delivery-date rules apply to every profile.
 
 Prices are USD unless stated otherwise. The broader survey was checked September 10; the recommended stack, primary model shortlist, and selected provider details were refreshed September 11. This covers major relevant options, not every regional reseller or every model SKU. Account dashboards control actual eligibility and limits. Taxes, domains, payment fees, email/SMS, additional account usage, and engineering time are excluded unless a row says otherwise.
 
@@ -66,9 +66,9 @@ Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search
 
 ### 3.1 Confirm prerequisites and preserve existing work
 
-Read the [supplied assignment files](docs/assignment/README.md) and [requirements matrix](docs/requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review and the local application implementation are complete; use the commands in [README.md](README.md#local-setup) for the current checkout. Deployment and live model evaluation remain outstanding.
+Read the [supplied assignment files](../assignment/README.md) and [requirements matrix](../requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review, local implementation and Cloudflare deployment are complete; use the commands in [README.md](../../README.md#local-setup) for the current checkout. The 20-case live model evaluation remains outstanding.
 
-Install Node 24 LTS and Git. Inspect the latest repository and any unpushed work before scaffolding. No account or model key is needed for the offline build. A live deployment later needs a Cloudflare account; live model evaluation needs a provider account with permitted inputs and confirmed quota.
+Install Node 24 LTS and Git for local checks. The application is already deployed from `main`; use [the deployment guide](../deployment/cloudflare.md) for the current Cloudflare record. No external provider account or model key is needed by the final runtime. The 20-case live model evaluation remains a separate unrun check.
 
 Create the scaffold in a **new sibling directory**, then review and integrate its application files into this repository while preserving the documents:
 
@@ -167,23 +167,22 @@ Build in this order: import/data metrics → query API → dashboard/evidence �
 
 ### 3.4 Configure the selected LLM safely
 
-Create only the provider account selected for evaluation. For the first candidate, obtain a Groq key, confirm the free model quota, and review data controls. Store local secrets in an ignored `.dev.vars` file and remote secrets in Workers secrets. The file must not be imported by frontend code.
+The following external-provider setup is retained only as historical comparison material. It is not required by, or used by, the final deployment: Workers AI uses the native `AI` binding and no provider key. If an external candidate is ever evaluated separately, keep its key in an ignored `.dev.vars` file or a server-side secret and never import it into frontend code.
 
-| Setting | Groq P0 candidate | DeepInfra optional P2 challenger |
-|---|---|---|
-| Secret name | `GROQ_API_KEY` | `DEEPINFRA_API_KEY` |
-| Server endpoint | `https://api.groq.com/openai/v1/chat/completions` | `https://api.deepinfra.com/v1/openai/chat/completions` |
-| Model | `openai/gpt-oss-20b` | `google/gemma-4-E4B-it` |
-| Structured output | `response_format.type=json_schema`, `strict=true` | Request `json_schema` only after verifying this model/endpoint supports the contract. |
-| Reasoning policy | `reasoning_effort=low`; `include_reasoning=false` | Use verified model-specific controls; do not copy unsupported Groq parameters. |
-| Output bound | Configure `max_completion_tokens=512`; verify its accounting and finish behavior. | Verify the supported output-limit field and all billable output before enabling paid calls. |
-| Response handling | Inspect status, usage and finish reason; validate one decision object. | Same canonical validation and error contract. |
+| Final runtime setting | Current configuration |
+|---|---|
+| Secret | None; the Worker uses the native Cloudflare `AI` binding. |
+| Model policy | Gemma 4 default; GLM-4.7 Flash fallback; GLM-5.3 only behind explicit paid escalation, disabled in production. |
+| Structured output | Native Workers AI `response_format.type = "json_schema"`, followed by independent JSON/schema/operation validation. |
+| Failure handling | Bounded timeout/retry/quota logic; no automatic external-provider or paid fallback. |
 
-Groq requires every schema property to be required and object schemas to reject additional properties in strict mode. Adapt optional domain fields using a tested provider representation, such as explicit nullable fields, then normalize and revalidate. Strict schema adherence does not prove the selected metric, filter or date is correct. [Groq structured outputs](https://console.groq.com/docs/structured-outputs), [DeepInfra structured outputs](https://docs.deepinfra.com/chat/structured-outputs)
+The Groq and DeepInfra rows from the original comparison were removed from this current setup section because neither provider is part of the final application. Historical price and capability comparisons later in this document remain non-actionable research, not deployment instructions.
 
-GPT-OSS supports low/medium/high reasoning, not a `none` setting. Suppressing returned reasoning **does not disable reasoning or make those tokens free**. Do not send `reasoning_format` to Groq GPT-OSS; use its supported `include_reasoning` control. If 512 total output tokens cause truncation, the candidate fails this configuration; any increased bound requires updated costs, quotas and a new evaluation. [Groq reasoning](https://console.groq.com/docs/reasoning), [API reference](https://console.groq.com/docs/api-reference)
+The external-provider structured-output notes and citations below are historical comparisons only; they do not describe the deployed native Workers AI request. The current request format and validation are documented in [README.md](../../README.md) and [the deployment guide](../deployment/cloudflare.md).
 
-Use one live provider per deployment and no automatic paid fallback. Direct model API access is independent of a ChatGPT, Claude, Kiro, Copilot or other coding-assistant subscription.
+Reasoning and token-accounting notes for GPT-OSS are retained only as historical provider research. They have no bearing on the current Workers AI deployment, whose input/output bounds, timeout, pacing and validation are implemented in the repository.
+
+The final deployment uses one native Workers AI binding and no automatic paid or external-provider fallback. Coding-assistant subscriptions are independent of runtime model access.
 
 ### 3.5 Enforce limits and verify quality
 
@@ -245,7 +244,7 @@ Secret commands are interactive; never paste real values into the documentation,
 
 Use the provider hostname initially. CI deployment should use a narrowly scoped token and the repository's existing release policy; do not enable a second deployment pipeline for the same commit. Test SPA deep links, JSON API 404s, public reviewer access, provider-off behavior and capped requests. Test sessions only if that optional profile is implemented.
 
-Measure Worker CPU separately from network latency. The free invocation limit is 10 ms CPU; target measured p95 below 8 ms with realistic inputs and concurrency. If it does not fit after simple improvements, Workers Paid adds a $5/month base. Confirm the actual paid plan and resource usage before changing the cost estimate.
+Measure Worker CPU separately from network latency if the deployed workload grows; the current browser/API validation is not a resource benchmark. Keep the free-tier-first configuration and do not change the plan without measured need.
 
 Keep reviewed migrations backward-compatible. Preserve a data manifest/authorized seed or permitted export for recovery; rehearse application rollback. Disable Ask first during a cost incident. Restoring analytics must never restore old budget counters and reopen already consumed allowance. Use short retained logs and provider usage reporting; a separate observability subscription is unnecessary for the demo.
 
@@ -406,7 +405,7 @@ For P0, evaluate Groq 20B only and use it if it passes the declared subset and a
 
 ## 6. Budget arithmetic and practical purchase decision
 
-P0 permits no paid generation. The following arithmetic is retained for optional paid access and provider comparison. If activated later, the runtime must use verified maximum billable input/output, not the nominal comparison workload. At the proposed **4,096 input / 512 total-output** bounds:
+P0 permits no paid generation. The following arithmetic is retained for optional paid access and provider comparison; it is not the final runtime configuration. If activated later, the runtime must use verified maximum billable input/output, not the nominal comparison workload. At the proposed **4,096 input / 512 total-output** bounds:
 
 | Paid configuration | Unrounded worst-case USD/call | Reservation rounded up to whole microdollars |
 |---|---:|---:|
@@ -429,4 +428,4 @@ For the optional P2 comparison of two 60-case candidates and a 60-case confirmat
 | Domain | Provider hostname | Only if a custom domain is later requested; the brief accepts a public provider URL. |
 | Other services | None initially | A concrete requirement for files, named-user auth, email, jobs or observability appears. |
 
-The practical target remains **$0 for a quota-limited reviewer demo**, with an estimated upgrade path around **$5/month hosting plus cents of ordinary model usage**. Application implementation is locally verified; live routing evaluation, production performance and account eligibility remain unverified. Refresh the chosen prices and terms before activation, keep deterministic analytics available, and record the actual deployed model/configuration rather than declaring an untested provider the winner.
+The practical target remains **$0 for a quota-limited reviewer demo**, with an estimated upgrade path around **$5/month hosting plus cents of ordinary model usage**. The final application is deployed on Cloudflare with deterministic analytics available; the minimal live model probe returned `422 unsupported`, so the 20-case routing evaluation and any model-quality claim remain unverified. Refresh the chosen prices and terms before any paid activation, and record the actual deployed model/configuration rather than declaring an untested provider the winner.

@@ -1,8 +1,8 @@
 # Spaceship frontend redesign
 
-Updated: 2026-09-14 UTC
+Updated: 2026-09-15 UTC
 
-Status: implemented and locally verified. This is an incremental frontend redesign of the existing Spaceship logistics analytics application. Deployment and live-model evaluation remain outstanding.
+Status: implemented, merged into `main`, locally verified and production browser-validated. This is an incremental frontend redesign of the existing Spaceship logistics analytics application. The full live-model evaluation remains outstanding.
 
 ## Scope and preserved contracts
 
@@ -89,10 +89,10 @@ Commands run against the completed local implementation:
 |---|---|
 | npm run typecheck | Passed: browser, Worker and test TypeScript projects |
 | npm test | Passed: 253 tests in 23 files |
-| npm run build | Passed: client bundle, 728.94 kB raw / 210.41 kB gzip |
+| npm run build | Passed: client bundle, 729.98 kB raw / 210.60 kB gzip |
 | npm run smoke | Passed: 13/13 checks against local workerd at http://127.0.0.1:4173 |
 
-The recorded pre-redesign client measurement was 650.27 kB raw / 190.07 kB gzip. The measured change is approximately +78.67 kB raw / +20.34 kB gzip, below the 40 KiB gzip investigation threshold. Vite's large-chunk warning remains visible; it was not silenced.
+The recorded pre-redesign client measurement was 650.27 kB raw / 190.07 kB gzip. The measured change is approximately +79.71 kB raw / +20.53 kB gzip, below the 40 KiB gzip investigation threshold. Vite's large-chunk warning remains visible; it was not silenced.
 
 The smoke command starts the local workerd/static preview and checks HTTP, runtime and SPA/static-serving behavior. It does not inspect rendered chart SVG geometry, replace the browser review, or evaluate a live provider.
 
@@ -102,7 +102,7 @@ Reviewed captures live directly in [docs/screenshots](screenshots/README.md), wi
 
 ## Remaining limitations
 
-- The application has not been deployed and no public URL or reviewer access has been verified.
-- No live provider call or live routing evaluation has been made. /api/ask remains disabled without a provider key; deterministic tests use a stubbed transport.
+- Production is deployed at https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev; the repository is public. External reviewer/employer handoff remains an owner action.
+- A limited live provider call was made: `/api/ask` returned `422 unsupported` for `How many orders are there?`, and an immediate retry returned the expected `429` pacing response. The 20-case routing evaluation remains unrun; deterministic tests use a stubbed transport.
 - The dataset contains no coordinates, geometries, routes or tracking events, so no geographic view was added.
-- Local workerd smoke checks do not establish deployment performance, remote D1 state or live-model quality.
+- Local workerd smoke checks do not establish universal deployment performance or live-model quality. Production API/UI checks and the responsive forecast breakpoint passed; the checked-in screenshot files remain local because the browser screenshot writer rejected repository paths.

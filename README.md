@@ -4,7 +4,9 @@ A logistics analytics application over the supplied 400-order synthetic dataset:
 
 ## Live Application
 
-**Cloudflare deployment:** Pending final `main` deployment.
+**Cloudflare deployment:** https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev
+
+The public demo runs as Worker `logistics-analytics-demo` with Workers Static Assets, D1 and the native Workers AI binding. It is deployed from the verified `main` branch; no login is required for the synthetic dataset.
 
 ## Product Preview
 
@@ -24,7 +26,7 @@ A logistics analytics application over the supplied 400-order synthetic dataset:
 
 ![Mobile dashboard](docs/screenshots/overview-light-mobile.png)
 
-**Status: implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Local test and capture evidence is recorded below; deployment, live evaluation, reviewer access and remaining browser checks are explicitly pending.
+**Status: implemented, merged into `main`, deployed and production-validated.** Deterministic analytics, forecasting, responsive UI and the public API are operational. The production Workers AI route was exercised once but did not return a successful answer: the question `How many orders are there?` returned `422 unsupported`, and an immediate retry correctly returned `429` because of the 60-second pacing guard. The 20-case live evaluation remains unrun; no paid escalation occurred.
 
 | Document | Purpose |
 |---|---|
@@ -127,7 +129,7 @@ flowchart TD
     ASK --> A["POST /api/ask"]
 
     A --> GUARD["atomic D1 quota admission"]
-    GUARD --> ROUTER["Centralized Model Router + AI Gateway"]
+    GUARD --> ROUTER["Centralized model router"]
     ROUTER --> MODEL["Workers AI (Gemma 4 default; GLM-5.3 paid escalation opt-in; GLM-4.7 free fallback)"]
     MODEL --> VAL["decision validation: exactly one operation"]
     VAL --> DOMAIN
@@ -247,17 +249,17 @@ Two things the automated checks do not cover, and where they are covered instead
 
 ## Browser verification
 
-The current 12 captures were refreshed from the local application in Chrome DevTools 153.0 at device scale 1. They cover light/dark Overview, docked/modal assistant, mobile navigation and filters, direct forecast results, GLS scope and searched/sorted evidence. Fonts were loaded and chart frames stable before capture; each image was visually inspected. Exact viewports, analytical values and review limits are in the [screenshot README](docs/screenshots/README.md). These are local responsive emulations, not real-device or deployed-browser checks. Reduced-motion media emulation and a full 200% browser-zoom audit remain pending.
+The current 12 checked-in captures were refreshed from the local application in Chrome DevTools 153.0 at device scale 1. They cover light/dark Overview, docked/modal assistant, mobile navigation and filters, direct forecast results, GLS scope and searched/sorted evidence. Fonts were loaded and chart frames stable before capture; each image was visually inspected. Exact viewports, analytical values and review limits are in the [screenshot README](docs/screenshots/README.md). Production was separately reviewed at 390, 768, 1280, 1440 and 1920px widths, including the docked forecast breakpoint, mobile assistant modal, dark theme, filters and direct navigation; no page-level horizontal overflow or console errors were observed. The checked-in PNGs remain local captures because the browser tool's file-save whitelist rejected repository paths.
 
 ## What is not done
 
-- **Deployment:** The feature branch is being verified before its authorized merge into `main`; production requires a real D1 database id in place of the all-zero local placeholder, remote migrations and seeding. No external provider secret is required.
-- **The live model route has not been evaluated.** [evals/cases.json](evals/cases.json) freezes 20 cases — 12 supported, 4 ambiguous, 4 adversarial — with expected plans and facts defined before any run. They have not been executed against a provider. Passing them against a stubbed transport does not establish live routing accuracy.
-- Cloudflare's free tier allows 10 ms CPU per invocation. Local timings say nothing about that; it needs measuring on a deployment.
+- **The full live model evaluation is outstanding.** [evals/cases.json](evals/cases.json) freezes 20 cases — 12 supported, 4 ambiguous, 4 adversarial — with expected plans and facts defined before any run. The minimal production probe returned `422 unsupported`, followed by the expected pacing `429`; this is not enough evidence to claim live routing accuracy.
+- **Checked-in production screenshots remain outstanding.** Production UI states were visually reviewed, but the Chrome DevTools screenshot writer rejected repository paths, so the stable PNG catalog remains the verified local capture set.
+- **External submission remains outside the repository workflow.** Reviewer communication or an employer submission form must be completed by the owner.
 
 ## Known characteristics
 
-The client bundle is 728.94 kB (210.41 kB gzipped), mostly Recharts and TanStack Table, which trips Vite's large-chunk warning. The recorded baseline was 650.27 kB (190.07 kB gzipped), so the redesign delta is approximately +78.67 kB raw / +20.34 kB gzip. This remains below the 40 KiB gzip investigation threshold; the warning is not silenced and code splitting remains outside this scope.
+The client bundle is 729.98 kB (210.60 kB gzipped), mostly Recharts and TanStack Table, which trips Vite's large-chunk warning. The recorded baseline was 650.27 kB (190.07 kB gzipped), so the redesign delta is approximately +79.71 kB raw / +20.53 kB gzip. This remains below the 40 KiB gzip investigation threshold; the warning is not silenced and code splitting remains outside this scope.
 
 Resolved dependency versions, pinned exactly: React 19.3.0, Vite 8.3.0, TypeScript 7.0.2, Hono 4.13.7, Zod 4.6.4, Recharts 3.10.1, Wrangler 4.131.1, Vitest 4.1.11, csv-parse 7.0.2, jsdom 30.0.1. Two deviations from the plan's targets: Vite resolved to 8.3.0 rather than 8.1, and Vitest is pinned to 4.1.11 because `@cloudflare/vitest-pool-workers` still requires the 4.x line. That pool is not installed — tests run in plain Node against `node:sqlite` instead, which keeps the SQL real without a second runtime in the test loop.
 
@@ -271,9 +273,9 @@ Implementation details, preservation boundaries, table/CSV semantics, dependency
 
 | Deliverable | State |
 |---|---|
-| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), currently private; reviewer access still to be verified. |
-| Deployed URL | Not deployed. |
+| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public. |
+| Deployed URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev |
 | Credentials | Not required; no authentication in this profile. |
-| Data version | 1.0.0, metric version 2, source SHA-256 `b60f84b1…94bc82`. |
+| Data version | 1.0.0, metric version 2, source SHA-256 `b60f84b1…94bc82`; production D1 verified at 400 rows / 355 SKUs. |
 
 AI assistance is disclosed in [AI_USAGE.md](AI_USAGE.md). Complete [docs/submission-checklist.md](docs/submission-checklist.md) before submitting.

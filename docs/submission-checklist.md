@@ -1,16 +1,18 @@
 # Submission checklist
 
-Status: **The application is implemented and the release is being verified from `main`.** This checklist distinguishes deterministic local evidence from live Cloudflare evidence. No authentication credentials are required for the synthetic-data demo.
+Status: **The application is merged into `main`, deployed and production-validated.** This checklist distinguishes deterministic local evidence from the one limited live Workers AI probe. No authentication credentials are required for the synthetic-data demo.
 
 ## Handoff fields
 
 | Item | Current value | Release action |
 |---|---|---|
-| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics) | Verify reviewer access using the intended handoff method. |
-| Deployed app URL | Pending final `main` deployment | Record the stable HTTPS URL after production validation. |
+| Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public | Complete any external reviewer handoff separately. |
+| Deployed app URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev | Stable public Worker URL verified. |
 | Credentials | Not required; no login in this profile | Do not add credentials to the repository. |
-| Deployed commit | Pending | Record the exact `main` SHA served by the Worker. |
-| Data source | [Supplied CSV](../assignment/README.md#original-files), SHA-256 verified at import | Confirm production D1 contains data version `1.0.0`, metric version `2`, and 400 orders. |
+| Deployed commit | `7799ee6a33c4f45c03f04c3c900637dd988e3110` at the recorded deployment | Documentation-only finalization may follow; runtime files are redeployed when changed. |
+| Worker revision | `7a16a1f4-7ae7-4d58-9753-7f7562988ff9`; deployment `1ccb1b9b-e1c8-46ba-ad30-be51cc6f33d4` | 100% traffic on this version at verification. |
+| D1 | `logistics-analytics-demo` / `38482f2d-165a-46d2-91b6-89e222f77de5` | Production migration and seed verified: 400 orders / 355 SKUs. |
+| Data source | [Supplied CSV](assignment/README.md#original-files), SHA-256 verified at import | Production reports data version `1.0.0` and metric version `2`. |
 | Deadline | Not specified | Record only if later supplied. |
 
 ## Required product checks
@@ -28,12 +30,12 @@ Status: **The application is implemented and the release is being verified from 
 - [x] Node 24 is the declared local and CI toolchain; CI runs `npm ci`, typecheck, tests, build, and deterministic smoke checks.
 - [x] Model outputs are bounded and validated; the model cannot execute SQL or provide analytical numbers.
 - [x] Supplied analytical data is read-only through request paths; only quota usage is written.
-- [ ] Twenty frozen live evaluation cases have recorded results. The cases are in [evals/cases.json](../../evals/cases.json); a provider run is required before claiming routing quality.
+- [ ] Twenty frozen live evaluation cases have recorded results. The cases are in [evals/cases.json](../evals/cases.json); the minimal production probe returned `422 unsupported`, followed by the expected pacing `429`, so routing quality is not claimed.
 - [x] No provider keys or credentials are committed or shipped in the browser bundle.
 - [x] Quota admission, pacing, timeout, retry bounds, and concurrent reservation behavior are covered by tests.
-- [x] The forecast container-query fix is checked at the 1440 × 1100 docked-assistant breakpoint.
+- [x] The forecast container-query fix is checked at the 1440 × 1100 docked-assistant breakpoint locally and in production.
 - [x] The 12 screenshot filenames are retained and the gallery paths are repository-relative.
-- [ ] Production D1 id, remote migrations, seed row count, Worker URL, revision, and browser validation are recorded below after deployment.
+- [x] Production D1 id, remote migrations, seed row count, Worker URL, revision, and browser validation are recorded below.
 
 ## Workers AI policy
 
@@ -65,19 +67,19 @@ The test report must record exact counts from the current run. The smoke harness
 
 | Check | Result |
 |---|---|
-| `GET /api/health` | Pending deployment |
-| `GET /api/meta` | Pending deployment |
-| Analytics and GLS ranking | Pending deployment |
-| CRAYON-0008 forecast | Pending deployment |
-| SPA deep links and unknown API JSON 404 | Pending deployment |
-| Chrome responsive/theme/assistant review | Pending deployment |
-| Live Workers AI | Pending free-tier access check; never infer from mocks |
+| `GET /api/health` | **Passed** — HTTP 200 |
+| `GET /api/meta` | **Passed** — HTTP 200; data version `1.0.0`, metric version `2`, 355 SKUs |
+| Analytics and GLS ranking | **Passed** — carrier delay-rate ranking places GLS first at 2/7 (28.57%) |
+| CRAYON-0008 forecast | **Passed** — four-month forecast and 3-unit coverage target |
+| SPA deep links and unknown API JSON 404 | **Passed** — direct navigation works; unknown API route returns JSON 404 |
+| Chrome responsive/theme/assistant review | **Passed** — production review at 390, 768, 1280, 1440 and 1920px; no horizontal overflow or console errors observed |
+| Live Workers AI | **Limited** — `How many orders are there?` returned 422 `unsupported`; immediate retry returned 429 pacing; no paid escalation |
 
 ## Final handoff actions
 
-1. Push the verified feature branch, fetch the newest `origin/main`, merge without rewriting history, and push `main`.
-2. Rerun the complete verification suite on `main`.
-3. Create or reuse only the required D1 database, apply remote migrations, seed the checked CSV, and verify 400 rows.
-4. Deploy with `npm run deploy` from `main` and record the Worker URL and revision.
-5. Validate production in the API and Chrome DevTools, then update this checklist, `README.md`, `AI_USAGE.md`, the deployment guide, screenshot catalog, and `public/llms.txt` with actual evidence.
-6. Commit and push the final documentation on `main`; redeploy if a runtime-served file changed.
+1. The verified feature branch `866e9ac2916bf14b99c52ac8c44e543ff31f40fa` was pushed and merged with commit `0aa8a10aef2ac7535057093dbd82a6e62f480a3a`; final `origin/main` is `7799ee6a33c4f45c03f04c3c900637dd988e3110`.
+2. The complete verification suite passed on the merged `main`: typecheck, 253 tests in 23 files, production build, 13/13 smoke checks and `git diff --check`.
+3. The existing production D1 was reused, migrations and the checked seed were applied, and the remote count was verified at 400 rows / 355 SKUs.
+4. `npm run deploy` was run from `main`; the Worker URL and revision are recorded above.
+5. Production was validated through the API and Chrome DevTools. The checked-in screenshot catalog remains the local capture set because the browser tool rejected repository screenshot paths; this limitation is recorded in [docs/screenshots/README.md](screenshots/README.md).
+6. The final README, AI disclosure, deployment guide, screenshot catalog, requirements/plan status and `public/llms.txt` are being committed on `main`; the runtime metadata change is followed by a redeploy.

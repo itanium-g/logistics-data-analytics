@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-Updated: 2026-09-14 UTC. **Implemented and verified locally. Not deployed, and the live model route has not been evaluated.** Phases P00 to P05 are complete with the evidence recorded in section 9 and in [README.md](README.md#verification-performed); P06 is partially complete: focused checks and the README are done, deployment and live evaluation are not. Current local verification: 253 tests in 23 files, three TypeScript projects, production build and 13/13 workerd smoke checks.
+Updated: 2026-09-15 UTC. **Implemented, merged into `main`, deployed and production-validated.** Phases P00 to P06 are complete for the engineering release. Current local verification is 253 tests in 23 files, three TypeScript projects, a passing production build and 13/13 workerd smoke checks. The deterministic production API/UI passed; the minimal live Workers AI probe returned `422 unsupported` and the immediate retry returned the expected `429` pacing response, so the 20-case routing evaluation remains unclaimed.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
@@ -43,7 +43,7 @@ G00 is **complete for source review**, not for application behavior. All four su
 | Dataset | 400 rows, 17 columns, 355 SKUs; inspected from supplied attachments and cataloged in docs/assignment/README.md. Originals are not committed. |
 | Coverage | Assume January–December 2025 is a complete synthetic observation window. This is not proved by the brief or last order. Forecasts return coverage_unverified. |
 | Status meaning | delivered is the on-time proxy; delayed is the late proxy. Exceptions have unknown outcome and are excluded from these rate denominators. These are project assumptions. |
-| Live readiness | Account eligibility, quota, deployment and model behavior remain unverified. None is activated by this documentation update. |
+| Live readiness | Production Worker, D1, bindings, quota guard and deterministic behavior are verified. Workers AI is enabled with paid escalation off; one live probe returned `422 unsupported`, so broader model behavior remains unverified. |
 
 Do not reopen the resolved brief/data acquisition tasks solely because Notion was unavailable in an earlier review. Revisit new material conflicts, actual provider readiness, or newly supplied code.
 
@@ -208,7 +208,7 @@ P2 paid activation requires a reviewed reviewer gate and atomic monetary reserva
 
 ## 9. Acceptance evidence
 
-Gate status as executed on this machine. "Met" means the check ran and the result was observed; the reproduction commands are in [README.md](README.md#local-setup).
+Gate status as executed on this machine. "Met" means the check ran and the result was observed; the reproduction commands are in [README.md](../../README.md#local-setup).
 
 | Gate | Status | Evidence |
 |---|---|---|
@@ -216,10 +216,10 @@ Gate status as executed on this machine. "Met" means the check ran and the resul
 | G02 Analytics | **Met** | Five KPI results to full precision, empty and null-denominator cases, dashboard/Ask parity through shared domain functions, full-scope ranking before truncation, and denominators exposed on every ratio. |
 | G03 Query safety | **Met** | Unknown keys and values, bad dates, SQL-like inputs in value and identifier positions, and extra or multiple model operations all rejected with the dataset intact. |
 | G04 Forecast | **Met** | Sparse known SKU, four months, the exact CRAYON-0008 result of 3 units, unknown SKU, zero demand, canceled exclusion, and rounding once after summing. |
-| G05 Live AI | **Not met** | 20 cases frozen in `evals/cases.json` with expected plans and facts, defined before any run. They have not been executed against a provider. Passing them against a stubbed transport does not satisfy this gate. |
-| G06 Quotas and errors | **Partially met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are all verified locally. The free route itself is unconfirmed because no account has been used. |
-| G07 Browser and runtime | **Partially met** | Five cards, two charts, Ask panel, SKU forecast, date labels, empty/error/model-off states, keyboard reachability and JSON API 404 verified through a jsdom mount test and 13 workerd smoke checks. Real-device and deployed-browser checks are outstanding. |
-| G08 Handoff | **Partially met** | Clean-checkout instructions executed successfully; README, disclosure and credentials state are complete. There is no public URL and reviewer repository access is unverified. |
+| G05 Live AI | **Not met** | 20 cases are frozen in `evals/cases.json`. A minimal production probe returned `422 unsupported`, followed by the expected pacing `429`; no broader routing-accuracy claim is made. |
+| G06 Quotas and errors | **Partially met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are verified locally. The production route is enabled but the observed probe did not complete an answer. |
+| G07 Browser and runtime | **Met for the deployed review; real-device checks remain outside scope** | Five cards, two charts, Ask panel, SKU forecast, date labels, empty/error/model-off states, keyboard reachability and JSON API 404 are covered by tests and smoke checks. Production browser review covered 390, 768, 1280, 1440 and 1920px widths, themes, filters, assistant states and the forecast breakpoint without page-level overflow. |
+| G08 Handoff | **Partially met** | Feature branch was pushed, merged into `main`, deployed, and the repository is public with the URL and revision recorded. The full live evaluation, screenshot file refresh and external reviewer/employer handoff remain outstanding. |
 
 Use 12 supported, 4 missing/ambiguous-input and 4 unsupported/adversarial live cases. Include all three quoted analytics examples, two SKU/four-month variations, filters, ranking, date basis and empty ranges. Define acceptable plans before execution. Require all 20 expected outcomes for the declared subset and no forbidden execution; publish counts rather than claiming general 100% accuracy.
 
@@ -229,20 +229,20 @@ Executed script contract: `npm ci`; `npm run data:import`; `npm run db:migrate`;
 
 ## Local browser verification update
 
-The local Chrome DevTools capture review covers Overview and Forecasts, light/dark themes, docked/modal assistant, mobile navigation, expanded filters, GLS results and evidence search/sort. The [screenshot README](../screenshots/README.md) records all 12 states, exact viewports, checks and limitations. The 1440px docked forecast layout now uses a container-query stack so its configuration and result remain within the available workspace.
+The local Chrome DevTools capture review covers Overview and Forecasts, light/dark themes, docked/modal assistant, mobile navigation, expanded filters, GLS results and evidence search/sort. Production Chrome DevTools review additionally covered 390, 768, 1280, 1440 and 1920px widths, direct navigation and the docked forecast breakpoint. The [screenshot README](../screenshots/README.md) records all 12 checked-in states, exact viewports, checks and limitations; its PNGs remain local because repository-path screenshot writes were blocked. The 1440px docked forecast layout now uses a container-query stack so its configuration and result remain within the available workspace.
 
 ## 10. Release and handoff
 
-Deployment is future work. Freeze lockfile, data checksum, metric version, provider/model and deployed commit. Seed the selected environment without resetting usage. Use one deployment path and scoped secrets; no provider keys in browser bundles or Git.
+Deployment is complete. The lockfile, data checksum, metric version, provider/model policy and deployed commit are recorded in [docs/submission-checklist.md](../submission-checklist.md). Production D1 was seeded without resetting usage, and the one Worker path uses scoped configuration with no provider keys in browser bundles or Git.
 
-Test the public URL from a fresh session: filters, live analytics, four-month SKU forecast, tables, JSON API 404 and provider failure. Measure actual CPU/resources; local checks do not establish free-tier performance.
+The public URL was tested from a fresh browser session: filters, live analytics, four-month SKU forecast, tables, JSON API 404, direct SPA navigation, themes and provider failure/pacing behavior. Local checks do not establish a universal free-tier CPU guarantee; the deployment remains free-tier-first and no paid feature was enabled.
 
 README must contain actual tested setup/environment variables, architecture/data flow, tool routing, assumptions, unsupported queries, future work, AI disclosure and live URL. If authentication is chosen, provide credentials through the handoff channel; otherwise state “Not required”.
 
 Rollback: disable Ask for quota/provider incidents, restore the previous working deployment, and preserve provenance and usage counters. Restoring data must not restore old budget state.
 
-Complete docs/submission-checklist.md with repository, deployed URL, access, revision and checks. The repository is private; verify reviewer access at handoff without silently changing visibility.
+The repository is public and docs/submission-checklist.md records the repository, deployed URL, access, revision and checks. External reviewer/employer handoff is still an owner action.
 
-**Done means:** required features work on the deployed revision with acceptance evidence. The application is implemented and locally verified against gates G01 to G04, with G06 and G07 partially met. Deployment, live model evaluation and employer submission remain pending, so this is not yet done by that definition.
+**Done means:** required features work on the deployed revision with acceptance evidence. The engineering release is complete and deterministic gates G01–G04, deployment and production runtime checks are met. G05 remains intentionally unclaimed because the live model probe returned `422 unsupported`; the 20-case evaluation and external employer submission are separate remaining actions.
 
-Frontend redesign follow-up: see [docs/frontend-redesign.md](docs/frontend-redesign.md) for the incremental shell, responsive presentation, TanStack Table/CSV semantics, browser captures and measured verification. The historical hosting and provider plan above remains unchanged.
+Frontend redesign follow-up: see [docs/frontend-redesign.md](../frontend-redesign.md) for the incremental shell, responsive presentation, TanStack Table/CSV semantics, browser captures and measured verification. The historical hosting and provider plan above remains unchanged.
