@@ -52,7 +52,7 @@ The final query must report 400 rows. Also verify `/api/meta` after deployment r
 
 ## Deploy the verified main branch
 
-Build and deploy with the package script. It selects Wrangler's `production` environment, which enables Workers AI while keeping paid escalation off:
+Build and deploy with the package script. It selects the Vite plugin's `production` environment during the build and deploys that flattened configuration, which enables Workers AI while keeping paid escalation off:
 
 ```sh
 npm run typecheck
