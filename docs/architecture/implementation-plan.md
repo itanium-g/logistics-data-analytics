@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-Updated: 2026-09-15 UTC. **Implemented, merged into `main`, deployed and production-validated.** Phases P00 to P06 are complete for the engineering release. Current local verification is 253 tests in 23 files, three TypeScript projects, a passing production build and 13/13 workerd smoke checks. The deterministic production API/UI passed; the minimal live Workers AI probe returned `422 unsupported` and the immediate retry returned the expected `429` pacing response, so the 20-case routing evaluation remains unclaimed.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
@@ -14,7 +14,7 @@ Use one React SPA and Hono API on Cloudflare Workers Static Assets, one D1 datab
 |---|---|---|
 | Stack | TypeScript, React, Hono, Zod, Recharts, Workers and D1 | Any stack is permitted. Preserve the existing cost-first architecture; no separate frontend/backend hosting or ORM. |
 | Hosting | Workers and D1 Free, subject to measured fit | Target $0 within quotas. A paid upgrade is a later decision if limits prevent a stable review. |
-| LLM | Evaluate Groq openai/gpt-oss-20b Free first | One adapter; no automatic paid fallback. A second provider is optional follow-up. |
+| LLM | Native Workers AI Gemma 4 | One function selection, thinking disabled, deterministic execution; no automatic paid fallback. |
 | Access | Public demo using only the supplied synthetic sample; no login by default | Authentication is optional. Credentials are N/A for this profile. This does not authorize real customer uploads. |
 | Data | Offline import of the supplied CSV into read-only analytical tables | No runtime upload/edit/delete endpoint. The separate usage table may be updated by the quota guard. |
 | Forecast | Known SKU, 1–4 months, quantity-based moving average | Four months is an explicit example. Sparse history changes the warning and baseline, not support for known SKUs. |
@@ -43,7 +43,7 @@ G00 is **complete for source review**, not for application behavior. All four su
 | Dataset | 400 rows, 17 columns, 355 SKUs; inspected from supplied attachments and cataloged in docs/assignment/README.md. Originals are not committed. |
 | Coverage | Assume January–December 2025 is a complete synthetic observation window. This is not proved by the brief or last order. Forecasts return coverage_unverified. |
 | Status meaning | delivered is the on-time proxy; delayed is the late proxy. Exceptions have unknown outcome and are excluded from these rate denominators. These are project assumptions. |
-| Live readiness | Production Worker, D1, bindings, quota guard and deterministic behavior are verified. Workers AI is enabled with paid escalation off; one live probe returned `422 unsupported`, so broader model behavior remains unverified. |
+| Live AI validation | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence. |
 
 Do not reopen the resolved brief/data acquisition tasks solely because Notion was unavailable in an earlier review. Revisit new material conflicts, actual provider readiness, or newly supplied code.
 
@@ -216,7 +216,7 @@ Gate status as executed on this machine. "Met" means the check ran and the resul
 | G02 Analytics | **Met** | Five KPI results to full precision, empty and null-denominator cases, dashboard/Ask parity through shared domain functions, full-scope ranking before truncation, and denominators exposed on every ratio. |
 | G03 Query safety | **Met** | Unknown keys and values, bad dates, SQL-like inputs in value and identifier positions, and extra or multiple model operations all rejected with the dataset intact. |
 | G04 Forecast | **Met** | Sparse known SKU, four months, the exact CRAYON-0008 result of 3 units, unknown SKU, zero demand, canceled exclusion, and rounding once after summing. |
-| G05 Live AI | **Not met** | 20 cases are frozen in `evals/cases.json`. A minimal production probe returned `422 unsupported`, followed by the expected pacing `429`; no broader routing-accuracy claim is made. |
+| G05 Live AI | **Met on real binding; production pending** | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence. |
 | G06 Quotas and errors | **Partially met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are verified locally. The production route is enabled but the observed probe did not complete an answer. |
 | G07 Browser and runtime | **Met for the deployed review; real-device checks remain outside scope** | Five cards, two charts, Ask panel, SKU forecast, date labels, empty/error/model-off states, keyboard reachability and JSON API 404 are covered by tests and smoke checks. Production browser review covered 390, 768, 1280, 1440 and 1920px widths, themes, filters, assistant states and the forecast breakpoint without page-level overflow. |
 | G08 Handoff | **Partially met** | Feature branch was pushed, merged into `main`, deployed, and the repository is public with the URL and revision recorded. The full live evaluation, screenshot file refresh and external reviewer/employer handoff remain outstanding. |
@@ -243,6 +243,6 @@ Rollback: disable Ask for quota/provider incidents, restore the previous working
 
 The repository is public and docs/submission-checklist.md records the repository, deployed URL, access, revision and checks. External reviewer/employer handoff is still an owner action.
 
-**Done means:** required features work on the deployed revision with acceptance evidence. The engineering release is complete and deterministic gates G01–G04, deployment and production runtime checks are met. G05 remains intentionally unclaimed because the live model probe returned `422 unsupported`; the 20-case evaluation and external employer submission are separate remaining actions.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 Frontend redesign follow-up: see [docs/frontend-redesign.md](../frontend-redesign.md) for the incremental shell, responsive presentation, TanStack Table/CSV semantics, browser captures and measured verification. The historical hosting and provider plan above remains unchanged.

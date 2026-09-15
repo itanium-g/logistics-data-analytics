@@ -68,7 +68,7 @@ Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search
 
 Read the [supplied assignment files](../assignment/README.md) and [requirements matrix](../requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review, local implementation and Cloudflare deployment are complete; use the commands in [README.md](../../README.md#local-setup) for the current checkout. The 20-case live model evaluation remains outstanding.
 
-Install Node 24 LTS and Git for local checks. The application is already deployed from `main`; use [the deployment guide](../deployment/cloudflare.md) for the current Cloudflare record. No external provider account or model key is needed by the final runtime. The 20-case live model evaluation remains a separate unrun check.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 Create the scaffold in a **new sibling directory**, then review and integrate its application files into this repository while preserving the documents:
 
@@ -428,4 +428,4 @@ For the optional P2 comparison of two 60-case candidates and a 60-case confirmat
 | Domain | Provider hostname | Only if a custom domain is later requested; the brief accepts a public provider URL. |
 | Other services | None initially | A concrete requirement for files, named-user auth, email, jobs or observability appears. |
 
-The practical target remains **$0 for a quota-limited reviewer demo**, with an estimated upgrade path around **$5/month hosting plus cents of ordinary model usage**. The final application is deployed on Cloudflare with deterministic analytics available; the minimal live model probe returned `422 unsupported`, so the 20-case routing evaluation and any model-quality claim remain unverified. Refresh the chosen prices and terms before any paid activation, and record the actual deployed model/configuration rather than declaring an untested provider the winner.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.

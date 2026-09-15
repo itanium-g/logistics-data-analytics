@@ -16,6 +16,11 @@ export const API_ERROR_CODES = [
   "provider_disabled",
   "provider_outage",
   "provider_timeout",
+  "provider_rate_limited",
+  "provider_account_quota",
+  "provider_capacity",
+  "provider_rejected",
+  "provider_invalid_response",
   "not_found",
   "internal_error",
 ] as const;
@@ -50,6 +55,11 @@ export const ERROR_STATUS: Record<ApiErrorCode, number> = {
   provider_disabled: 503,
   provider_outage: 502,
   provider_timeout: 504,
+  provider_rate_limited: 429,
+  provider_account_quota: 429,
+  provider_capacity: 503,
+  provider_rejected: 502,
+  provider_invalid_response: 502,
   not_found: 404,
   internal_error: 500,
 };

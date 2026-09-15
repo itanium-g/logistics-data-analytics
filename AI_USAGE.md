@@ -16,7 +16,7 @@ Updated: 2026-09-15 UTC. This repository now contains a working application in a
 | **Cloudflare-Native Architecture Refactor** | **Antigravity CLI (Google DeepMind) with codebase-memory MCP** | Migrated external LLM to Cloudflare Workers AI via native `AI` binding; consolidated architecture into single unified Workers deployment; modularized CSS (9 stylesheets in `src/client/styles/`); split large components and monolithic test suite (`tests/ai/`, `tests/server/`); updated directory layout (`src/client/`, `src/server/`); rationalized generated files; added CI workflow and live evaluation script; verified zero regressions with 100% passing tests. |
 | **Free-tier-first LLM policy** | **Codex assistance with Cloudflare documentation MCP** | Kept Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) as the default and GLM-4.7 Flash (`@cf/zai-org/glm-4.7-flash`) as the free-compatible fallback. GLM-5.3 Flash (`@cf/zai-org/glm-5.3-flash`) remains available only behind explicit `AI_ALLOW_PAID_ESCALATION=true`; retries and long prompts cannot select it by default. Verified the native `env.AI.run()` structured-output shape against current Cloudflare model documentation and added exact request/routing regression tests. |
 
-| **Merge, deployment and production validation** | **Codex assistance with Cloudflare MCP and Chrome DevTools MCP** | Pushed `refactor/cloudflare-native`, merged it into `main`, deployed Worker `logistics-analytics-demo`, seeded production D1 and validated the public API/UI. The minimal live AI probe returned `422 unsupported` for `How many orders are there?`; an immediate retry returned the expected `429` pacing response. No paid escalation or AI Gateway was used. |
+| **AI Analyst repair** | **Codex, codebase-memory MCP, Cloudflare MCP and Chrome DevTools MCP** | Reproduced truncation and application pacing; compared real native models/contracts; implemented one validated function call; improved quotas/errors; ran deterministic and live evaluations. See [validation](docs/ai-validation.md). |
 | UI redesign follow-up | OpenDesign reference generation and Codex assistance | Applied the responsive Overview and Forecasts workspaces, theme selector, AI Analyst states, accessible evidence surfaces and chart styling while preserving the existing API contracts. Verified with the focused UI tests, the full suite, production checks and local Chrome DevTools review; representative captures are checked in under docs/screenshots/. |
 
 ### What the assistant did in the implementation session
@@ -45,12 +45,16 @@ These are recorded because they show what the verification actually did, rather 
 
 ## What has not been done
 
-No employer submission occurred. Production infrastructure is provisioned and the deterministic application is deployed. `/api/ask` is enabled in production without a provider key in the repository; the native Workers AI route was probed once, returned `422 unsupported`, and was then paced with `429` on the immediate retry. The 20 frozen cases in `evals/cases.json` have not been executed, so no claim is made about live routing accuracy. The checked-in screenshots remain local captures because the browser tool rejected repository file paths even though production states were visually reviewed.
+No employer submission occurred. The AI repair has passed the 20-case real-binding evaluation and 14 critical repeats. Production rollout is pending merge. See [current evidence](docs/ai-validation.md).
 
 The supplied files were read without modification and are not committed. No reference implementation code was copied. The runtime model that the application would call is a separate matter from the assistant used to write the code.
 
 ## Responsibility
 
-Every number quoted in the README and in the test suite is reproducible by running the commands listed there. Where something is unverified — deployment behaviour, free-tier CPU fit, live routing quality — it is labelled unverified rather than estimated.
+Every number quoted in the README and in the test suite is reproducible by running the commands listed there. Live routing evidence and genuine remaining limitations are recorded in [the validation report](docs/ai-validation.md).
 
 Source: Coding_assignment.docx §15 and logistics-spec.pdf p3 warn that undisclosed AI usage may be treated negatively.
+
+## AI repair verification
+
+Native Gemma function calling with thinking disabled passed 20/20 frozen cases and 14/14 critical repeats. The final regression suite has 287 tests in 24 files, passing typecheck/build and 13/13 workerd smoke checks. No paid escalation or external provider was enabled. The source assignment was read; no reference code was copied.

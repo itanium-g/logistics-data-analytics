@@ -1,0 +1,34 @@
+{
+  "choices": [
+    {
+      "finish_reason": "tool_calls",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "content": null,
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"breakdown\": null, \"date_context\": \"current\", \"date_field\": \"order_date\", \"date_from\": null, \"date_to\": null, \"filters\": null, \"limit\": null, \"metrics\": [\"total_orders\"], \"order_by\": null, \"order_dir\": null, \"relative_range\": null, \"time_grain\": null}",
+              "name": "query_metric"
+            },
+            "id": "call_fixture",
+            "type": "function"
+          }
+        ]
+      }
+    }
+  ],
+  "model": "@cf/google/gemma-4-26b-a4b-it-external",
+  "object": "chat.completion",
+  "usage": {
+    "prompt_tokens": 836,
+    "completion_tokens": 97,
+    "total_tokens": 933,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "neurons": 10.245454788208008
+  }
+}

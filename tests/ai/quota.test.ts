@@ -1,9 +1,16 @@
+import { nativeDecision } from "../helpers/native-ai.ts";
 import { describe, expect, it, vi } from "vitest";
 import app from "../../src/server/index.ts";
 import type { AiBinding } from "../../src/server/env.ts";
-import { createTestBinding, hasSuppliedCsv, type TestBinding } from "../helpers/dataset.ts";
+import {
+  createTestBinding,
+  hasSuppliedCsv,
+  type TestBinding,
+} from "../helpers/dataset.ts";
 
-function wire(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function wire(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
     tool: "query_metric",
     query: {
@@ -27,16 +34,24 @@ function wire(overrides: Record<string, unknown> = {}): Record<string, unknown> 
   };
 }
 
-function mockAi(decisionOrFn: unknown | ((model: string, inputs: Record<string, unknown>) => Promise<unknown>)): AiBinding {
+function mockAi(
+  decisionOrFn:
+    | unknown
+    | ((model: string, inputs: Record<string, unknown>) => Promise<unknown>),
+): AiBinding {
   if (typeof decisionOrFn === "function") {
     return { run: decisionOrFn as AiBinding["run"] };
   }
   return {
-    run: (async () => ({ response: JSON.stringify(decisionOrFn) })) as AiBinding["run"],
+    run: (async () => nativeDecision(decisionOrFn)) as AiBinding["run"],
   };
 }
 
-function enabledEnv(binding: TestBinding, ai: AiBinding, overrides: Record<string, string> = {}) {
+function enabledEnv(
+  binding: TestBinding,
+  ai: AiBinding,
+  overrides: Record<string, string> = {},
+) {
   return {
     DB: binding.DB,
     AI: ai,
@@ -65,15 +80,48 @@ async function ask(
 }
 
 describe.skipIf(!hasSuppliedCsv)("Workers AI quota admission", () => {
+  it("disabling pacing ignores the previous deadline and admits consecutive questions", async () => {
+    const binding = createTestBinding();
+    try {
+      const ai = mockAi(wire());
+      expect(
+        (
+          await ask(binding, "How many orders?", ai, {
+            AI_MIN_INTERVAL_SECONDS: "60",
+          })
+        ).status,
+      ).toBe(200);
+      for (let i = 0; i < 3; i++) {
+        expect(
+          (
+            await ask(binding, "How many orders?", ai, {
+              AI_MIN_INTERVAL_SECONDS: "0",
+            })
+          ).status,
+        ).toBe(200);
+      }
+      const usage = binding.raw
+        .prepare("SELECT day_attempts FROM llm_usage WHERE id = 1")
+        .get() as { day_attempts: number };
+      expect(usage.day_attempts).toBe(4);
+    } finally {
+      binding.close();
+    }
+  });
+
   it("paces requests and reports a retry-after", async () => {
     const binding = createTestBinding();
     const ai = mockAi(wire());
 
     try {
-      const first = await ask(binding, "How many orders?", ai, { AI_MIN_INTERVAL_SECONDS: "60" });
+      const first = await ask(binding, "How many orders?", ai, {
+        AI_MIN_INTERVAL_SECONDS: "60",
+      });
       expect(first.status).toBe(200);
 
-      const second = await ask(binding, "How many orders?", ai, { AI_MIN_INTERVAL_SECONDS: "60" });
+      const second = await ask(binding, "How many orders?", ai, {
+        AI_MIN_INTERVAL_SECONDS: "60",
+      });
       expect(second.status).toBe(429);
       const body = (await second.json()) as {
         error: { code: string; message: string; retry_after_seconds?: number };
@@ -122,19 +170,21 @@ describe.skipIf(!hasSuppliedCsv)("Workers AI quota admission", () => {
         AI_DAILY_ATTEMPT_LIMIT: "1",
         AI_MIN_INTERVAL_SECONDS: "0",
       });
-      expect(((await daily.json()) as { error: { message: string } }).error.message).toContain(
-        "daily limit of 1 question",
-      );
+      expect(
+        ((await daily.json()) as { error: { message: string } }).error.message,
+      ).toContain("daily limit of 1 question");
 
-      binding.raw.exec("UPDATE llm_usage SET day_attempts = 0, day_tokens_reserved = 0");
+      binding.raw.exec(
+        "UPDATE llm_usage SET day_attempts = 0, day_tokens_reserved = 0",
+      );
       const tokens = await ask(binding, "How many orders?", ai, {
         AI_DAILY_TOKEN_RESERVATION_LIMIT: "1000",
         AI_MIN_INTERVAL_SECONDS: "0",
       });
       expect(tokens.status).toBe(429);
-      expect(((await tokens.json()) as { error: { message: string } }).error.message).toContain(
-        "token reservation",
-      );
+      expect(
+        ((await tokens.json()) as { error: { message: string } }).error.message,
+      ).toContain("token reservation");
     } finally {
       binding.close();
     }
@@ -151,15 +201,19 @@ describe.skipIf(!hasSuppliedCsv)("Workers AI quota admission", () => {
     };
 
     try {
-      const failed = await ask(binding, "How many orders?", failAi, { AI_MIN_INTERVAL_SECONDS: "0" });
+      const failed = await ask(binding, "How many orders?", failAi, {
+        AI_MIN_INTERVAL_SECONDS: "0",
+      });
       expect(failed.status).toBe(502);
 
       const usage = binding.raw
-        .prepare("SELECT day_attempts, day_tokens_reserved FROM llm_usage WHERE id = 1")
+        .prepare(
+          "SELECT day_attempts, day_tokens_reserved FROM llm_usage WHERE id = 1",
+        )
         .get() as { day_attempts: number; day_tokens_reserved: number };
       // The failed attempt still consumed its reservation.
       expect(usage.day_attempts).toBe(1);
-      expect(usage.day_tokens_reserved).toBe(4096 + 512);
+      expect(usage.day_tokens_reserved).toBe(6144 + 512);
     } finally {
       binding.close();
     }
@@ -177,7 +231,9 @@ describe.skipIf(!hasSuppliedCsv)("Workers AI quota admission", () => {
       expect(first.status).toBe(200);
 
       // Simulate the stored period belonging to an earlier day.
-      binding.raw.exec("UPDATE llm_usage SET day_key = '2020-01-01', month_key = '2020-01'");
+      binding.raw.exec(
+        "UPDATE llm_usage SET day_key = '2020-01-01', month_key = '2020-01'",
+      );
 
       const afterRollover = await ask(binding, "How many orders?", ai, {
         AI_DAILY_ATTEMPT_LIMIT: "1",
@@ -186,10 +242,12 @@ describe.skipIf(!hasSuppliedCsv)("Workers AI quota admission", () => {
       expect(afterRollover.status).toBe(200);
 
       const usage = binding.raw
-        .prepare("SELECT day_attempts, day_tokens_reserved FROM llm_usage WHERE id = 1")
+        .prepare(
+          "SELECT day_attempts, day_tokens_reserved FROM llm_usage WHERE id = 1",
+        )
         .get() as { day_attempts: number; day_tokens_reserved: number };
       expect(usage.day_attempts).toBe(1);
-      expect(usage.day_tokens_reserved).toBe(4096 + 512);
+      expect(usage.day_tokens_reserved).toBe(6144 + 512);
     } finally {
       binding.close();
     }

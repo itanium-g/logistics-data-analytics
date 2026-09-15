@@ -1,15 +1,6 @@
-/**
- * Native Cloudflare Workers AI client adapter with optional AI Gateway routing,
- * free-tier-first model selection, bounded retries, and graceful fallback.
- *
- * Workers AI is accessed via the native Worker `AI` binding (env.AI.run).
- * Optional Cloudflare AI Gateway routing is enabled when `gatewayId` is present.
- *
- * The raw output is normalized into decision text and passed to independent
- * application validation (parseDecisionText / parseDecision). The model output
- * is never trusted on its own.
- */
+/** Native Workers AI selects one bounded operation; it never generates the answer. */
 import type { AiBinding } from "../env.ts";
+import { decisionTools, toolCallDecision } from "../../domain/decision.ts";
 import {
   DEFAULT_MODEL,
   ESCALATION_MODEL,
@@ -18,7 +9,6 @@ import {
   routeModel,
   type ModelSelectionReason,
 } from "./models.ts";
-
 export interface AiCall {
   readonly system: string;
   readonly user: string;
@@ -27,14 +17,15 @@ export interface AiCall {
   readonly maxOutputTokens: number;
   readonly estimatedTokens?: number;
 }
-
 export type AiFailureKind =
   | "rate_limited"
+  | "account_quota"
+  | "capacity"
+  | "rejected"
   | "outage"
   | "timeout"
   | "invalid_response"
   | "truncated";
-
 export type AiResult =
   | {
       readonly ok: true;
@@ -51,378 +42,298 @@ export type AiResult =
       readonly kind: AiFailureKind;
       readonly message: string;
       readonly retryAfterSeconds?: number;
+      readonly diagnostic?: string;
+      readonly providerStatus?: number;
+      readonly internalCode?: number;
     };
-
 export interface AiDecisionClient {
   readonly name: string;
   readonly model: string;
   complete(call: AiCall): Promise<AiResult>;
 }
-
 export interface WorkersAiClientOptions {
   readonly ai: AiBinding;
-  /** Primary model. Defaults to Gemma 4 (@cf/google/gemma-4-26b-a4b-it). */
   readonly defaultModel?: string;
-  /** Backward-compatible alias for defaultModel. */
   readonly model?: string;
-  /**
-   * Explicit opt-in for paid escalation. When absent or false, every request
-   * and retry remains on the free-compatible default model.
-   */
   readonly allowPaidEscalation?: boolean;
-  /** Paid model for complex reasoning and long context when explicitly enabled. */
   readonly escalationModel?: string;
-  /** Free-compatible fallback if explicitly enabled paid escalation cannot be billed. */
   readonly fallbackModel?: string;
-  /** Optional Cloudflare AI Gateway identifier */
   readonly gatewayId?: string;
   readonly gatewaySkipCache?: boolean;
-  /** Hard timeout in milliseconds per request */
-  readonly timeoutMs: number;
-  /** Number of retries on transient 429/5xx errors or malformed structured output (default 0) */
+  /** Total deadline including retries. */ readonly timeoutMs: number;
   readonly maxRetries?: number;
-  /** Base delay in ms for exponential backoff (default 100ms) */
   readonly retryDelayMs?: number;
 }
-
-export function normalizeWorkersAiResult(raw: unknown): {
-  ok: boolean;
-  text?: string;
-  usage?: { input_tokens: number | null; output_tokens: number | null };
-  kind?: AiFailureKind;
-  message?: string;
-} {
-  if (raw === null || raw === undefined) {
+type AiFailure = Extract<AiResult, { ok: false }>;
+const record = (v: unknown): Record<string, unknown> | undefined =>
+  typeof v === "object" && v !== null && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : undefined;
+const numeric = (v: unknown): number | undefined =>
+  typeof v === "number" && Number.isFinite(v) ? v : undefined;
+const invalid = (diagnostic: string): AiFailure => ({
+  ok: false,
+  kind: "invalid_response",
+  diagnostic,
+  message:
+    "The analyst returned an invalid routing decision. No operation was executed. Please try again.",
+});
+/** Actual native choices[].message.tool_calls shape, verified against Workers AI. */
+export function normalizeWorkersAiResult(
+  raw: unknown,
+):
+  | {
+      ok: true;
+      text: string;
+      usage: { input_tokens: number | null; output_tokens: number | null };
+    }
+  | AiFailure {
+  const obj = record(raw);
+  if (!obj) return invalid("malformed_envelope");
+  const choices = obj.choices;
+  const first = Array.isArray(choices) ? record(choices[0]) : undefined;
+  if (obj.finish_reason === "length" || first?.finish_reason === "length")
     return {
       ok: false,
-      kind: "invalid_response",
-      message: "The model returned no content, so no operation was executed.",
+      kind: "truncated",
+      diagnostic: "output_truncated",
+      message:
+        "The analyst reached its output limit. No operation was executed. Please try again.",
     };
-  }
-
-  if (typeof raw === "string") {
-    const trimmed = raw.trim();
-    if (trimmed === "") {
-      return {
-        ok: false,
-        kind: "invalid_response",
-        message: "The model returned no content, so no operation was executed.",
-      };
-    }
-    return {
-      ok: true,
-      text: trimmed,
-      usage: { input_tokens: null, output_tokens: null },
-    };
-  }
-
-  if (typeof raw === "object") {
-    const obj = raw as Record<string, unknown>;
-
-    // Check for finish_reason indicating output truncation
-    const finishReason =
-      obj.finish_reason ??
-      (Array.isArray(obj.choices)
-        ? (obj.choices[0] as Record<string, unknown> | undefined)?.finish_reason
-        : undefined);
-
-    if (finishReason === "length") {
-      return {
-        ok: false,
-        kind: "truncated",
-        message:
-          "The model response hit the output limit and was truncated, so no operation was executed.",
-      };
-    }
-
-    // Extract usage metrics if available
-    let inputTokens: number | null = null;
-    let outputTokens: number | null = null;
-    const usage = obj.usage as Record<string, unknown> | undefined;
-    if (usage && typeof usage === "object") {
-      if (typeof usage.prompt_tokens === "number") inputTokens = usage.prompt_tokens;
-      else if (typeof usage.input_tokens === "number") inputTokens = usage.input_tokens;
-      if (typeof usage.completion_tokens === "number") outputTokens = usage.completion_tokens;
-      else if (typeof usage.output_tokens === "number") outputTokens = usage.output_tokens;
-    }
-
-    // Extract text content from standard Workers AI response shapes
-    let extractedText = "";
-
-    if ("response" in obj) {
-      const resp = obj.response;
-      if (typeof resp === "string") {
-        extractedText = resp;
-      } else if (resp !== null && typeof resp === "object") {
-        extractedText = JSON.stringify(resp);
-      }
-    } else if (Array.isArray(obj.choices) && obj.choices.length > 0) {
-      const firstChoice = obj.choices[0] as Record<string, unknown> | undefined;
-      if (firstChoice) {
-        const msg = firstChoice.message as Record<string, unknown> | undefined;
-        if (msg && typeof msg.content === "string") {
-          extractedText = msg.content;
-        } else if (typeof firstChoice.text === "string") {
-          extractedText = firstChoice.text;
-        }
-      }
-    } else if ("text" in obj && typeof obj.text === "string") {
-      extractedText = obj.text;
-    } else if ("tool" in obj) {
-      // Model returned the parsed JSON schema directly
-      extractedText = JSON.stringify(obj);
-    }
-
-    let trimmed = extractedText.trim();
-    if (trimmed.startsWith("```")) {
-      trimmed = trimmed.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "").trim();
-    }
-    if (trimmed === "") {
-      return {
-        ok: false,
-        kind: "invalid_response",
-        message: "The model returned no content, so no operation was executed.",
-      };
-    }
-
-    return {
-      ok: true,
-      text: trimmed,
-      usage: { input_tokens: inputTokens, output_tokens: outputTokens },
-    };
-  }
-
-  return {
-    ok: false,
-    kind: "invalid_response",
-    message: "The model returned an unparseable response.",
+  const usage = record(obj.usage);
+  const tokens = {
+    input_tokens:
+      numeric(usage?.prompt_tokens) ?? numeric(usage?.input_tokens) ?? null,
+    output_tokens:
+      numeric(usage?.completion_tokens) ??
+      numeric(usage?.output_tokens) ??
+      null,
   };
+  if (!Array.isArray(choices) || choices.length !== 1)
+    return invalid("no_single_choice");
+  const calls = record(first?.message)?.tool_calls;
+  if (!Array.isArray(calls) || calls.length !== 1)
+    return invalid("no_single_tool_call");
+  const call = record(calls[0]);
+  const fn = record(call?.function);
+  if (
+    call?.type !== "function" ||
+    typeof fn?.name !== "string" ||
+    typeof fn.arguments !== "string"
+  )
+    return invalid("malformed_tool_call");
+  let args: unknown;
+  try {
+    args = JSON.parse(fn.arguments);
+  } catch {
+    return invalid("malformed_tool_arguments");
+  }
+  try {
+    return {
+      ok: true,
+      text: JSON.stringify(toolCallDecision(fn.name, args)),
+      usage: tokens,
+    };
+  } catch {
+    return invalid("unknown_tool");
+  }
 }
-
-/**
- * Build the native `env.AI.run()` text-generation input. Cloudflare's native
- * binding uses the OpenAI-compatible structured-output shape where `schema`
- * and `strict` live inside `response_format.json_schema`.
- */
 export function buildWorkersAiInputs(call: AiCall): Record<string, unknown> {
   return {
     messages: [
       { role: "system", content: call.system },
       { role: "user", content: call.user },
     ],
-    max_tokens: call.maxOutputTokens,
+    max_completion_tokens: call.maxOutputTokens,
     temperature: 0,
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "analytics_decision",
-        strict: true,
-        schema: call.schema,
-      },
-    },
+    chat_template_kwargs: { enable_thinking: false },
+    tools: decisionTools(call.schema),
+    tool_choice: "required",
+    parallel_tool_calls: false,
   };
 }
-
-export function createWorkersAiClient(options: WorkersAiClientOptions): AiDecisionClient {
+/** Cloudflare's 3036 is daily allocation exhaustion; 3040 is temporary capacity. */
+export function classifyWorkersAiError(error: unknown): AiFailure {
+  const e = record(error);
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  const providerStatus =
+    numeric(e?.status) ??
+    numeric(e?.statusCode) ??
+    (Number(message.match(/\b(4\d\d|5\d\d)\b/)?.[1]) || undefined);
+  const internalCode =
+    numeric(e?.internalCode) ??
+    numeric(e?.code) ??
+    (Number(message.match(/\b(30\d\d|5007)\b/)?.[1]) || undefined);
+  const metadata = { providerStatus, internalCode };
+  const retryAfter =
+    numeric(e?.retryAfterSeconds) ?? numeric(e?.retryAfter) ?? 60;
+  if (
+    internalCode === 3036 ||
+    /daily free allocation|neurons.*exceed|allocation.*exhaust/.test(lower)
+  )
+    return {
+      ok: false,
+      kind: "account_quota",
+      message:
+        "The Workers AI daily allocation has been used. Deterministic analytics remain available.",
+      diagnostic: "provider_account_quota",
+      ...metadata,
+    };
+  if (
+    internalCode === 3040 ||
+    /out of capacity|no more data centers/.test(lower)
+  )
+    return {
+      ok: false,
+      kind: "capacity",
+      message:
+        "Workers AI is temporarily at capacity. Please try again shortly.",
+      retryAfterSeconds: retryAfter,
+      diagnostic: "provider_capacity",
+      ...metadata,
+    };
+  if (providerStatus === 429 || /rate limit|too many requests/.test(lower))
+    return {
+      ok: false,
+      kind: "rate_limited",
+      message:
+        "Workers AI temporarily rate limited this request. Please try again shortly.",
+      retryAfterSeconds: retryAfter,
+      diagnostic: "provider_rate_limited",
+      ...metadata,
+    };
+  if (/timeout|timed out/.test(lower) || e?.name === "AbortError")
+    return {
+      ok: false,
+      kind: "timeout",
+      message: "Workers AI timed out. No operation was executed.",
+      diagnostic: "provider_timeout",
+      ...metadata,
+    };
+  if (
+    (providerStatus !== undefined &&
+      providerStatus >= 400 &&
+      providerStatus < 500) ||
+    isBillingError(error) ||
+    /no such model|model.*(not found|access)|unauthorized|permission/.test(lower)
+  )
+    return {
+      ok: false,
+      kind: "rejected",
+      message:
+        "Workers AI could not accept the routing request. Deterministic analytics remain available.",
+      diagnostic: "provider_rejected",
+      ...metadata,
+    };
+  return {
+    ok: false,
+    kind: "outage",
+    message: "Workers AI is temporarily unavailable. Please try again.",
+    diagnostic: "provider_unavailable",
+    ...metadata,
+  };
+}
+export function createWorkersAiClient(
+  options: WorkersAiClientOptions,
+): AiDecisionClient {
   const defaultModel = options.defaultModel ?? options.model ?? DEFAULT_MODEL;
-  const escalationModel = options.escalationModel ?? ESCALATION_MODEL;
-  const fallbackModel = options.fallbackModel ?? FALLBACK_MODEL;
-  const allowPaidEscalation = options.allowPaidEscalation === true;
-  const maxRetries = options.maxRetries ?? 0;
-  const baseDelayMs = options.retryDelayMs ?? 100;
-
   return {
     name: "workers-ai",
     model: defaultModel,
-    async complete(call: AiCall): Promise<AiResult> {
-      const questionText =
-        call.question ??
-        (call.user.startsWith("Question: ")
-          ? call.user.split("\n")[0]!.replace("Question: ", "")
-          : call.user);
-
-      // Centralized selection is free-tier-first unless paid escalation was
-      // explicitly enabled by an operator.
-      const initialRoute = routeModel({
-        question: questionText,
+    async complete(call) {
+      const escalationModel = options.escalationModel ?? ESCALATION_MODEL;
+      const fallbackModel = options.fallbackModel ?? FALLBACK_MODEL;
+      const route = routeModel({
+        question: call.question ?? call.user,
         estimatedTokens: call.estimatedTokens,
-        allowPaidEscalation,
+        allowPaidEscalation: options.allowPaidEscalation === true,
         defaultModel,
         escalationModel,
         fallbackModel,
       });
-
-      let currentModel = initialRoute.model;
-      let routeReason = initialRoute.reason;
-
+      let model = route.model;
+      let routeReason = route.reason;
+      const deadline = Date.now() + options.timeoutMs;
+      const maxRetries = options.maxRetries ?? 0;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         let timer: ReturnType<typeof setTimeout> | undefined;
-
-        const timeoutPromise = new Promise<AiResult>((resolve) => {
-          timer = setTimeout(() => {
-            resolve({
-              ok: false,
-              kind: "timeout",
-              message: `Workers AI did not respond within ${options.timeoutMs} ms. No answer was generated and no retry was attempted.`,
-            });
-          }, options.timeoutMs);
-        });
-
-        const runPromise = (async (): Promise<AiResult> => {
+        const timeout: AiFailure = {
+          ok: false,
+          kind: "timeout",
+          diagnostic: "provider_timeout",
+          message:
+            "Workers AI timed out. No operation was executed and no retry was attempted.",
+        };
+        const run = async (): Promise<AiResult> => {
           try {
-            // Optional AI Gateway configuration via options parameter
-            const runOptions: Record<string, unknown> = {};
-            if (options.gatewayId) {
-              runOptions.gateway = {
-                id: options.gatewayId,
-                skipCache: options.gatewaySkipCache ?? false,
-              };
-            }
-
-            const rawResult = await options.ai.run(
-              currentModel,
+            const raw = await options.ai.run(
+              model,
               buildWorkersAiInputs(call),
-              runOptions,
+              options.gatewayId
+                ? {
+                    gateway: {
+                      id: options.gatewayId,
+                      skipCache: options.gatewaySkipCache ?? false,
+                    },
+                  }
+                : {},
             );
-
-            const norm = normalizeWorkersAiResult(rawResult);
-            if (!norm.ok) {
-              return {
-                ok: false,
-                kind: norm.kind ?? "invalid_response",
-                message: norm.message ?? "The model returned an invalid response.",
-              };
-            }
-
-            // Structured-output JSON validation for retry triggering
-            let isJsonValid = false;
-            try {
-              JSON.parse(norm.text!);
-              isJsonValid = true;
-            } catch {
-              isJsonValid = false;
-            }
-
-            if (!isJsonValid && attempt < maxRetries) {
-              return {
-                ok: false,
-                kind: "invalid_response",
-                message: "non_json_retry_needed",
-              };
-            }
-
-            return {
-              ok: true,
-              text: norm.text!,
-              usage: norm.usage!,
-              modelUsed: currentModel,
-              routeReason,
-            };
+            const normalized = normalizeWorkersAiResult(raw);
+            return normalized.ok
+              ? { ...normalized, modelUsed: model, routeReason }
+              : normalized;
           } catch (error) {
-            // Billing fallback is reachable only after the explicit paid
-            // escalation opt-in selected the paid model.
-            if (allowPaidEscalation && isBillingError(error) && currentModel === escalationModel) {
-              currentModel = fallbackModel;
-              routeReason = "billing_fallback";
-              return {
-                ok: false,
-                kind: "outage",
-                message: "billing_fallback_needed",
-              };
-            }
-
-            const message = error instanceof Error ? error.message : String(error);
-            const lower = message.toLowerCase();
-
-            if (
-              lower.includes("rate limit") ||
-              lower.includes("429") ||
-              lower.includes("too many requests")
-            ) {
-              const retryAfter =
-                typeof (error as { retryAfter?: unknown })?.retryAfter === "number"
-                  ? ((error as { retryAfter: number }).retryAfter)
-                  : typeof (error as { retryAfterSeconds?: unknown })?.retryAfterSeconds === "number"
-                    ? ((error as { retryAfterSeconds: number }).retryAfterSeconds)
-                    : 60;
-
-              return {
-                ok: false,
-                kind: "rate_limited",
-                message: "Workers AI rate limited this request. No answer was generated.",
-                retryAfterSeconds: retryAfter,
-              };
-            }
-
-            if (
-              lower.includes("timeout") ||
-              lower.includes("timed out") ||
-              (error instanceof Error && error.name === "AbortError")
-            ) {
-              return {
-                ok: false,
-                kind: "timeout",
-                message: `Workers AI did not respond within ${options.timeoutMs} ms. No answer was generated and no retry was attempted.`,
-              };
-            }
-
-            return {
-              ok: false,
-              kind: "outage",
-              message: `Workers AI returned an error: ${message}. No answer was generated.`,
-            };
+            return classifyWorkersAiError(error);
           }
-        })();
-
+        };
         let result: AiResult;
         try {
-          result = await Promise.race([runPromise, timeoutPromise]);
+          result = await Promise.race([
+            run(),
+            new Promise<AiFailure>((resolve) => {
+              timer = setTimeout(
+                () => resolve(timeout),
+                Math.max(1, deadline - Date.now()),
+              );
+            }),
+          ]);
         } finally {
           if (timer !== undefined) clearTimeout(timer);
         }
-
-        if (result.ok) {
+        if (result.ok) return result;
+        // Never log questions, model text, reasoning or raw provider errors.
+        console.warn("ai_provider_failure", {
+          model,
+          attempt: attempt + 1,
+          kind: result.kind,
+          diagnostic: result.diagnostic,
+          status: result.providerStatus,
+          internal_code: result.internalCode,
+        });
+        if (
+          options.allowPaidEscalation === true &&
+          model === escalationModel &&
+          result.kind === "rejected"
+        ) {
+          model = fallbackModel;
+          routeReason = "billing_fallback";
+        } else if (result.kind !== "capacity" && result.kind !== "outage")
           return result;
-        }
-
-        // Do not retry on timeouts (preserves deterministic fast failure)
-        if (result.kind === "timeout") {
+        const delay =
+          Math.min(options.retryDelayMs ?? 200, 1000) * (attempt + 1);
+        const wait =
+          result.retryAfterSeconds === undefined
+            ? delay
+            : Math.max(delay, result.retryAfterSeconds * 1000);
+        if (attempt === maxRetries || Date.now() + wait + 1000 >= deadline)
           return result;
-        }
-
-        // Immediate retry without penalty if falling back from billing error
-        if (result.message === "billing_fallback_needed") {
-          attempt--;
-          continue;
-        }
-
-        // If retries remain and the error is retryable
-        if (attempt < maxRetries) {
-          if (
-            result.message === "non_json_retry_needed" &&
-            currentModel === defaultModel &&
-            allowPaidEscalation
-          ) {
-            currentModel = escalationModel;
-            routeReason = "retry_escalation";
-          }
-
-          const delay =
-            result.kind === "rate_limited" && result.retryAfterSeconds && result.retryAfterSeconds < 5
-              ? result.retryAfterSeconds * 1000
-              : Math.min(baseDelayMs * Math.pow(2, attempt) + Math.random() * 50, 1000);
-
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-
-        return result;
+        await new Promise((resolve) => setTimeout(resolve, wait));
       }
-
       return {
         ok: false,
         kind: "outage",
-        message: "Workers AI request failed after all attempts were exhausted.",
+        message: "Workers AI is temporarily unavailable.",
       };
     },
   };

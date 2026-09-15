@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-Reviewed: 2026-09-15 UTC. **Source review complete; application implemented, merged into `main`, deployed and production-validated.** The deterministic paths are operational; the limited live Workers AI result and screenshot-capture limitation are recorded in [Current status](#current-status), [README verification](../README.md#verification-performed) and [capture limitations](screenshots/README.md#review-limits).
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence.
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -87,7 +87,7 @@ The source layout was also checked against the adopted architecture: pure analyt
 | Requirement | Status |
 |---|---|
 | R01, R02, R03, R05, R06, R07, R08, R10 | **Met and verified locally.** Five KPIs at 400 / 304 / 55 / 84.68% / 3.69 days, two charts with matching tables, deterministic chart selection, a shared evidence panel on every result, a validated plan panel, and one shared metric registry and query executor used by both the dashboard and the question path. |
-| R04, R09 | **Implemented; verified against a stubbed transport and a limited production probe.** All four operations route correctly in tests and every number is rendered from a computed field. The production probe returned `422 unsupported`, so live routing accuracy is not claimed. |
+| R04, R09 | **Live binding validated.** AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence. |
 | R11, R12, R13 | **Met and verified locally.** A known SKU returns four monthly values with exact dates, a history and future chart, a numerical coverage target of 3 units for CRAYON-0008, the methodology, and the stock and lead-time limitations. |
 | R14 | **Met.** The application is publicly deployed at https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev and the deterministic API/UI passed production validation. |
 | R15 | **Not applicable, recorded.** No authentication in this profile, so credentials are "Not required". |
@@ -100,10 +100,10 @@ The source layout was also checked against the adopted architecture: pure analyt
 
 Optional bonuses: B03 (tests) is included well beyond the minimum. B01, B02, B04 and B05 were not implemented. B06 is partially implemented: safe clarification exists, elaborate conversational follow-ups do not.
 
-The remaining release limitations are the **20-case live model evaluation**, checked-in production screenshot refresh and **external reviewer/employer handoff**. Production deployment, deterministic API/UI behavior and the forecast layout fix are complete; the [screenshot README](screenshots/README.md#review-limits) records the browser-tool file-write limitation. There is no supplied deadline; do not invent one.
+The AI repair is live-binding validated; its production rollout is pending merge. External reviewer submission remains an owner action. See [current release evidence](ai-validation.md).
 
 ## Frontend redesign handoff
 
 The incremental Spaceship logistics-dashboard redesign is implemented within the existing React 19, TypeScript, Vite and ordinary-CSS application. It retains the current Overview and Forecasts controllers, analytical contracts, Recharts views, AI Analyst behavior, themes and hash navigation. It does not add maps, tracking, authentication, a Tailwind migration, or backend/data changes.
 
-The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 253 tests in 23 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Production deployment is validated; the limited live-model result and remaining external handoff are recorded above.
+The responsive shell, native modal behavior, TanStack Table v8.21.3 result tables, CSV contract and browser evidence are documented in [docs/frontend-redesign.md](frontend-redesign.md). Local verification for this handoff reports 287 tests in 24 files, a passing typecheck and production build, and 13/13 workerd smoke checks. Production deployment is validated; the current live-model evidence and remaining external handoff are recorded above.

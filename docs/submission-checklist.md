@@ -1,6 +1,6 @@
 # Submission checklist
 
-Status: **The application is merged into `main`, deployed and production-validated.** This checklist distinguishes deterministic local evidence from the one limited live Workers AI probe. No authentication credentials are required for the synthetic-data demo.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence.
 
 ## Handoff fields
 
@@ -30,7 +30,7 @@ Status: **The application is merged into `main`, deployed and production-validat
 - [x] Node 24 is the declared local and CI toolchain; CI runs `npm ci`, typecheck, tests, build, and deterministic smoke checks.
 - [x] Model outputs are bounded and validated; the model cannot execute SQL or provide analytical numbers.
 - [x] Supplied analytical data is read-only through request paths; only quota usage is written.
-- [ ] Twenty frozen live evaluation cases have recorded results. The cases are in [evals/cases.json](../evals/cases.json); the minimal production probe returned `422 unsupported`, followed by the expected pacing `429`, so routing quality is not claimed.
+- [x] Twenty frozen live cases and fourteen critical repeats have recorded passing results. See [ai-validation.md](ai-validation.md). Production rollout remains pending.
 - [x] No provider keys or credentials are committed or shipped in the browser bundle.
 - [x] Quota admission, pacing, timeout, retry bounds, and concurrent reservation behavior are covered by tests.
 - [x] The forecast container-query fix is checked at the 1440 × 1100 docked-assistant breakpoint locally and in production.
@@ -73,12 +73,12 @@ The test report must record exact counts from the current run. The smoke harness
 | CRAYON-0008 forecast | **Passed** — four-month forecast and 3-unit coverage target |
 | SPA deep links and unknown API JSON 404 | **Passed** — direct navigation works; unknown API route returns JSON 404 |
 | Chrome responsive/theme/assistant review | **Passed** — production review at 390, 768, 1280, 1440 and 1920px; no horizontal overflow or console errors observed |
-| Live Workers AI | **Limited** — `How many orders are there?` returned 422 `unsupported`; immediate retry returned 429 pacing; no paid escalation |
+| Live AI validation | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence. |
 
 ## Final handoff actions
 
 1. The verified feature branch `866e9ac2916bf14b99c52ac8c44e543ff31f40fa` was pushed and merged with commit `0aa8a10aef2ac7535057093dbd82a6e62f480a3a`; final `origin/main` is `7799ee6a33c4f45c03f04c3c900637dd988e3110`.
-2. The complete verification suite passed on the merged `main`: typecheck, 253 tests in 23 files, production build, 13/13 smoke checks and `git diff --check`.
+2. The complete verification suite passed on the merged `main`: typecheck, 280 tests in 24 files, production build, 13/13 smoke checks and `git diff --check`.
 3. The existing production D1 was reused, migrations and the checked seed were applied, and the remote count was verified at 400 rows / 355 SKUs.
 4. `npm run deploy` was run from `main`; the Worker URL and revision are recorded above.
 5. Production was validated through the API and Chrome DevTools. The checked-in screenshot catalog remains the local capture set because the browser tool rejected repository screenshot paths; this limitation is recorded in [docs/screenshots/README.md](screenshots/README.md).

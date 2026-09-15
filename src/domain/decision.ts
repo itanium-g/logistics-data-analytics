@@ -105,7 +105,10 @@ export interface ClarifyDecision {
 
 export interface UnsupportedDecision {
   readonly tool: "unsupported";
-  readonly unsupported: { readonly reason: string; readonly alternative: string };
+  readonly unsupported: {
+    readonly reason: string;
+    readonly alternative: string;
+  };
 }
 
 export type Decision =
@@ -115,7 +118,9 @@ export type Decision =
   | UnsupportedDecision;
 
 /** Strip nulls so the canonical validators apply their own defaults. */
-function withoutNulls(source: Record<string, unknown>): Record<string, unknown> {
+function withoutNulls(
+  source: Record<string, unknown>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(source)) {
     if (value !== null && value !== undefined) result[key] = value;
@@ -137,11 +142,18 @@ const BRANCH_KEYS: Readonly<Record<AskTool, keyof WireDecision>> = {
  * keys, a null branch for the selected tool, and a populated branch for any
  * other tool.
  */
-export function parseDecision(raw: unknown): ParseSuccess<Decision> | ParseFailure {
+export function parseDecision(
+  raw: unknown,
+): ParseSuccess<Decision> | ParseFailure {
   if (Array.isArray(raw)) {
     return {
       ok: false,
-      issues: [{ path: "(root)", message: "Expected a single decision object, received an array" }],
+      issues: [
+        {
+          path: "(root)",
+          message: "Expected a single decision object, received an array",
+        },
+      ],
     };
   }
   if (raw === null || typeof raw !== "object") {
@@ -194,12 +206,18 @@ export function parseDecision(raw: unknown): ParseSuccess<Decision> | ParseFailu
     case "query_metric":
       return {
         ok: true,
-        value: { tool: "query_metric", query: withoutNulls(decision.query ?? {}) },
+        value: {
+          tool: "query_metric",
+          query: withoutNulls(decision.query ?? {}),
+        },
       };
     case "forecast":
       return {
         ok: true,
-        value: { tool: "forecast", forecast: withoutNulls(decision.forecast ?? {}) },
+        value: {
+          tool: "forecast",
+          forecast: withoutNulls(decision.forecast ?? {}),
+        },
       };
     case "clarify":
       return {
@@ -221,12 +239,16 @@ export function parseDecision(raw: unknown): ParseSuccess<Decision> | ParseFailu
 }
 
 /** Parse the provider's response text, then the decision within it. */
-export function parseDecisionText(text: string): ParseSuccess<Decision> | ParseFailure {
+export function parseDecisionText(
+  text: string,
+): ParseSuccess<Decision> | ParseFailure {
   const trimmed = text.trim();
   if (trimmed === "") {
     return {
       ok: false,
-      issues: [{ path: "(root)", message: "The model returned an empty response" }],
+      issues: [
+        { path: "(root)", message: "The model returned an empty response" },
+      ],
     };
   }
   let parsed: unknown;
@@ -238,7 +260,8 @@ export function parseDecisionText(text: string): ParseSuccess<Decision> | ParseF
       issues: [
         {
           path: "(root)",
-          message: "The model response was not valid JSON, so no operation was executed",
+          message:
+            "The model response was not valid JSON, so no operation was executed",
         },
       ],
     };
@@ -248,7 +271,10 @@ export function parseDecisionText(text: string): ParseSuccess<Decision> | ParseF
 
 /* --------------------------------------------------------- provider schema */
 
-function enumProperty(values: readonly string[], description: string): Record<string, unknown> {
+function enumProperty(
+  values: readonly string[],
+  description: string,
+): Record<string, unknown> {
   return { type: ["string", "null"], enum: [...values, null], description };
 }
 
@@ -293,12 +319,18 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
           items: { type: "string", enum: [...METRIC_IDS] },
         },
         breakdown: enumProperty(DIMENSIONS, "Group by one dimension, or null."),
-        time_grain: enumProperty(TIME_GRAINS, "Time bucket, or null for a single value."),
+        time_grain: enumProperty(
+          TIME_GRAINS,
+          "Time bucket, or null for a single value.",
+        ),
         date_field: enumProperty(
           DATE_FIELDS,
           "order_date for order cohorts, delivery_date for delivery events.",
         ),
-        date_context: enumProperty(DATE_CONTEXTS, "dataset or current date anchoring."),
+        date_context: enumProperty(
+          DATE_CONTEXTS,
+          "dataset or current date anchoring.",
+        ),
         relative_range: enumProperty(
           RELATIVE_RANGES,
           "Relative range in whole complete calendar months, or null when explicit dates are given.",
@@ -330,7 +362,10 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
             },
           },
         },
-        order_by: enumProperty(METRIC_IDS, "Rank by one requested metric, or null."),
+        order_by: enumProperty(
+          METRIC_IDS,
+          "Rank by one requested metric, or null.",
+        ),
         order_dir: {
           type: ["string", "null"],
           enum: ["asc", "desc", null],
@@ -346,7 +381,10 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
       additionalProperties: false,
       required: ["sku", "horizon_months", "buffer_pct"],
       properties: {
-        sku: { type: "string", description: "Exact SKU identifier taken from the question." },
+        sku: {
+          type: "string",
+          description: "Exact SKU identifier taken from the question.",
+        },
         horizon_months: {
           type: ["number", "null"],
           description: `Months ahead, 1 to ${MAX_HORIZON_MONTHS}, or null for the default.`,
@@ -362,8 +400,14 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
       additionalProperties: false,
       required: ["question", "missing"],
       properties: {
-        question: { type: "string", description: "One question to ask the user." },
-        missing: { type: "string", description: "The single missing detail, for example sku." },
+        question: {
+          type: "string",
+          description: "One question to ask the user.",
+        },
+        missing: {
+          type: "string",
+          description: "The single missing detail, for example sku.",
+        },
       },
     },
     unsupported: {
@@ -371,9 +415,102 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
       additionalProperties: false,
       required: ["reason", "alternative"],
       properties: {
-        reason: { type: "string", description: "Why this cannot be answered from the data." },
-        alternative: { type: "string", description: "The closest supported question." },
+        reason: {
+          type: "string",
+          description: "Why this cannot be answered from the data.",
+        },
+        alternative: {
+          type: "string",
+          description:
+            "The closest supported question, including its limitations. For unavailable exact SLA data use: What is the on-time delivery rate (status proxy)?",
+        },
       },
     },
   },
 };
+
+/** Bounded native functions; the same wire/domain validators remain authoritative. */
+export function decisionTools(
+  schema = DECISION_JSON_SCHEMA,
+): Record<string, unknown>[] {
+  const properties = schema.properties as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const descriptions = {
+    query_metric:
+      "Select recorded order metrics, counts, rates, averages, trends or rankings. On-time delivery rate uses on_time_rate; average delivery time uses avg_delivery_days; orders uses total_orders. No date period is required: unspecified means all_time. Never calculate values yourself.",
+    forecast:
+      "Compute future demand coverage for one known SKU explicitly present in the question.",
+    clarify:
+      "Only for a missing SKU, genuinely unspecified metric, or incompatible trend-plus-breakdown views. An ordinary named KPI, order count or unspecified time period NEVER needs clarification. Ask a useful question, not a repetition of the request.",
+    unsupported:
+      "Explain unavailable data or disallowed SQL/write requests and offer a supported alternative.",
+  };
+  return Object.entries(BRANCH_KEYS).map(([name, branch]) => ({
+    type: "function",
+    function: {
+      name,
+      description: descriptions[name as AskTool],
+      parameters: compactParameters(properties[branch]!, name),
+    },
+  }));
+}
+
+function compactParameters(
+  schema: Record<string, unknown>,
+  tool: string,
+): Record<string, unknown> {
+  const compact = (value: unknown): unknown => {
+    if (Array.isArray(value))
+      return value.filter((item) => item !== null).map(compact);
+    if (value === null || typeof value !== "object") return value;
+    const output: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      output[key] =
+        key === "type" && Array.isArray(item)
+          ? item.find((type) => type !== "null")
+          : compact(item);
+    }
+    return output;
+  };
+  const result = compact(schema) as Record<string, unknown>;
+  const props = result.properties as Record<string, unknown>;
+  if (tool === "query_metric") {
+    delete props.date_context;
+    result.required = ["metrics"];
+  }
+  if (tool === "forecast") result.required = ["sku"];
+  return result;
+}
+
+/** Convert exactly one native function call into the existing strict decision. */
+export function toolCallDecision(name: string, args: unknown): unknown {
+  if (!Object.hasOwn(BRANCH_KEYS, name)) throw new Error("unknown_tool");
+  const branch = BRANCH_KEYS[name as AskTool];
+  const properties = DECISION_JSON_SCHEMA.properties as Record<
+    string,
+    { properties: Record<string, unknown> }
+  >;
+  // Fill only missing optional wire keys; preserve unknown keys for strict rejection.
+  const normalized =
+    args && typeof args === "object" && !Array.isArray(args)
+      ? {
+          ...Object.fromEntries(
+            Object.keys(properties[branch]!.properties).map((key) => [
+              key,
+              null,
+            ]),
+          ),
+          ...args,
+        }
+      : args;
+  return {
+    tool: name,
+    query: null,
+    forecast: null,
+    clarify: null,
+    unsupported: null,
+    [branch]: normalized,
+  };
+}

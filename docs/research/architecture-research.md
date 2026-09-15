@@ -20,7 +20,7 @@ Current implementation evidence: [README](../../README.md#verification-performed
 | [Target baseline da1d4a4](https://github.com/itanium-g/logistics-data-analytics/tree/da1d4a408c80ebcd462acd5c89b17a325a5316af) | Four Markdown documents, no app source. | No working app, test run or deployment. |
 | Vendor documentation in the setup guide | Earlier provider research and selected current stack/Workers/Groq checks. | Not a fresh exhaustive provider sweep, tested lockfile or account-readiness result. |
 
-All four user-supplied files were read, and the coding brief and specification PDF were visually inspected. Source filenames and hashes are recorded in the [source catalog](../assignment/README.md). The supplied CSV has SHA-256 b60f84b18aacc1a76b6d401ba0c290a0efd1f2729734224d65608e941594bc82 and Git blob dc20411f5b37c57af46f2ae42c0802d5a19d0ea9, identical to the earlier reference fixture.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 Source review is resolved; original files remain user-supplied inputs rather than repository content. Coverage/status semantics and provider readiness remain explicit assumptions or future checks. No reference code is copied; no open-source license for supplied assignment materials is inferred.
 
@@ -117,7 +117,7 @@ Groq documents strict structured-output support for GPT-OSS 20B and free limits 
 
 The plan bounds complete input to 4,096 tokens and total output to 512, reserves free quota atomically, admits at most one generation/minute globally and uses no hidden retry or paid fallback. At maximum size the 180K daily application reservation permits 39 calls. Public Ask can exhaust free quota; the dashboard and direct forecast remain available.
 
-P0 uses a 20-case live acceptance check, roughly 20 minutes under pacing, rather than a 180-call multi-provider experiment. The production probe returned `422 unsupported` and its immediate retry returned the expected pacing `429`; the 20-case evaluation is therefore still unrun. Keep paid models, the former $2/month ledger and custom reviewer sessions in an optional profile. The setup guide preserves their comparison arithmetic and limitations.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 Measure Worker CPU separately from network latency during the future deployment. Keep secrets server-side, report failures clearly, and use scoped provider/deployment credentials. No public write/upload/admin endpoints, arbitrary model SQL, model-written numerical summaries or unrestricted provider tools are planned.
 

@@ -71,7 +71,7 @@ UPDATE llm_usage SET
   next_allowed_at_ms  = ?4 + ?5,
   updated_at          = ?6
 WHERE id = 1
-  AND ?4 >= next_allowed_at_ms
+    AND (?5 = 0 OR ?4 >= next_allowed_at_ms)
   AND (CASE WHEN day_key = ?1 THEN day_attempts ELSE 0 END) < ?7
   AND (CASE WHEN month_key = ?2 THEN month_attempts ELSE 0 END) < ?8
   AND (CASE WHEN day_key = ?1 THEN day_tokens_reserved ELSE 0 END) + ?3 <= ?9
@@ -91,7 +91,11 @@ export async function admitGeneration(
   const nowMs = now.getTime();
   const intervalMs = limits.minIntervalSeconds * 1000;
 
-  let admitted: { day_attempts: number; month_attempts: number; day_tokens_reserved: number } | null;
+  let admitted: {
+    day_attempts: number;
+    month_attempts: number;
+    day_tokens_reserved: number;
+  } | null;
   try {
     admitted = await db.first<{
       day_attempts: number;
@@ -198,6 +202,10 @@ async function explainDenial(
 }
 
 function secondsUntilNextUtcDay(now: Date): number {
-  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const next = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+  );
   return Math.max(1, Math.ceil((next - now.getTime()) / 1000));
 }
