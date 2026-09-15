@@ -111,6 +111,18 @@ With the defaults, `/api/ask` returns a `provider_disabled` state that explains 
 
 One Worker serves the SPA and the API on a single origin. `wrangler.jsonc` sends `/api` and `/api/*` to the Worker first — including browser navigations — so a mistyped API path returns JSON 404 rather than the SPA shell with a 200.
 
+### Technology stack
+
+| Layer | Technology | Role |
+|---|---|---|
+| Frontend | React 19.3, TypeScript 7, Vite 8.3, ordinary CSS, Geist | Responsive Overview and Forecasts workspaces, themes and accessible UI. |
+| API/runtime | Cloudflare Workers, Hono 4.13 | Single-origin HTTP API and SPA serving. |
+| Data | Cloudflare D1 / SQLite | Orders, provenance manifest and durable AI quota state. |
+| Analytics | TypeScript domain modules, Zod 4.6 | Validated contracts, deterministic metrics, bounded query compilation and SKU forecasting. |
+| Visualization and tables | Recharts 3.10, TanStack Table 8.21 | Charts, evidence tables, local filtering, sorting, pagination and CSV export. |
+| Natural-language routing | Native Cloudflare Workers AI binding | Bounded structured interpretation only; application code computes every analytical result. |
+| Verification and delivery | Vitest 4.1, workerd smoke checks, GitHub Actions, Wrangler 4.131 | Automated tests, runtime checks, CI and Cloudflare deployment. |
+
 ```mermaid
 flowchart TD
     CSV["mock_logistics_data.csv (supplied, not committed)"]
