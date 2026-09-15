@@ -20,10 +20,10 @@
     "data:import": "node scripts/import-data.ts",
     "db:migrate": "wrangler d1 migrations apply DB --local",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --env production",
     "db:seed": "wrangler d1 execute DB --local --file .generated/seed.sql",
     "db:seed:local": "wrangler d1 execute DB --local --file .generated/seed.sql",
-    "db:seed:remote": "wrangler d1 execute DB --remote --file .generated/seed.sql",
+    "db:seed:remote": "wrangler d1 execute DB --remote --file .generated/seed.sql --env production",
     "eval:ai:live": "node scripts/eval-ai-live.ts",
     "deploy": "node scripts/deploy-production.ts"
   },
