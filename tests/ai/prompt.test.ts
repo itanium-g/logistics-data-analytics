@@ -49,7 +49,7 @@ describe.skipIf(!hasSuppliedCsv)("prompt content", () => {
       // Small vocabularies are included so filters can be chosen.
       expect(prompt.user).toContain("GLS");
       expect(prompt.user).toContain("US-C");
-      expect(prompt.system).toContain("never compute, estimate or state a number");
+      expect(prompt.system).toContain("Never compute final business values");
     } finally {
       binding.close();
     }

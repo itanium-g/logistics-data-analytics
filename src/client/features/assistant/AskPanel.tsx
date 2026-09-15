@@ -54,6 +54,15 @@ function friendlyErrorTitle(code: ApiError["code"]): string {
       return "AI Analyst is not configured";
     case "rate_limited":
       return "The question limit has been reached";
+    case "provider_account_quota":
+      return "The AI daily allocation has been reached";
+    case "provider_rate_limited":
+    case "provider_capacity":
+      return "The AI provider is busy";
+    case "provider_invalid_response":
+      return "The analyst could not interpret the question";
+    case "provider_rejected":
+      return "The AI provider could not accept the request";
     case "provider_timeout":
       return "The analyst timed out";
     case "provider_outage":
@@ -271,7 +280,7 @@ export function AskPanel({ meta, open, modal, onClose, triggerRef }: AskPanelPro
               <div className="submitted-question"><span>Submitted question</span><strong>{interaction.question}</strong></div>
               <p className="interaction-context">{interaction.dateContext === "dataset" ? "Dataset date context" : "Current UTC date context"}</p>
               <div className="answer-block">
-                <p className="answer-label">Computed answer</p>
+                <p className="answer-label">{interaction.response.query || interaction.response.forecast ? "Computed answer" : "Analyst response"}</p>
                 <p className="ask-answer-text" role="status" aria-live="polite">{interaction.response.answer}</p>
               </div>
 

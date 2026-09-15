@@ -6,7 +6,7 @@ This application is a single Cloudflare Worker with Workers Static Assets, D1, a
 
 The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from `main` commit `16635341a6401d91670882d8d200fbeb5bb7b0bf`; the current version is `d9c378be-20bb-42a5-9150-1d83741bd571` and deployment id is `3fb3a00f-6554-4ce4-9457-90111ac7da7d`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
 
-The production browser and API checks passed for the deterministic application, including the SPA root and forecast navigation, responsive widths from 390px through 1920px, dark theme, assistant presentation, the GLS ranking and the CRAYON-0008 forecast. The minimal Workers AI probe did not produce a completed answer: `How many orders are there?` returned `422 unsupported`; an immediate retry returned the expected `429` pacing response. No paid escalation or AI Gateway was used.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 ## Production architecture
 
@@ -87,7 +87,7 @@ curl -X POST <url>/api/forecast \
 
 The carrier query should place GLS first at 2/7 (28.57%), and the CRAYON-0008 forecast should return January–April 2026 with a coverage target of 3 units. Validate the SPA root, `/forecast` reload, an unknown `/api` route, mobile and desktop layouts, both themes, filters, assistant states, browser console, and network requests in Chrome DevTools.
 
-Workers AI enablement is on in production with the Gemma 4 default and paid escalation disabled. The first live probe returned a model-level `422 unsupported` response and the immediate retry was blocked by the application-wide 60-second pacing guard (`429`). This is a limitation of the observed live route, not evidence from the stubbed tests; do not enable paid billing just to make the live model check pass. The deterministic analytics deployment remains fully operational.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 ## Rollback and cost controls
 

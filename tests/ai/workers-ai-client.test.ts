@@ -1,374 +1,267 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createWorkersAiClient,
   normalizeWorkersAiResult,
+  buildWorkersAiInputs,
+  classifyWorkersAiError,
+  type AiCall,
 } from "../../src/server/ai/client.ts";
-import { DEFAULT_MODEL, ESCALATION_MODEL, FALLBACK_MODEL } from "../../src/server/ai/models.ts";
-import type { AiBinding } from "../../src/server/env.ts";
-
-const validDecision = {
-  tool: "query_metric",
-  query: {
-    metrics: ["total_orders"],
-    breakdown: null,
-    time_grain: null,
-    date_field: null,
-    date_context: null,
-    relative_range: null,
-    date_from: null,
-    date_to: null,
-    filters: null,
-    order_by: null,
-    order_dir: null,
-    limit: null,
-  },
-  forecast: null,
-  clarify: null,
-  unsupported: null,
+import {
+  DECISION_JSON_SCHEMA,
+  parseDecisionText,
+} from "../../src/domain/decision.ts";
+import {
+  DEFAULT_MODEL,
+  ESCALATION_MODEL,
+  FALLBACK_MODEL,
+} from "../../src/server/ai/models.ts";
+import { nativeDecision } from "../helpers/native-ai.ts";
+import fixture from "./fixtures/native-tool-call.json";
+const call: AiCall = {
+  system: "Route only",
+  user: "How many orders?",
+  schema: DECISION_JSON_SCHEMA,
+  maxOutputTokens: 512,
 };
-
-describe("Workers AI result normalizer", () => {
-  it("handles string response property", () => {
-    const raw = { response: JSON.stringify(validDecision), usage: { prompt_tokens: 100, completion_tokens: 20 } };
-    const result = normalizeWorkersAiResult(raw);
+describe("native Workers AI response boundary", () => {
+  it("parses the captured native Gemma function envelope and token usage", () => {
+    const result = normalizeWorkersAiResult(fixture);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(JSON.parse(result.text!)).toEqual(validDecision);
-      expect(result.usage?.input_tokens).toBe(100);
-      expect(result.usage?.output_tokens).toBe(20);
+      expect(parseDecisionText(result.text)).toMatchObject({
+        ok: true,
+        value: { tool: "query_metric", query: { metrics: ["total_orders"] } },
+      });
+      expect(result.usage).toEqual({ input_tokens: 836, output_tokens: 97 });
     }
   });
-
-  it("handles object response property directly", () => {
-    const raw = { response: validDecision };
-    const result = normalizeWorkersAiResult(raw);
+  it.each([null, undefined, {}, "400", { response: "400" }, { choices: [] }])(
+    "rejects non-tool output %j",
+    (raw) => expect(normalizeWorkersAiResult(raw).ok).toBe(false),
+  );
+  it("detects the exact observed thinking-only truncation before parsing", () => {
+    expect(
+      normalizeWorkersAiResult({
+        choices: [
+          {
+            finish_reason: "length",
+            message: {
+              role: "assistant",
+              content: "",
+              reasoning_content: "private",
+            },
+          },
+        ],
+        usage: { completion_tokens: 512 },
+      }),
+    ).toMatchObject({
+      ok: false,
+      kind: "truncated",
+      diagnostic: "output_truncated",
+    });
+  });
+  it("does not accept text-only choices or expose reasoning", () => {
+    const result = normalizeWorkersAiResult({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { content: "400", reasoning_content: "private" },
+        },
+      ],
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      diagnostic: "no_single_tool_call",
+    });
+    expect(JSON.stringify(result)).not.toContain("private");
+  });
+  it.each(["{", "not json"])("rejects malformed tool arguments %s", (args) => {
+    const raw = structuredClone(fixture);
+    raw.choices[0]!.message.tool_calls[0]!.function.arguments = args;
+    expect(normalizeWorkersAiResult(raw)).toMatchObject({
+      ok: false,
+      diagnostic: "malformed_tool_arguments",
+    });
+  });
+  it("rejects unknown functions", () => {
+    const raw = structuredClone(fixture);
+    raw.choices[0]!.message.tool_calls[0]!.function.name = "raw_sql";
+    expect(normalizeWorkersAiResult(raw)).toMatchObject({
+      ok: false,
+      diagnostic: "unknown_tool",
+    });
+  });
+  it("rejects multiple calls and multiple choices", () => {
+    const raw = structuredClone(fixture);
+    raw.choices[0]!.message.tool_calls.push(
+      raw.choices[0]!.message.tool_calls[0]!,
+    );
+    expect(normalizeWorkersAiResult(raw).ok).toBe(false);
+    raw.choices.push(raw.choices[0]!);
+    expect(normalizeWorkersAiResult(raw).ok).toBe(false);
+  });
+  it("keeps schema validation authoritative for parsed arguments", () => {
+    const result = normalizeWorkersAiResult(
+      nativeDecision({
+        tool: "forecast",
+        forecast: {
+          sku: "CRAYON-0008",
+          horizon_months: 4,
+          buffer_pct: 20,
+          sql: "DROP TABLE orders",
+        },
+      }),
+    );
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(JSON.parse(result.text!)).toEqual(validDecision);
-    }
-  });
-
-  it("handles markdown code fences in response", () => {
-    const raw = { response: `\`\`\`json\n${JSON.stringify(validDecision)}\n\`\`\`` };
-    const result = normalizeWorkersAiResult(raw);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(JSON.parse(result.text!)).toEqual(validDecision);
-    }
-  });
-
-  it("handles top-level decision object", () => {
-    const result = normalizeWorkersAiResult(validDecision);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(JSON.parse(result.text!)).toEqual(validDecision);
-    }
-  });
-
-  it("rejects null or unparseable raw values", () => {
-    expect(normalizeWorkersAiResult(null).ok).toBe(false);
-    expect(normalizeWorkersAiResult(undefined).ok).toBe(false);
-    expect(normalizeWorkersAiResult({}).ok).toBe(false);
-    expect(normalizeWorkersAiResult({ unknown_key: 123 }).ok).toBe(false);
-    expect(normalizeWorkersAiResult({ response: "   " }).ok).toBe(false);
+    if (result.ok) expect(parseDecisionText(result.text).ok).toBe(false);
   });
 });
-
-describe("Workers AI client wrapper", () => {
-  it("invokes ai.run with default Gemma 4 model and json_schema response format", async () => {
-    let capturedModel = "";
-    let capturedInputs: Record<string, unknown> = {};
-
-    const ai: AiBinding = {
-      run: async (model, inputs) => {
-        capturedModel = model;
-        capturedInputs = inputs;
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      defaultModel: DEFAULT_MODEL,
-      timeoutMs: 5000,
-    });
-
-    const result = await client.complete({
-      system: "system prompt here",
-      user: "What was the total order count?",
-      schema: { type: "object" },
-      maxOutputTokens: 512,
-    });
-
-    expect(client.name).toBe("workers-ai");
-    expect(client.model).toBe(DEFAULT_MODEL);
-    expect(capturedModel).toBe(DEFAULT_MODEL);
-    expect(capturedInputs).toEqual({
-      messages: [
-        { role: "system", content: "system prompt here" },
-        { role: "user", content: "What was the total order count?" },
-      ],
-      max_tokens: 512,
+describe("Workers AI request and retry policy", () => {
+  it("uses documented tools and disables thinking with a completion bound", () => {
+    const inputs = buildWorkersAiInputs(call);
+    expect(inputs).toMatchObject({
+      max_completion_tokens: 512,
       temperature: 0,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "analytics_decision",
-          strict: true,
-          schema: { type: "object" },
-        },
-      },
+      chat_template_kwargs: { enable_thinking: false },
+      tool_choice: "required",
+      parallel_tool_calls: false,
     });
-    expect(capturedInputs["messages"]).toEqual([
-      { role: "system", content: "system prompt here" },
-      { role: "user", content: "What was the total order count?" },
-    ]);
-    expect(capturedInputs["max_tokens"]).toBe(512);
-
-    const format = capturedInputs["response_format"] as Record<string, any>;
-    expect(format.type).toBe("json_schema");
-    expect(format.json_schema.strict).toBe(true);
-
-    expect(result.ok).toBe(true);
+    expect(inputs).not.toHaveProperty("response_format");
+    expect(inputs).not.toHaveProperty("max_tokens");
+    expect(inputs.tools).toHaveLength(4);
   });
-
-  it("routes complex reasoning questions to GLM-5.3 Flash", async () => {
-    let capturedModel = "";
-    const ai: AiBinding = {
-      run: async (model) => {
-        capturedModel = model;
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      allowPaidEscalation: true,
+  it("uses the configured free model, with no paid escalation for long complex questions", async () => {
+    const run = vi.fn(async (..._args: unknown[]) => fixture);
+    const result = await createWorkersAiClient({
+      ai: { run },
+      defaultModel: FALLBACK_MODEL,
       timeoutMs: 5000,
+    }).complete({
+      ...call,
+      user: "Compare complex performance and forecast scenarios",
+      estimatedTokens: 6000,
     });
-
-    const result = await client.complete({
-      system: "system prompt",
-      user: "Compare carrier performance between DHL and FedEx versus warehouse volume",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(capturedModel).toBe(ESCALATION_MODEL);
-    if (result.ok) {
-      expect(result.modelUsed).toBe(ESCALATION_MODEL);
-      expect(result.routeReason).toBe("complex_reasoning");
-    }
+    expect(result).toMatchObject({ ok: true, modelUsed: FALLBACK_MODEL });
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls[0]?.[0]).not.toBe(ESCALATION_MODEL);
   });
-
-  it("gracefully falls back to GLM-4.7 Flash when GLM-5.3 Flash returns a billing error", async () => {
-    const invokedModels: string[] = [];
-
-    const ai: AiBinding = {
-      run: async (model) => {
-        invokedModels.push(model);
-        if (model === ESCALATION_MODEL) {
-          throw new Error("HTTP 402 Payment Required: Model requires billing to be enabled");
-        }
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      allowPaidEscalation: true,
+  it("defaults to the free model", async () => {
+    const run = vi.fn(async () => fixture);
+    const result = await createWorkersAiClient({
+      ai: { run },
       timeoutMs: 5000,
-    });
-
-    const result = await client.complete({
-      system: "system prompt",
-      user: "Compare delay rates versus total volumes",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(invokedModels).toEqual([ESCALATION_MODEL, FALLBACK_MODEL]);
-    if (result.ok) {
-      expect(result.modelUsed).toBe(FALLBACK_MODEL);
-      expect(result.routeReason).toBe("billing_fallback");
-    }
+    }).complete(call);
+    expect(result).toMatchObject({ ok: true, modelUsed: DEFAULT_MODEL });
   });
-
-  it("does not escalate paid models by default", async () => {
-    let capturedModel = "";
-    const ai: AiBinding = {
-      run: async (model) => {
-        capturedModel = model;
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
+  it("preserves optional native gateway settings", async () => {
+    const run = vi.fn(async (..._args: unknown[]) => fixture);
+    await createWorkersAiClient({
+      ai: { run },
+      gatewayId: "test",
       timeoutMs: 5000,
-      maxRetries: 1,
-      retryDelayMs: 0,
-    });
-
-    const result = await client.complete({
-      system: "system prompt",
-      user: "Compare carrier performance between DHL and FedEx versus warehouse volume",
-      schema: {},
-      maxOutputTokens: 512,
-      estimatedTokens: 3500,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(capturedModel).toBe(DEFAULT_MODEL);
-    if (result.ok) {
-      expect(result.modelUsed).toBe(DEFAULT_MODEL);
-      expect(result.routeReason).toBe("default");
-    }
-  });
-
-  it("passes gateway configuration when gatewayId is configured", async () => {
-    let capturedOptions: Record<string, unknown> | undefined;
-
-    const ai: AiBinding = {
-      run: async (_model, _inputs, options) => {
-        capturedOptions = options;
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      gatewayId: "my-analytics-gateway",
-      timeoutMs: 5000,
-    });
-
-    const result = await client.complete({
-      system: "system prompt",
-      user: "How many orders were there?",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(capturedOptions).toEqual({
-      gateway: {
-        id: "my-analytics-gateway",
-        skipCache: false,
-      },
+    }).complete(call);
+    expect(run.mock.calls[0]?.[2]).toEqual({
+      gateway: { id: "test", skipCache: false },
     });
   });
-
-  it("retries on transient rate limits with backoff", async () => {
-    let callCount = 0;
-    const ai: AiBinding = {
-      run: async () => {
-        callCount += 1;
-        if (callCount === 1) {
-          throw new Error("HTTP 429 Too Many Requests");
-        }
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      timeoutMs: 5000,
-      maxRetries: 1,
-      retryDelayMs: 10,
+  it.each([
+    [
+      new Error("3036: HTTP 429 daily free allocation exhausted"),
+      "account_quota",
+    ],
+    [new Error("HTTP 429 Too Many Requests"), "rate_limited"],
+    [new Error("HTTP 402 Payment Required"), "rejected"],
+    [new Error("HTTP 403 model access denied"), "rejected"],
+    [new Error("HTTP 400 Invalid request"), "rejected"],
+    [new Error("5007: No such model @cf/invalid/diagnostic-model or task"), "rejected"],
+    [new Error("timeout"), "timeout"],
+  ])(
+    "does not retry permanent or unclassified quota errors %s",
+    async (error, kind) => {
+      const run = vi.fn(async () => {
+        throw error;
+      });
+      expect(
+        await createWorkersAiClient({
+          ai: { run },
+          timeoutMs: 5000,
+          maxRetries: 2,
+        }).complete(call),
+      ).toMatchObject({ ok: false, kind });
+      expect(run).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("classifies capacity distinctly and respects long retry hints", async () => {
+    const run = vi.fn(async () => {
+      throw Object.assign(new Error("3040: out of capacity"), {
+        status: 429,
+        retryAfterSeconds: 60,
+      });
     });
-
-    const result = await client.complete({
-      system: "system prompt",
-      user: "How many orders were there?",
-      schema: {},
-      maxOutputTokens: 512,
+    expect(
+      await createWorkersAiClient({
+        ai: { run },
+        timeoutMs: 5000,
+        maxRetries: 2,
+      }).complete(call),
+    ).toMatchObject({
+      ok: false,
+      kind: "capacity",
+      internalCode: 3040,
+      providerStatus: 429,
     });
-
-    expect(result.ok).toBe(true);
-    expect(callCount).toBe(2);
+    expect(run).toHaveBeenCalledTimes(1);
   });
-
-  it("maps timeouts when client timer fires with no hidden retries", async () => {
-    let callCount = 0;
-    const ai: AiBinding = {
-      run: async () => {
-        callCount += 1;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return { response: JSON.stringify(validDecision) };
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      timeoutMs: 50,
-    });
-
-    const result = await client.complete({
-      system: "sys",
-      user: "usr",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.kind).toBe("timeout");
-      expect(result.message).toContain("No answer was generated and no retry was attempted");
-    }
-    expect(callCount).toBe(1);
+  it.each(["capacity", "outage"])(
+    "bounds transient %s retries on the same free model",
+    async (kind) => {
+      const error =
+        kind === "capacity"
+          ? Object.assign(new Error("3040 out of capacity"), {
+              retryAfterSeconds: 0,
+            })
+          : new Error("HTTP 503 unavailable");
+      const run = vi.fn(async () => fixture).mockRejectedValueOnce(error);
+      expect(
+        await createWorkersAiClient({
+          ai: { run },
+          timeoutMs: 5000,
+          maxRetries: 1,
+          retryDelayMs: 0,
+        }).complete(call),
+      ).toMatchObject({ ok: true });
+      expect(run).toHaveBeenCalledTimes(2);
+    },
+  );
+  it("does not retry malformed output or escalate paid models", async () => {
+    const run = vi.fn(async () => ({ response: "bad" }));
+    expect(
+      await createWorkersAiClient({
+        ai: { run },
+        timeoutMs: 5000,
+        maxRetries: 2,
+      }).complete(call),
+    ).toMatchObject({ ok: false, kind: "invalid_response" });
+    expect(run).toHaveBeenCalledTimes(1);
   });
-
-  it("maps rate limits with retry-after header when retries exhausted", async () => {
-    const ai: AiBinding = {
-      run: async () => {
-        throw new Error("HTTP 429 Too Many Requests - Rate limit reached");
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      timeoutMs: 5000,
-    });
-
-    const result = await client.complete({
-      system: "sys",
-      user: "usr",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.kind).toBe("rate_limited");
-      expect(result.retryAfterSeconds).toBe(60);
-    }
+  it("times out without launching another provider request", async () => {
+    const run = vi.fn(() => new Promise(() => {}));
+    expect(
+      await createWorkersAiClient({
+        ai: { run },
+        timeoutMs: 10,
+        maxRetries: 2,
+      }).complete(call),
+    ).toMatchObject({ ok: false, kind: "timeout" });
+    expect(run).toHaveBeenCalledTimes(1);
   });
-
-  it("maps server outages (500s)", async () => {
-    const ai: AiBinding = {
-      run: async () => {
-        throw new Error("Internal Server Error (500)");
-      },
-    };
-
-    const client = createWorkersAiClient({
-      ai,
-      timeoutMs: 5000,
-    });
-
-    const result = await client.complete({
-      system: "sys",
-      user: "usr",
-      schema: {},
-      maxOutputTokens: 512,
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.kind).toBe("outage");
-      expect(result.message).toContain("Workers AI returned an error");
-    }
+  it("sanitizes provider error messages", () => {
+    expect(
+      classifyWorkersAiError(new Error("HTTP 500 private provider context")),
+    ).toMatchObject({ kind: "outage" });
+    expect(
+      classifyWorkersAiError(new Error("HTTP 500 private provider context"))
+        .message,
+    ).not.toContain("private");
   });
 });

@@ -9,11 +9,23 @@
  * never writes SQL, and never writes a final numerical analytical answer.
  */
 import type { Hono } from "hono";
-import { ManifestUnavailableError, readManifest, type StoredManifest } from "../../data/manifest.ts";
-import { describePlan, renderForecastAnswer, renderQueryAnswer } from "../../domain/answer.ts";
+import {
+  ManifestUnavailableError,
+  readManifest,
+  type StoredManifest,
+} from "../../data/manifest.ts";
+import {
+  describePlan,
+  renderForecastAnswer,
+  renderQueryAnswer,
+} from "../../domain/answer.ts";
 import { parseAskRequest } from "../../domain/ask-schema.ts";
 import { referenceDateFor } from "../../domain/date-context.ts";
-import { DECISION_JSON_SCHEMA, parseDecisionText } from "../../domain/decision.ts";
+import {
+  DECISION_JSON_SCHEMA,
+  decisionTools,
+  parseDecisionText,
+} from "../../domain/decision.ts";
 import { ForecastError, runForecast } from "../../domain/forecast.ts";
 import { parseForecastRequest } from "../../domain/forecast-schema.ts";
 import { buildPrompt, estimateTokens } from "../../domain/prompt.ts";
@@ -27,12 +39,19 @@ import {
 import type { SqlDb } from "../../shared/db.ts";
 import type { ApiErrorCode, ApiErrorDetail } from "../../shared/errors.ts";
 import { createWorkersAiClient, type AiDecisionClient } from "../ai/client.ts";
-import { ConfigError, readAiConfig, type RuntimeAiConfig } from "../ai/config.ts";
+import {
+  ConfigError,
+  readAiConfig,
+  type RuntimeAiConfig,
+} from "../ai/config.ts";
 import { admitGeneration } from "../ai/quota.ts";
 import { d1SqlDb } from "../db/d1.ts";
 import type { AppEnv, Env } from "../env.ts";
 import { errorPayload } from "../http/respond.ts";
-import { isCrossOriginBrowserRequest, readJsonBody } from "../middleware/request-guard.ts";
+import {
+  isCrossOriginBrowserRequest,
+  readJsonBody,
+} from "../middleware/request-guard.ts";
 
 export interface AskFailure {
   readonly ok: false;
@@ -42,7 +61,9 @@ export interface AskFailure {
   readonly retryAfterSeconds?: number;
 }
 
-export type AskOutcome = { readonly ok: true; readonly value: AskResponse } | AskFailure;
+export type AskOutcome =
+  | { readonly ok: true; readonly value: AskResponse }
+  | AskFailure;
 
 export interface AskDependencies {
   readonly db: SqlDb;
@@ -61,12 +82,18 @@ export interface AskInput {
 function failure(
   code: ApiErrorCode,
   message: string,
-  extra: { details?: readonly ApiErrorDetail[]; retryAfterSeconds?: number } = {},
+  extra: {
+    details?: readonly ApiErrorDetail[];
+    retryAfterSeconds?: number;
+  } = {},
 ): AskFailure {
   return { ok: false, code, message, ...extra };
 }
 
-export async function runAsk(input: AskInput, deps: AskDependencies): Promise<AskOutcome> {
+export async function runAsk(
+  input: AskInput,
+  deps: AskDependencies,
+): Promise<AskOutcome> {
   const question = input.question.trim();
   if (question === "") {
     return failure("bad_input", "Ask a question about the order data.");
@@ -92,7 +119,7 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
     referenceDate,
   });
 
-  const schemaTokens = estimateTokens(JSON.stringify(DECISION_JSON_SCHEMA));
+  const schemaTokens = estimateTokens(JSON.stringify(decisionTools()));
   const totalInputTokens = prompt.estimatedInputTokens + schemaTokens;
   if (totalInputTokens > deps.config.maxInputTokens) {
     return failure(
@@ -101,10 +128,22 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
     );
   }
 
-  const admission = await admitGeneration(deps.db, deps.config.limits, deps.now);
+  const admission = await admitGeneration(
+    deps.db,
+    deps.config.limits,
+    deps.now,
+  );
   if (!admission.admitted) {
-    const code: ApiErrorCode = admission.reason === "unavailable" ? "provider_outage" : "rate_limited";
-    return failure(code, admission.message, { retryAfterSeconds: admission.retryAfterSeconds });
+    console.warn("ai_admission_rejected", {
+      stage: "app_quota",
+      reason: admission.reason,
+      provider_called: false,
+    });
+    const code: ApiErrorCode =
+      admission.reason === "unavailable" ? "provider_outage" : "rate_limited";
+    return failure(code, admission.message, {
+      retryAfterSeconds: admission.retryAfterSeconds,
+    });
   }
 
   // Exactly one admitted question execution through Workers AI.
@@ -122,10 +161,16 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
       completion.kind === "timeout"
         ? "provider_timeout"
         : completion.kind === "rate_limited"
-          ? "rate_limited"
-          : completion.kind === "outage"
-            ? "provider_outage"
-            : "unsupported";
+          ? "provider_rate_limited"
+          : completion.kind === "account_quota"
+            ? "provider_account_quota"
+            : completion.kind === "capacity"
+              ? "provider_capacity"
+              : completion.kind === "rejected"
+                ? "provider_rejected"
+                : completion.kind === "outage"
+                  ? "provider_outage"
+                  : "provider_invalid_response";
     return failure(code, completion.message, {
       ...(completion.retryAfterSeconds === undefined
         ? {}
@@ -135,8 +180,13 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
 
   const decision = parseDecisionText(completion.text);
   if (!decision.ok) {
+    console.warn("ai_decision_rejected", {
+      stage: "decision_schema",
+      model: completion.modelUsed,
+      paths: decision.issues.map((issue) => issue.path),
+    });
     return failure(
-      "unsupported",
+      "provider_invalid_response",
       "The routing decision did not match the required contract, so no operation was executed. Rephrase the question or use the dashboard filters.",
       { details: decision.issues },
     );
@@ -162,12 +212,17 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
     case "query_metric": {
       // The model's arguments are validated by the same schema the direct API uses.
       const parsed = parseQueryRequest({
-        date_context: input.dateContext,
         ...decision.value.query,
+        date_context: input.dateContext,
       });
       if (!parsed.ok) {
+        console.warn("ai_decision_rejected", {
+          stage: "canonical_query",
+          model: modelUsed,
+          paths: parsed.issues.map((issue) => issue.path),
+        });
         return failure(
-          "unsupported",
+          "provider_invalid_response",
           "The selected analytics plan was not valid, so nothing was executed.",
           { details: parsed.issues },
         );
@@ -184,7 +239,10 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
             ...base,
             tool: "query_metric",
             answer: renderQueryAnswer(result),
-            interpretation: { tool: "query_metric", summary: describePlan(result.plan) },
+            interpretation: {
+              tool: "query_metric",
+              summary: describePlan(result.plan),
+            },
             query: result,
             forecast: null,
             clarification: null,
@@ -193,21 +251,39 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
         };
       } catch (error) {
         if (error instanceof QueryError) {
-          return failure(error.code, error.message, {
-            ...(error.field === undefined
-              ? {}
-              : { details: [{ path: error.field, message: error.message }] }),
+          console.warn("ai_decision_rejected", {
+            stage: "query_validation",
+            model: modelUsed,
+            code: error.code,
+            field: error.field,
           });
+          return failure(
+            "provider_invalid_response",
+            "The analyst selected an invalid analytics plan. No operation was executed. Please try again.",
+            {
+              ...(error.field === undefined
+                ? {}
+                : { details: [{ path: error.field, message: error.message }] }),
+            },
+          );
         }
         throw error;
       }
     }
 
     case "forecast": {
-      const parsed = parseForecastRequest({ scope: "sku", ...decision.value.forecast });
+      const parsed = parseForecastRequest({
+        scope: "sku",
+        ...decision.value.forecast,
+      });
       if (!parsed.ok) {
+        console.warn("ai_decision_rejected", {
+          stage: "canonical_forecast",
+          model: modelUsed,
+          paths: parsed.issues.map((issue) => issue.path),
+        });
         return failure(
-          "unsupported",
+          "provider_invalid_response",
           "The selected forecast request was not valid, so nothing was executed.",
           { details: parsed.issues },
         );
@@ -272,7 +348,8 @@ export async function runAsk(input: AskInput, deps: AskDependencies): Promise<As
           answer: decision.value.unsupported.reason,
           interpretation: {
             tool: "unsupported",
-            summary: "The question is outside the supported subset, so no operation ran.",
+            summary:
+              "The question is outside the supported subset, so no operation ran.",
           },
           query: null,
           forecast: null,
@@ -316,7 +393,12 @@ export function registerAskRoutes(app: Hono<AppEnv>): void {
    */
   app.post("/api/ask", async (c) => {
     if (isCrossOriginBrowserRequest(c.req.raw)) {
-      return c.json(...errorPayload("bad_input", "Cross-origin browser requests are not accepted."));
+      return c.json(
+        ...errorPayload(
+          "bad_input",
+          "Cross-origin browser requests are not accepted.",
+        ),
+      );
     }
 
     const body = await readJsonBody(c.req.raw);
@@ -366,20 +448,33 @@ export function registerAskRoutes(app: Hono<AppEnv>): void {
       if (!clientResolution.ok) {
         return c.json(
           ...errorPayload(clientResolution.code, clientResolution.message, {
-            ...(clientResolution.details === undefined ? {} : { details: clientResolution.details }),
+            ...(clientResolution.details === undefined
+              ? {}
+              : { details: clientResolution.details }),
           }),
         );
       }
 
       const outcome = await runAsk(
-        { question: parsed.value.question, dateContext: parsed.value.date_context },
-        { db, manifest, config, now: new Date(), client: clientResolution.client },
+        {
+          question: parsed.value.question,
+          dateContext: parsed.value.date_context,
+        },
+        {
+          db,
+          manifest,
+          config,
+          now: new Date(),
+          client: clientResolution.client,
+        },
       );
 
       if (!outcome.ok) {
         return c.json(
           ...errorPayload(outcome.code, outcome.message, {
-            ...(outcome.details === undefined ? {} : { details: outcome.details }),
+            ...(outcome.details === undefined
+              ? {}
+              : { details: outcome.details }),
             ...(outcome.retryAfterSeconds === undefined
               ? {}
               : { retryAfterSeconds: outcome.retryAfterSeconds }),

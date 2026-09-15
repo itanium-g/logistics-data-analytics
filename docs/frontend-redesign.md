@@ -88,7 +88,7 @@ Commands run against the completed local implementation:
 | Check | Result |
 |---|---|
 | npm run typecheck | Passed: browser, Worker and test TypeScript projects |
-| npm test | Passed: 253 tests in 23 files |
+| npm test | Passed: 280 tests in 24 files |
 | npm run build | Passed: client bundle, 729.98 kB raw / 210.60 kB gzip |
 | npm run smoke | Passed: 13/13 checks against local workerd at http://127.0.0.1:4173 |
 
@@ -103,6 +103,6 @@ Reviewed captures live directly in [docs/screenshots](screenshots/README.md), wi
 ## Remaining limitations
 
 - Production is deployed at https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev; the repository is public. External reviewer/employer handoff remains an owner action.
-- A limited live provider call was made: `/api/ask` returned `422 unsupported` for `How many orders are there?`, and an immediate retry returned the expected `429` pacing response. The 20-case routing evaluation remains unrun; deterministic tests use a stubbed transport.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence.
 - The dataset contains no coordinates, geometries, routes or tracking events, so no geographic view was added.
 - Local workerd smoke checks do not establish universal deployment performance or live-model quality. Production API/UI checks and the responsive forecast breakpoint passed; the checked-in screenshot files remain local because the browser screenshot writer rejected repository paths.

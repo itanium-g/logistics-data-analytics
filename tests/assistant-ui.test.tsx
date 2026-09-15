@@ -71,6 +71,22 @@ async function submitPrompt(label: string): Promise<void> {
 }
 
 describe("AI Analyst presentation", () => {
+  it.each([
+    ["provider_account_quota", "The AI daily allocation has been reached"],
+    ["provider_rate_limited", "The AI provider is busy"],
+    ["provider_capacity", "The AI provider is busy"],
+    ["provider_rejected", "The AI provider could not accept the request"],
+    ["provider_invalid_response", "The analyst could not interpret the question"],
+    ["provider_timeout", "The analyst timed out"],
+  ] as const)("renders %s distinctly and offers retry", async (code, heading) => {
+    postAskMock.mockRejectedValue(new ApiError(code, "Safe diagnostic message"));
+    await mountPanel();
+    await submitPrompt("highest delay rate");
+    expect(container.textContent).toContain(heading);
+    expect(container.textContent).toContain("Safe diagnostic message");
+    expect(container.querySelector("button.secondary-button")).not.toBeNull();
+  });
+
   it("associates the computed result with the submitted question and context", async () => {
     postAskMock.mockResolvedValue(computedResponse);
     await mountPanel();

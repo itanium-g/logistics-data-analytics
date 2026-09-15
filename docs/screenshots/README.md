@@ -8,7 +8,7 @@ Chrome 153.0 on Windows, device scale factor 1, browser zoom 100%, explicit Ligh
 
 Before each capture the expected response was present, loading indicators were clear, document.fonts.ready had resolved, and chart container dimensions were unchanged across consecutive animation frames. Each resulting image was visually inspected for theme, readable labels, layout, expected values and clipping. Page-level horizontal overflow was absent in these captured states. Some pages and modal/table regions scroll vertically; a viewport capture intentionally does not show all content below the fold. Chart axis ticks are responsive and may omit intermediate labels; equivalent data remains in the tables.
 
-Direct Overview and Forecasts responses came from the analytical API. Assistant captures show the ready state with no submitted question; no model result is fabricated and no provider call was made for the checked-in captures. Deployment and production browser validation were performed separately; the full live-model evaluation remains unrun.
+AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
 
 ## Captures
 
