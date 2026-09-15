@@ -275,6 +275,7 @@ Implementation details, preservation boundaries, table/CSV semantics, dependency
 |---|---|
 | Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public. |
 | Deployed URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev |
+| Deployed revision | Worker version `d9c378be-20bb-42a5-9150-1d83741bd571` (deployment `3fb3a00f-6554-4ce4-9457-90111ac7da7d`), from `main` commit `16635341a6401d91670882d8d200fbeb5bb7b0bf`. |
 | Credentials | Not required; no authentication in this profile. |
 | Data version | 1.0.0, metric version 2, source SHA-256 `b60f84b1…94bc82`; production D1 verified at 400 rows / 355 SKUs. |
 

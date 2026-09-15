@@ -9,8 +9,8 @@ Status: **The application is merged into `main`, deployed and production-validat
 | Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public | Complete any external reviewer handoff separately. |
 | Deployed app URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev | Stable public Worker URL verified. |
 | Credentials | Not required; no login in this profile | Do not add credentials to the repository. |
-| Deployed commit | `7799ee6a33c4f45c03f04c3c900637dd988e3110` at the recorded deployment | Documentation-only finalization may follow; runtime files are redeployed when changed. |
-| Worker revision | `7a16a1f4-7ae7-4d58-9753-7f7562988ff9`; deployment `1ccb1b9b-e1c8-46ba-ad30-be51cc6f33d4` | 100% traffic on this version at verification. |
+| Deployed commit | `16635341a6401d91670882d8d200fbeb5bb7b0bf` | The final repository follow-up is documentation-only; runtime files were redeployed from this commit. |
+| Worker revision | `d9c378be-20bb-42a5-9150-1d83741bd571`; deployment `3fb3a00f-6554-4ce4-9457-90111ac7da7d` | 100% traffic on this version at verification. |
 | D1 | `logistics-analytics-demo` / `38482f2d-165a-46d2-91b6-89e222f77de5` | Production migration and seed verified: 400 orders / 355 SKUs. |
 | Data source | [Supplied CSV](assignment/README.md#original-files), SHA-256 verified at import | Production reports data version `1.0.0` and metric version `2`. |
 | Deadline | Not specified | Record only if later supplied. |
@@ -82,4 +82,4 @@ The test report must record exact counts from the current run. The smoke harness
 3. The existing production D1 was reused, migrations and the checked seed were applied, and the remote count was verified at 400 rows / 355 SKUs.
 4. `npm run deploy` was run from `main`; the Worker URL and revision are recorded above.
 5. Production was validated through the API and Chrome DevTools. The checked-in screenshot catalog remains the local capture set because the browser tool rejected repository screenshot paths; this limitation is recorded in [docs/screenshots/README.md](screenshots/README.md).
-6. The final README, AI disclosure, deployment guide, screenshot catalog, requirements/plan status and `public/llms.txt` are being committed on `main`; the runtime metadata change is followed by a redeploy.
+6. The release README, AI disclosure, deployment guide, screenshot catalog, requirements/plan status and `public/llms.txt` were committed on `main` at `16635341a6401d91670882d8d200fbeb5bb7b0bf`; the runtime metadata change was followed by the deployment recorded above, and these final revision identifiers are a documentation-only follow-up.

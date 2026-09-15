@@ -4,7 +4,7 @@ This application is a single Cloudflare Worker with Workers Static Assets, D1, a
 
 ## Verified production record
 
-The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from the verified `main` release; the current recorded version is `7a16a1f4-7ae7-4d58-9753-7f7562988ff9` and deployment id is `1ccb1b9b-e1c8-46ba-ad30-be51cc6f33d4`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
+The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from `main` commit `16635341a6401d91670882d8d200fbeb5bb7b0bf`; the current version is `d9c378be-20bb-42a5-9150-1d83741bd571` and deployment id is `3fb3a00f-6554-4ce4-9457-90111ac7da7d`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
 
 The production browser and API checks passed for the deterministic application, including the SPA root and forecast navigation, responsive widths from 390px through 1920px, dark theme, assistant presentation, the GLS ranking and the CRAYON-0008 forecast. The minimal Workers AI probe did not produce a completed answer: `How many orders are there?` returned `422 unsupported`; an immediate retry returned the expected `429` pacing response. No paid escalation or AI Gateway was used.
 
