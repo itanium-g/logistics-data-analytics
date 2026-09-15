@@ -1,6 +1,6 @@
 # Submission checklist
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](ai-validation.md) for evidence.
 
 ## Handoff fields
 
@@ -9,8 +9,8 @@ AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated funct
 | Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public | Complete any external reviewer handoff separately. |
 | Deployed app URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev | Stable public Worker URL verified. |
 | Credentials | Not required; no login in this profile | Do not add credentials to the repository. |
-| Deployed commit | `16635341a6401d91670882d8d200fbeb5bb7b0bf` | The final repository follow-up is documentation-only; runtime files were redeployed from this commit. |
-| Worker revision | `d9c378be-20bb-42a5-9150-1d83741bd571`; deployment `3fb3a00f-6554-4ce4-9457-90111ac7da7d` | 100% traffic on this version at verification. |
+| Deployed commit | `72bf067edf63b280a0161ab6b93555fd85d569a8` | Deployed release commit on `main`. |
+| Worker revision | `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86`; deployment `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4` | 100% traffic on this version at verification. |
 | D1 | `logistics-analytics-demo` / `38482f2d-165a-46d2-91b6-89e222f77de5` | Production migration and seed verified: 400 orders / 355 SKUs. |
 | Data source | [Supplied CSV](assignment/README.md#original-files), SHA-256 verified at import | Production reports data version `1.0.0` and metric version `2`. |
 | Deadline | Not specified | Record only if later supplied. |
@@ -30,7 +30,7 @@ AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated funct
 - [x] Node 24 is the declared local and CI toolchain; CI runs `npm ci`, typecheck, tests, build, and deterministic smoke checks.
 - [x] Model outputs are bounded and validated; the model cannot execute SQL or provide analytical numbers.
 - [x] Supplied analytical data is read-only through request paths; only quota usage is written.
-- [x] Twenty frozen live cases and fourteen critical repeats have recorded passing results. See [ai-validation.md](ai-validation.md). Production rollout remains pending.
+- [x] Twenty frozen live cases and fourteen critical repeats have recorded passing results against the real Workers AI binding. See [ai-validation.md](ai-validation.md). Production rollout and public API/browser checks are complete.
 - [x] No provider keys or credentials are committed or shipped in the browser bundle.
 - [x] Quota admission, pacing, timeout, retry bounds, and concurrent reservation behavior are covered by tests.
 - [x] The forecast container-query fix is checked at the 1440 × 1100 docked-assistant breakpoint locally and in production.
@@ -73,13 +73,13 @@ The test report must record exact counts from the current run. The smoke harness
 | CRAYON-0008 forecast | **Passed** — four-month forecast and 3-unit coverage target |
 | SPA deep links and unknown API JSON 404 | **Passed** — direct navigation works; unknown API route returns JSON 404 |
 | Chrome responsive/theme/assistant review | **Passed** — production review at 390, 768, 1280, 1440 and 1920px; no horizontal overflow or console errors observed |
-| Live AI validation | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence. |
+| Live AI validation | **Passed** — 34/34 cases against the real Workers AI binding (20 frozen + 14 critical repeats) and separate public-production API/browser verification with zero pacing delay. See [AI validation](ai-validation.md). |
 
 ## Final handoff actions
 
-1. The verified feature branch `866e9ac2916bf14b99c52ac8c44e543ff31f40fa` was pushed and merged with commit `0aa8a10aef2ac7535057093dbd82a6e62f480a3a`; final `origin/main` is `7799ee6a33c4f45c03f04c3c900637dd988e3110`.
-2. The complete verification suite passed on the merged `main`: typecheck, 280 tests in 24 files, production build, 13/13 smoke checks and `git diff --check`.
+1. The verified feature branch `fix/ai-analyst-workers-ai` (`d5dcbe1`) was merged into `main` with commit `72bf067edf63b280a0161ab6b93555fd85d569a8`.
+2. The complete verification suite passed on the merged `main`: typecheck, 287 tests in 24 files, production build, 13/13 smoke checks and `git diff --check`.
 3. The existing production D1 was reused, migrations and the checked seed were applied, and the remote count was verified at 400 rows / 355 SKUs.
-4. `npm run deploy` was run from `main`; the Worker URL and revision are recorded above.
-5. Production was validated through the API and Chrome DevTools. The checked-in screenshot catalog remains the local capture set because the browser tool rejected repository screenshot paths; this limitation is recorded in [docs/screenshots/README.md](screenshots/README.md).
-6. The release README, AI disclosure, deployment guide, screenshot catalog, requirements/plan status and `public/llms.txt` were committed on `main` at `16635341a6401d91670882d8d200fbeb5bb7b0bf`; the runtime metadata change was followed by the deployment recorded above, and these final revision identifiers are a documentation-only follow-up.
+4. `npm run deploy` was run from `main`; Worker revision `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86` (deployment `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4`) was deployed to `https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev`.
+5. Production was validated through the public API (7/7 canonical questions passing consecutively with zero delay) and Chrome DevTools. The checked-in screenshot catalog remains the local capture set because the browser tool rejected repository screenshot paths; this limitation is recorded in [docs/screenshots/README.md](screenshots/README.md).
+6. Post-deployment documentation cleanup synchronizes the final deployed revision and evidence across repository files.

@@ -4,9 +4,9 @@ This application is a single Cloudflare Worker with Workers Static Assets, D1, a
 
 ## Verified production record
 
-The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from `main` commit `16635341a6401d91670882d8d200fbeb5bb7b0bf`; the current version is `d9c378be-20bb-42a5-9150-1d83741bd571` and deployment id is `3fb3a00f-6554-4ce4-9457-90111ac7da7d`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
+The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from `main` commit `72bf067edf63b280a0161ab6b93555fd85d569a8`; the current version is `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86` and deployment id is `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 ## Production architecture
 
@@ -87,7 +87,7 @@ curl -X POST <url>/api/forecast \
 
 The carrier query should place GLS first at 2/7 (28.57%), and the CRAYON-0008 forecast should return January–April 2026 with a coverage target of 3 units. Validate the SPA root, `/forecast` reload, an unknown `/api` route, mobile and desktop layouts, both themes, filters, assistant states, browser console, and network requests in Chrome DevTools.
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 ## Rollback and cost controls
 

@@ -20,7 +20,7 @@ Current implementation evidence: [README](../../README.md#verification-performed
 | [Target baseline da1d4a4](https://github.com/itanium-g/logistics-data-analytics/tree/da1d4a408c80ebcd462acd5c89b17a325a5316af) | Four Markdown documents, no app source. | No working app, test run or deployment. |
 | Vendor documentation in the setup guide | Earlier provider research and selected current stack/Workers/Groq checks. | Not a fresh exhaustive provider sweep, tested lockfile or account-readiness result. |
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 Source review is resolved; original files remain user-supplied inputs rather than repository content. Coverage/status semantics and provider readiness remain explicit assumptions or future checks. No reference code is copied; no open-source license for supplied assignment materials is inferred.
 
@@ -117,7 +117,7 @@ Groq documents strict structured-output support for GPT-OSS 20B and free limits 
 
 The plan bounds complete input to 4,096 tokens and total output to 512, reserves free quota atomically, admits at most one generation/minute globally and uses no hidden retry or paid fallback. At maximum size the 180K daily application reservation permits 39 calls. Public Ask can exhaust free quota; the dashboard and direct forecast remain available.
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 Measure Worker CPU separately from network latency during the future deployment. Keep secrets server-side, report failures clearly, and use scoped provider/deployment credentials. No public write/upload/admin endpoints, arbitrary model SQL, model-written numerical summaries or unrestricted provider tools are planned.
 

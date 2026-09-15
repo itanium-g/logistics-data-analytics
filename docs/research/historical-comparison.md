@@ -66,9 +66,9 @@ Keep one package initially. Do not add Next.js/SSR, Redis, queues, vector search
 
 ### 3.1 Confirm prerequisites and preserve existing work
 
-Read the [supplied assignment files](../assignment/README.md) and [requirements matrix](../requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review, local implementation and Cloudflare deployment are complete; use the commands in [README.md](../../README.md#local-setup) for the current checkout. The 20-case live model evaluation remains outstanding.
+Read the [supplied assignment files](../assignment/README.md) and [requirements matrix](../requirements.md). The user-supplied originals resolve the previous Notion-access gap. Any stack is allowed; the reference answer remains audit context, not the authority. Source review, local implementation, Cloudflare deployment and live model evaluations are complete; use the commands in [README.md](../../README.md#local-setup) for the current checkout.
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 Create the scaffold in a **new sibling directory**, then review and integrate its application files into this repository while preserving the documents:
 
@@ -428,4 +428,4 @@ For the optional P2 comparison of two 60-case candidates and a 60-case confirmat
 | Domain | Provider hostname | Only if a custom domain is later requested; the brief accepts a public provider URL. |
 | Other services | None initially | A concrete requirement for files, named-user auth, email, jobs or observability appears. |
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.

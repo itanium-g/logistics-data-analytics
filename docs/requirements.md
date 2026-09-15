@@ -1,6 +1,6 @@
 # Assignment requirements and acceptance matrix
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](ai-validation.md) for evidence.
 
 C refers to [Coding_assignment.docx](assignment/README.md#original-files) using its own numbered sections. S refers to [logistics-spec.pdf](assignment/README.md#original-files) page numbers; the supplied Word specification corroborates it. N refers to the landing-page text supplied by the user. [The source catalog](assignment/README.md) records exact files and hashes.
 
@@ -87,7 +87,7 @@ The source layout was also checked against the adopted architecture: pure analyt
 | Requirement | Status |
 |---|---|
 | R01, R02, R03, R05, R06, R07, R08, R10 | **Met and verified locally.** Five KPIs at 400 / 304 / 55 / 84.68% / 3.69 days, two charts with matching tables, deterministic chart selection, a shared evidence panel on every result, a validated plan panel, and one shared metric registry and query executor used by both the dashboard and the question path. |
-| R04, R09 | **Live binding validated.** AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](ai-validation.md) for current evidence. |
+| R04, R09 | **Met and production-validated.** Native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. 34/34 cases passed against the real Workers AI binding (20 frozen + 14 critical repeats), complemented by separate public-production API and browser verification with zero pacing delay. See [AI validation](ai-validation.md). |
 | R11, R12, R13 | **Met and verified locally.** A known SKU returns four monthly values with exact dates, a history and future chart, a numerical coverage target of 3 units for CRAYON-0008, the methodology, and the stock and lead-time limitations. |
 | R14 | **Met.** The application is publicly deployed at https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev and the deterministic API/UI passed production validation. |
 | R15 | **Not applicable, recorded.** No authentication in this profile, so credentials are "Not required". |
@@ -100,7 +100,7 @@ The source layout was also checked against the adopted architecture: pure analyt
 
 Optional bonuses: B03 (tests) is included well beyond the minimum. B01, B02, B04 and B05 were not implemented. B06 is partially implemented: safe clarification exists, elaborate conversational follow-ups do not.
 
-The AI repair is live-binding validated; its production rollout is pending merge. External reviewer submission remains an owner action. See [current release evidence](ai-validation.md).
+The AI repair is merged and production-validated. External reviewer submission remains an owner action. See [current release evidence](ai-validation.md).
 
 ## Frontend redesign handoff
 

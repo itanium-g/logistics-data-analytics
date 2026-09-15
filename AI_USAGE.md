@@ -45,7 +45,7 @@ These are recorded because they show what the verification actually did, rather 
 
 ## What has not been done
 
-No employer submission occurred. The AI repair has passed the 20-case real-binding evaluation and 14 critical repeats. Production rollout is pending merge. See [current evidence](docs/ai-validation.md).
+No employer submission occurred. The AI repair passed the 20-case real-binding evaluation and 14 critical repeats, was merged into `main` (`72bf067edf63b280a0161ab6b93555fd85d569a8`), deployed to Cloudflare Workers (`2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86`), and production-validated via the public API and browser. See [current evidence](docs/ai-validation.md).
 
 The supplied files were read without modification and are not committed. No reference implementation code was copied. The runtime model that the application would call is a separate matter from the assistant used to write the code.
 

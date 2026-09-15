@@ -26,7 +26,7 @@ The public demo runs as Worker `logistics-analytics-demo` with Workers Static As
 
 ![Mobile dashboard](docs/screenshots/overview-light-mobile.png)
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](docs/ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](docs/ai-validation.md) for evidence.
 
 | Document | Purpose |
 |---|---|
@@ -265,7 +265,6 @@ The current 12 checked-in captures were refreshed from the local application in 
 
 ## What is not done
 
-- Production rollout of the validated AI repair is pending merge.
 - **Checked-in production screenshots remain outstanding.** Production UI states were visually reviewed, but the Chrome DevTools screenshot writer rejected repository paths, so the stable PNG catalog remains the verified local capture set.
 - **External submission remains outside the repository workflow.** Reviewer communication or an employer submission form must be completed by the owner.
 
@@ -287,7 +286,7 @@ Implementation details, preservation boundaries, table/CSV semantics, dependency
 |---|---|
 | Repository | [itanium-g/logistics-data-analytics](https://github.com/itanium-g/logistics-data-analytics), public. |
 | Deployed URL | https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev |
-| Deployed revision | Worker version `d9c378be-20bb-42a5-9150-1d83741bd571` (deployment `3fb3a00f-6554-4ce4-9457-90111ac7da7d`), from `main` commit `16635341a6401d91670882d8d200fbeb5bb7b0bf`. |
+| Deployed revision | Worker version `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86` (deployment `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4`), from `main` commit `72bf067edf63b280a0161ab6b93555fd85d569a8`. |
 | Credentials | Not required; no authentication in this profile. |
 | Data version | 1.0.0, metric version 2, source SHA-256 `b60f84b1…94bc82`; production D1 verified at 400 rows / 355 SKUs. |
 

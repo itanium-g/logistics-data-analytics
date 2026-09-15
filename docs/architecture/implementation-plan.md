@@ -1,6 +1,6 @@
 # Spaceship Logistics Analytics Implementation Plan
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 Build the supplied assignment within its **6–10 hour** expectation: five required KPIs, at least two charts, live AI routing, SKU demand forecasting for four months, evidence for each answer, and a public review URL. The previous 41–65 hour plan described a much larger hardening project and is superseded as the submission baseline.
 
@@ -43,7 +43,7 @@ G00 is **complete for source review**, not for application behavior. All four su
 | Dataset | 400 rows, 17 columns, 355 SKUs; inspected from supplied attachments and cataloged in docs/assignment/README.md. Originals are not committed. |
 | Coverage | Assume January–December 2025 is a complete synthetic observation window. This is not proved by the brief or last order. Forecasts return coverage_unverified. |
 | Status meaning | delivered is the on-time proxy; delayed is the late proxy. Exceptions have unknown outcome and are excluded from these rate denominators. These are project assumptions. |
-| Live AI validation | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence. |
+| Live AI validation | AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence. |
 
 Do not reopen the resolved brief/data acquisition tasks solely because Notion was unavailable in an earlier review. Revisit new material conflicts, actual provider readiness, or newly supplied code.
 
@@ -216,10 +216,10 @@ Gate status as executed on this machine. "Met" means the check ran and the resul
 | G02 Analytics | **Met** | Five KPI results to full precision, empty and null-denominator cases, dashboard/Ask parity through shared domain functions, full-scope ranking before truncation, and denominators exposed on every ratio. |
 | G03 Query safety | **Met** | Unknown keys and values, bad dates, SQL-like inputs in value and identifier positions, and extra or multiple model operations all rejected with the dataset intact. |
 | G04 Forecast | **Met** | Sparse known SKU, four months, the exact CRAYON-0008 result of 3 units, unknown SKU, zero demand, canceled exclusion, and rounding once after summing. |
-| G05 Live AI | **Met on real binding; production pending** | AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence. |
-| G06 Quotas and errors | **Partially met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are verified locally. The production route is enabled but the observed probe did not complete an answer. |
+| G05 Live AI | **Met and production-validated** | AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence. |
+| G06 Quotas and errors | **Met** | Token bounds, concurrent admission, UTC rollover, timeout, 429, outage and truncation behaviour, and the absence of any paid fallback are verified. Production route is enabled with zero pacing delay and live verification passing. |
 | G07 Browser and runtime | **Met for the deployed review; real-device checks remain outside scope** | Five cards, two charts, Ask panel, SKU forecast, date labels, empty/error/model-off states, keyboard reachability and JSON API 404 are covered by tests and smoke checks. Production browser review covered 390, 768, 1280, 1440 and 1920px widths, themes, filters, assistant states and the forecast breakpoint without page-level overflow. |
-| G08 Handoff | **Partially met** | Feature branch was pushed, merged into `main`, deployed, and the repository is public with the URL and revision recorded. The full live evaluation, screenshot file refresh and external reviewer/employer handoff remain outstanding. |
+| G08 Handoff | **Met for repository release; external employer handoff remains owner action** | Feature branch was pushed, merged into `main`, deployed, and the repository is public with the URL and revision recorded. The real-binding evaluation, public API validation, and production browser reviews are complete. |
 
 Use 12 supported, 4 missing/ambiguous-input and 4 unsupported/adversarial live cases. Include all three quoted analytics examples, two SKU/four-month variations, filters, ranking, date basis and empty ranges. Define acceptable plans before execution. Require all 20 expected outcomes for the declared subset and no forbidden execution; publish counts rather than claiming general 100% accuracy.
 
@@ -243,6 +243,6 @@ Rollback: disable Ask for quota/provider incidents, restore the previous working
 
 The repository is public and docs/submission-checklist.md records the repository, deployed URL, access, revision and checks. External reviewer/employer handoff is still an owner action.
 
-AI Analyst repair: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats. Production rollout is pending merge; see [AI validation](../ai-validation.md) for current evidence.
+AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
 
 Frontend redesign follow-up: see [docs/frontend-redesign.md](../frontend-redesign.md) for the incremental shell, responsive presentation, TanStack Table/CSV semantics, browser captures and measured verification. The historical hosting and provider plan above remains unchanged.
