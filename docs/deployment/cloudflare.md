@@ -1,66 +1,35 @@
-# Cloudflare deployment guide
+# Cloudflare deployment
 
-This application is a single Cloudflare Worker with Workers Static Assets, D1, and the native Workers AI binding. The analytics and forecast paths are deterministic and do not require an AI provider. The deployment commands below are intended to run from the verified `main` branch.
+The application is deployed as one Cloudflare Worker with Workers Static Assets, D1, and the native Workers AI binding.
 
-## Verified production record
+## Public demo
 
-The public deployment is [logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev). Worker `logistics-analytics-demo` is serving 100% of traffic from `main` commit `72bf067edf63b280a0161ab6b93555fd85d569a8`; the current version is `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86` and deployment id is `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4`. Production D1 is `logistics-analytics-demo` (`38482f2d-165a-46d2-91b6-89e222f77de5`) and contains 400 orders / 355 SKUs, data version `1.0.0` and metric version `2`.
+[logistics-analytics-demo.ghiffariahmadijaya.workers.dev](https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev)
 
-AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
+The demo uses the supplied synthetic dataset and does not require authentication. The deterministic dashboard, query, and forecast paths do not depend on an AI provider. The AI Analyst is subject to Workers AI availability and quota.
 
-## Production architecture
+## Production configuration
 
-- `src/server/index.ts` serves the Hono API.
-- Vite builds the React SPA into the Worker asset bundle.
-- D1 binding `DB` stores `orders`, the data manifest, and quota usage.
-- Workers AI binding `AI` is enabled in Wrangler's `production` environment.
-- Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) is the default model and is listed by Cloudflare as available on the Workers Free plan.
-- GLM-4.7 Flash (`@cf/zai-org/glm-4.7-flash`) is the free-compatible fallback.
-- GLM-5.3 Flash (`@cf/zai-org/glm-5.3-flash`) is retained only as an explicit opt-in paid escalation; `AI_ALLOW_PAID_ESCALATION` is false by default.
-- AI Gateway is optional and unset by default. Do not add a Gateway id unless an existing Gateway's billing, caching, and retention settings have been reviewed.
+Production settings are under `env.production` in `wrangler.jsonc`:
 
-Cloudflare's current Workers AI guidance identifies Gemma 4 and GLM-4.7 Flash as available on the Workers Free plan, while GLM-5.3 Flash requires Workers Paid or prepaid AI Gateway credits. The default configuration therefore never selects GLM-5.3 because of prompt length, question complexity, malformed output, or a retry.
+- Worker: `logistics-analytics-demo`
+- D1 binding: `DB`
+- Workers AI binding: `AI`
+- Default model: `@cf/google/gemma-4-26b-a4b-it`
+- Paid escalation: disabled unless explicitly enabled
+- AI request and token limits: enabled
 
-## Prerequisites
+No external provider key is required. Never put a provider key, Cloudflare token, or login credential in Git or frontend code.
 
-1. Node.js 24 or newer and npm.
-2. An authenticated Cloudflare account with Workers and D1 access.
-3. The supplied `docs/assignment/mock_logistics_data.csv`.
-4. A clean checkout of the verified `main` branch.
+## Deploy from a clean checkout
 
-Authenticate without committing the resulting credentials:
-
-```sh
-npx wrangler login
-```
-
-## Provision and seed D1
-
-Inspect existing resources before creating anything. Reuse the project database if one already exists. If no suitable database exists, create the one named by `wrangler.jsonc`:
-
-```sh
-npx wrangler d1 create logistics-analytics-demo
-```
-
-Copy the returned database id into the `production` D1 binding in `wrangler.jsonc`. Never commit an API token or login credential; the database id is configuration, not a secret.
-
-Generate the checked dataset's deterministic seed, apply the schema, and seed the remote database:
+Requirements: Node.js 24+, npm, an authenticated Cloudflare account, and the supplied CSV.
 
 ```sh
 npm ci
 npm run data:import
 npm run db:migrate:remote
 npm run db:seed:remote
-npx wrangler d1 execute logistics-analytics-demo --remote --command "SELECT COUNT(*) AS row_count FROM orders"
-```
-
-The final query must report 400 rows. Also verify `/api/meta` after deployment reports data version `1.0.0`, metric version `2`, and the expected 355-SKU vocabulary.
-
-## Deploy the verified main branch
-
-Build and deploy with the package script. It selects the Vite plugin's `production` environment during the build and deploys that flattened configuration, which enables Workers AI while keeping paid escalation off:
-
-```sh
 npm run typecheck
 npm test
 npm run build
@@ -68,30 +37,27 @@ npm run smoke
 npm run deploy
 ```
 
-Record the Worker name, public URL, deployment version, final `main` SHA, D1 name/id, and AI configuration in the submission checklist. The deploy command must be run from `main`, never from the feature branch.
+`npm run deploy` selects the `production` Wrangler environment, builds the SPA, and deploys the Worker. Run it from the intended release branch after reviewing the diff.
 
-## Production checks
+Before the first deployment, authenticate with `npx wrangler login` and confirm that the production D1 binding points to the intended database. The seed command writes the generated dataset; it does not contain the AI usage table.
 
-Replace `<url>` with the URL printed by Wrangler:
+## Quick checks
+
+Replace `<url>` with the deployed URL:
 
 ```sh
 curl <url>/api/health
 curl <url>/api/meta
 curl -X POST <url>/api/query \
   -H "content-type: application/json" \
-  --data '{"metrics":["delay_rate","total_orders"],"breakdown":"carrier","order_by":"delay_rate","order_dir":"desc","relative_range":"all_time"}'
+  --data '{"metrics":["total_orders"],"relative_range":"all_time"}'
 curl -X POST <url>/api/forecast \
   -H "content-type: application/json" \
   --data '{"sku":"CRAYON-0008"}'
 ```
 
-The carrier query should place GLS first at 2/7 (28.57%), and the CRAYON-0008 forecast should return January–April 2026 with a coverage target of 3 units. Validate the SPA root, `/forecast` reload, an unknown `/api` route, mobile and desktop layouts, both themes, filters, assistant states, browser console, and network requests in Chrome DevTools.
+Expected fixture checks include 400 orders, 355 SKUs, a valid metric contract, and a four-month CRAYON-0008 forecast. Review the browser at both desktop and mobile widths before sharing the URL.
 
-AI Analyst: native Workers AI Gemma 4 selects exactly one validated function, with thinking disabled. The real-binding evaluation passed 20/20 cases plus 14/14 critical repeats, and production deployment is fully validated; see [AI validation](../ai-validation.md) for evidence.
+## Disable AI safely
 
-## Rollback and cost controls
-
-- Disable the natural-language path by setting `AI_ENABLED="false"` in the production environment and redeploying. Query and forecast remain available.
-- Keep `AI_ALLOW_PAID_ESCALATION="false"` unless paid usage has been deliberately approved.
-- Keep the input/output bounds, D1 quota admission, pacing, and bounded retries in place.
-- Never add an external provider key, external database, or Gateway solely to bypass a Workers AI access limitation.
+Set `AI_ENABLED` to `false` in the production environment and redeploy. The dashboard, query API, and forecast remain available. Keep `AI_ALLOW_PAID_ESCALATION` set to `false` unless paid usage has been explicitly approved.

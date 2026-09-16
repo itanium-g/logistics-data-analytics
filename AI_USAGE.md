@@ -1,60 +1,14 @@
 # AI assistance disclosure
 
-Updated: 2026-09-15 UTC. This repository now contains a working application in addition to the earlier planning and research documents, and the verified `main` branch is deployed publicly.
+AI tools were used during development of this assignment. The final repository, analytical definitions, tests, and deployment configuration were reviewed by the author.
 
-## Work recorded so far
+| Area | Assistance used |
+|---|---|
+| Research and planning | ChatGPT-assisted assignment analysis, architecture comparison, and technology research. |
+| Implementation | Kiro CLI, Codex, and Antigravity CLI assisted with scaffolding, source code, refactoring, tests, and Cloudflare configuration. |
+| UI review | Codex and browser-development tools assisted with responsive layout review and screenshot capture. |
+| Documentation | AI assistance helped organize the requirements, setup instructions, assumptions, validation notes, and this disclosure. |
 
-| Stage | Assistance | Scope and verification |
-|---|---|---|
-| Earlier research and planning | ChatGPT-assisted research and architecture comparison | Produced the retained report, implementation plan and hosting/LLM comparison. Their research claims are distinguished from application evidence throughout. |
-| Earlier local document refactor | User-reported Kiro assistance | The user reported a local refactor. Exact model identity and per-file history were not independently verified; no vendor model name is asserted. |
-| Assignment reconciliation | ChatGPT/Codex assistance | Read the supplied DOCX/PDF/CSV, revised requirements, data assumptions, timebox, SKU forecast scope and submission checklist. |
-| Data verification | Deterministic CSV/decimal/date calculations | Checked all 400 records, byte hashes, counts, sums, dates, sparsity and the worked forecast arithmetic. These were source-data checks, not application tests. |
-| **Implementation** | **Kiro CLI (claude-opus-5) drove the build in this session** | Scaffolded the project, wrote every source file under `src/`, `scripts/`, `migrations/` and `tests/`, and updated this documentation. Work proceeded through eight reviewed steps, each ending with typecheck, tests, build and a runtime smoke run before moving on. |
-| **Structure follow-up** | **Codex assistance with codebase-memory MCP** | Read the indexed code graph, moved data/bootstrap concerns into `src/data/`, separated the shared SQL port from the Worker D1 adapter, audited `.gitignore`, updated path documentation, and reran typecheck plus the full test suite. |
-| **Frontend redesign follow-up** | **Codex assistance with codebase-memory MCP and Chrome DevTools MCP** | Implemented the incremental Spaceship shell, responsive workspace composition, native modal presentation, TanStack Table adapters, CSV serialization, and presentation refinements within `src/client/`. Preserved the existing domain/data/server contracts and verified the local browser states without provider calls or deployment. |
-| **Cloudflare-Native Architecture Refactor** | **Antigravity CLI (Google DeepMind) with codebase-memory MCP** | Migrated external LLM to Cloudflare Workers AI via native `AI` binding; consolidated architecture into single unified Workers deployment; modularized CSS (9 stylesheets in `src/client/styles/`); split large components and monolithic test suite (`tests/ai/`, `tests/server/`); updated directory layout (`src/client/`, `src/server/`); rationalized generated files; added CI workflow and live evaluation script; verified zero regressions with 100% passing tests. |
-| **Free-tier-first LLM policy** | **Codex assistance with Cloudflare documentation MCP** | Kept Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) as the default and GLM-4.7 Flash (`@cf/zai-org/glm-4.7-flash`) as the free-compatible fallback. GLM-5.3 Flash (`@cf/zai-org/glm-5.3-flash`) remains available only behind explicit `AI_ALLOW_PAID_ESCALATION=true`; retries and long prompts cannot select it by default. Verified the native `env.AI.run()` structured-output shape against current Cloudflare model documentation and added exact request/routing regression tests. |
+The application's own AI feature is separate from the tools used to build it. At runtime, native Cloudflare Workers AI selects one validated operation. The application then performs the query or forecast deterministically; it does not trust the model to calculate or invent analytical values.
 
-| **AI Analyst repair** | **Codex, codebase-memory MCP, Cloudflare MCP and Chrome DevTools MCP** | Reproduced truncation and application pacing; compared real native models/contracts; implemented one validated function call; improved quotas/errors; ran deterministic and live evaluations. See [validation](docs/ai-validation.md). |
-| UI redesign follow-up | OpenDesign reference generation and Codex assistance | Applied the responsive Overview and Forecasts workspaces, theme selector, AI Analyst states, accessible evidence surfaces and chart styling while preserving the existing API contracts. Verified with the focused UI tests, the full suite, production checks and local Chrome DevTools review; representative captures are checked in under docs/screenshots/. |
-
-### What the assistant did in the implementation session
-
-- Resolved and pinned exact dependency versions after querying the registry, and recorded the two deviations from the plan's targets in the README rather than silently accepting them.
-- Wrote the importer, schema, metric registry, date interpretation, bounded query compiler, forecast, decision validation, prompt builder, answer renderer, quota guard, provider adapter, Hono routes, React UI and the whole test suite.
-- The original implementation session recorded 206 tests in 13 files, three TypeScript projects, the production build and a 13-check runtime smoke harness against workerd. This historical count is superseded by the current 253 tests in 23 files below.
-- Read the repository with the codebase-memory MCP graph before the structure follow-up; the graph was refreshed after the moves and reported no partial or skipped source files.
-
-### Frontend redesign verification
-
-The redesign work was reviewed against the implementation handoff and current source. It added only `@tanstack/react-table@8.21.3` as a direct production dependency, kept the two existing hash workspaces and the independently opened AI Analyst, and did not copy paid dashboard source or introduce backend/data changes. The final local verification was 253 tests in 23 files, three TypeScript projects, a passing production build, and 13 passing workerd smoke checks. Chrome DevTools review used the local app at the widths and states recorded in [docs/frontend-redesign.md](docs/frontend-redesign.md).
-
-### Documentation and screenshot refresh
-
-Codex reviewed all project Markdown files against current source and verification results, corrected stale status and browser claims, and refreshed the 12 checked-in UI captures through Chrome DevTools MCP using real analytical responses. Superseded captures were replaced by stable filenames in [docs/screenshots](docs/screenshots/README.md). Typecheck, all 253 tests in 23 files, build and 13/13 local smoke checks passed. The production API and browser review also passed for the deterministic paths. The screenshot README records exact local capture conditions and the remaining reduced-motion/200% zoom and screenshot-writer limitations. Application code, assignment assets and analytical data were not changed by the documentation refresh.
-
-### Defects the checks caught, and what changed
-
-These are recorded because they show what the verification actually did, rather than implying the first draft was correct:
-
-1. `runForecast` computed its `warnings` array and then omitted it from the returned object. A test dereferenced `warnings` and failed. The cause was writing the module without running `typecheck` immediately afterwards; the practice changed to typechecking each new module on completion.
-2. `tsconfig.worker.json` was silently typechecking the JSX component tests without JSX or DOM libraries. A third TypeScript project was added for them.
-3. A filtered-by-status query disclosed no assumptions, because `total_orders` carries none, even though the answer's meaning depends on the status proxy. Assumption collection now considers the plan, not only the metrics, and discloses the proxy whenever status is filtered or grouped.
-4. The seed builder rejected the pretty-printed manifest because its value guard forbids newlines in data values. The builder now normalizes manifest JSON, and the guard was kept.
-
-## What has not been done
-
-No employer submission occurred. The AI repair passed the 20-case real-binding evaluation and 14 critical repeats, was merged into `main` (`72bf067edf63b280a0161ab6b93555fd85d569a8`), deployed to Cloudflare Workers (`2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86`), and production-validated via the public API and browser. See [current evidence](docs/ai-validation.md).
-
-The supplied files were read without modification and are not committed. No reference implementation code was copied. The runtime model that the application would call is a separate matter from the assistant used to write the code.
-
-## Responsibility
-
-Every number quoted in the README and in the test suite is reproducible by running the commands listed there. Live routing evidence and genuine remaining limitations are recorded in [the validation report](docs/ai-validation.md).
-
-Source: Coding_assignment.docx §15 and logistics-spec.pdf p3 warn that undisclosed AI usage may be treated negatively.
-
-## AI repair verification
-
-Native Gemma function calling with thinking disabled passed 20/20 frozen cases and 14/14 critical repeats. The final regression suite has 287 tests in 24 files, passing typecheck/build and 13/13 workerd smoke checks. No paid escalation or external provider was enabled. The source assignment was read; no reference code was copied.
+No reference implementation code was intentionally copied. The supplied assignment files are used as inputs and remain excluded from Git.

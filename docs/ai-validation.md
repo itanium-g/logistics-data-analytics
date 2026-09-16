@@ -1,64 +1,34 @@
-# AI Analyst validation — 2026-09-15
+# AI Analyst validation notes
 
-## Release state
+## What the route does
 
-Implementation branch `fix/ai-analyst-workers-ai` (commit `d5dcbe1`), based on clean remote main `6dfb011022008c3d47021ee1401dcc8156a23d7a`, was merged into `main` with merge commit `72bf067edf63b280a0161ab6b93555fd85d569a8` and deployed to production.
+The AI Analyst is a bounded router, not a chat model for computing answers:
 
-Deployed Worker version: `2ceeb3ce-3b8f-4e13-b1c7-76d2e1963a86`; deployment: `2d0eb3e4-54d0-478c-8e06-f6f1aeb273e4` at `https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev`. (Starting Worker version at reproduction was `d9c378be-20bb-42a5-9150-1d83741bd571`, deployment `3fb3a00f-6554-4ce4-9457-90111ac7da7d`, originally attributed to `16635341a6401d91670882d8d200fbeb5bb7b0bf`).
+1. Workers AI receives the question, date context, and a small operation contract.
+2. It selects exactly one operation: `query_metric`, `forecast`, `clarify`, or `unsupported`.
+3. The application validates the operation and its arguments against the same schemas used by the direct APIs.
+4. Deterministic domain code queries D1 or runs the forecast and renders the answer.
 
-## Failure and repair
+The model does not receive database rows, execute SQL, or provide the numerical answer. Invalid tool names, multiple operations, malformed arguments, truncated output, unsupported questions, timeouts, and quota/provider failures fail closed with a typed error.
 
-The public order-count request returned HTTP 422 `unsupported`, with the explicit detail that model output was truncated. A controlled native-binding reproduction returned `choices[0].finish_reason: length`, empty message content, reasoning content and 512 completion tokens. Gemma's documented default thinking consumed the small output budget. The old normalizer did not understand native tool calls, and malformed/truncated output was incorrectly presented as an unsupported business question.
+## Configuration
 
-The immediate second public request returned HTTP 429 `rate_limited` from the application's D1 global 60-second pacing guard. This was **not a Cloudflare provider 429**. No provider request occurs after a failed local admission.
+- Default model: `@cf/google/gemma-4-26b-a4b-it`
+- Native binding: `AI` in `wrangler.jsonc`
+- Thinking: disabled for the routing request
+- Paid escalation: disabled by default (`AI_ALLOW_PAID_ESCALATION=false`)
+- Local default: AI disabled (`AI_ENABLED=false`)
+- Bounds: 6,144 input tokens, 512 output tokens, 15-second timeout, zero automatic retries
 
-The repaired flow is question → one native function call → strict decision validation → canonical domain validation → deterministic execution → deterministic numerical answer. It accepts exactly one `choices[].message.tool_calls[].function` with an allowlisted name and JSON arguments. Unknown tools, multiple calls, malformed arguments, truncation and invalid canonical plans fail closed with `provider_invalid_response`; valid unsupported decisions remain explicit application responses. Reasoning and raw provider output are never logged or shown.
+## Evidence in this repository
 
-The simpler function parameters omit unspecified optional fields. Existing domain defaults and allowlists remain authoritative. User date context cannot be overridden by the model. No arbitrary SQL or model-produced numerical answer is executed or trusted; there is no second summarization call.
+- `tests/ai/` covers configuration, prompts, decision validation, native tool-call parsing, provider errors, quota behavior, and routing.
+- `evals/cases.json` contains 20 frozen cases covering supported, ambiguous, unsupported, and adversarial questions.
+- `scripts/eval-ai-live.ts` can run those cases against a configured endpoint and checks the selected operation, plan, chart, computed facts, and deterministic API parity.
+- `evals/live-workers-ai-2026-09-15.json` is a recorded evaluation artifact from a local endpoint. It should be treated as historical evidence, not a guarantee of current production availability.
 
-## Empirical model selection
+## Production expectation
 
-All probes used native Workers AI; no external provider or paid escalation was enabled.
+Workers AI availability, quota, and model behavior can change between runs. A live-provider pass rate is therefore not described as permanent production evidence in this repository. If the provider is disabled, rate-limited, unavailable, or returns invalid output, the dashboard, query API, and deterministic SKU forecast remain usable.
 
-| Minimal order-count experiment | Output | Completion tokens | Latency | Reported neurons |
-|---|---|---:|---:|---:|
-| Current monolithic JSON, default thinking | Truncated, empty content | 512 | 6762 ms | 14.57 |
-| JSON, thinking disabled | Valid decision | 163 | 11803 ms | 5.07 |
-| Native function, thinking disabled | Valid native tool call | 97 | 2001 ms | 10.245 |
-
-These are individual observations, not stable latency/cost estimates. Full-prompt trials exposed unnecessary clarification and invalid plans with both initial contracts. After simplifying the function parameters and documenting date/event semantics, Gemma passed the final gate. GLM-4.7 Flash was tested against the same application path and remained less reliable: in the last nine-case comparison it produced invalid weekly/combined plans, extra status metrics and incorrectly answered a causal/cost question. Gemma was retained based on live results, not model specifications.
-
-Final evaluation against the real Workers AI binding: **20/20 frozen cases + 14/14 repeated critical cases** (34/34 passing against the test harness on `http://127.0.0.1:5173/api/ask` using the live Workers AI binding). [Recorded results](../evals/live-workers-ai-2026-09-15.json) include canonical plans, answers and per-case latency. Expectations were not changed. The runner checks plans, chart type, computed facts, API parity and unchanged dataset; HTTP errors never count as successful unsupported decisions. A local disposable quota counter was reset between experiment batches; production quota was not reset. Public-production verification was performed separately against the deployed URL.
-
-| Critical question | Deterministic result |
-|---|---|
-| Order count | 400 |
-| Delayed orders weekly, last three months | Order date, 2025-10-01 through 2025-12-31, sum 10, line |
-| Highest carrier delay rate | GLS, 2/7 = 28.57%, descending bar |
-| Delivered late last month | Delivery date, December 2025, 4 |
-| CRAYON-0008, next four months | January–April 2026; existing sparse monthly method; coverage target 3 units |
-| Inventory without SKU | Clarify missing SKU; no invented identifier/value |
-| Exact on-time SLA | Unsupported; offer status-proxy rate |
-
-## Quota, errors and cost
-
-Production configuration deployed: Gemma `@cf/google/gemma-4-26b-a4b-it`, thinking disabled, temperature 0, 512 maximum completion tokens, 6144 estimated input bound, interval 0, retries 0, total timeout 15 seconds. Guards retain 100 daily/1000 monthly admitted requests and a 650000-token daily reservation. The reservation includes the configured maximum retry multiplier; failed provider calls retain their reservation. Disabling pacing ignores a previous pacing deadline.
-
-Distinct errors: local quota `rate_limited`; provider generic 429 `provider_rate_limited`; Cloudflare internal 3036 `provider_account_quota`; internal 3040 `provider_capacity`; request rejection `provider_rejected`; outage `provider_outage`; timeout `provider_timeout`; malformed/truncated/no valid call `provider_invalid_response`. Tests exercise permanent errors without retries, bounded capacity/outage retries, and the total deadline. Safe logs record stage/category/model/status/internal code only.
-
-[Cloudflare pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) was checked on 2026-09-15: Workers Free has 10000 neurons/day; Gemma and GLM-4.7 are free-compatible, while GLM-5.3 requires paid billing. Gemma's listed rates are 9091 neurons per million input tokens and 27273 per million output tokens; GLM-4.7 lists 5500/36400. The application's bounds target less than the free allocation for normal use, but character-based token estimates are not exact provider accounting and other account workloads share that allocation. Exhaustion fails honestly. `AI_ALLOW_PAID_ESCALATION=false`; no paid plan or service was enabled.
-
-Request fields were verified against the current [Gemma schema](https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/): native tools, `chat_template_kwargs.enable_thinking=false` and `max_completion_tokens`. No unverified seed or reasoning-effort field was added.
-
-## Reference insight
-
-The comparison repository at `1c1ee718dc2ece3e9ad2296060721c7f948001e3` demonstrates bounded function selection followed by Pydantic validation and deterministic computation. That simple boundary informed the function interface. Its OpenRouter/Sonnet architecture, second summarization call and forecasting assumptions were not copied.
-
-## Verification
-
-Current local checks: typecheck passes; **287 tests in 24 files** pass. Clean npm ci (168 packages, zero vulnerabilities), checksum-verified data import, local migrations and seed, typecheck, build, and 13/13 workerd smoke checks pass. A running Vite process initially locked npm installation; stopping it resolved the lock. Smoke first reported 12/13 because experiment-local AI enablement was active; rebuilding with AI disabled restored the deterministic 13/13 gate.
-
-Separate public-production API and browser validation confirmed the live deployment at `https://logistics-analytics-demo.ghiffariahmadijaya.workers.dev`:
-- All 7 canonical questions rerun live against the public URL with 100% pass rate and zero pacing delay: order count (400 orders), delayed orders by week for last 3 months (line chart, sum 10), carrier delay rate ranking (GLS 28.57% first, descending bar chart), late deliveries last month (delivery_date Dec 2025, 4 orders), 4-month SKU forecast (CRAYON-0008, Jan–Apr 2026, 3 units target), inventory without SKU (clarify missing SKU), and exact SLA rate (unsupported, status proxy offered).
-- Browser validation in Chrome DevTools confirmed responsive rendering, theme switching, assistant form submission, loading state, chart and evidence disclosures, with zero console errors.
-- A deliberate invalid-model browser probe returned the native error 5007: `No such model ... or task`. The classifier treats this as permanent provider rejection, with no retries; its captured message is covered by a regression test. Loading and recoverable error presentation were checked in Chrome DevTools.
+This separation keeps a transient provider problem from being presented as a business-data result. No paid escalation or external provider key is required by the default deployment.
